@@ -1,156 +1,178 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Gestor-IA</title>
-
 
 <style>
 
-*{
-box-sizing:border-box;
-}
-
+*{box-sizing:border-box}
 
 body{
-
 margin:0;
-font-family:Arial,sans-serif;
-background:#0f172a;
+font-family:Segoe UI,Arial;
+background:#0b1220;
 color:white;
-
 }
-
 
 
 header{
-
 height:80px;
 background:#111827;
-
 display:flex;
 align-items:center;
 justify-content:space-between;
-
-padding:0 30px;
-
+padding:0 35px;
 }
-
-
 
 
 .logo{
-
 font-size:30px;
 font-weight:bold;
-
 color:#38bdf8;
-
 }
-
 
 
 button{
-
 background:#38bdf8;
 border:0;
-
 padding:12px 18px;
-
-border-radius:10px;
-
+border-radius:12px;
 cursor:pointer;
-
+font-weight:bold;
 }
 
 
-
 .container{
-
 display:grid;
-
 grid-template-columns:220px 1fr;
-
 height:calc(100vh - 80px);
-
 }
 
 
 
 .menu{
-
 background:#111827;
-
 padding:20px;
-
 }
-
-
 
 
 .menu div{
-
 background:#1e293b;
-
 padding:15px;
-
 margin-bottom:15px;
-
-border-radius:10px;
-
+border-radius:12px;
 cursor:pointer;
-
 }
-
-
-
-.menu div:hover{
-
-background:#334155;
-
-}
-
 
 
 
 .content{
-
-padding:30px;
-
+padding:25px;
+display:flex;
+justify-content:center;
 }
-
-
 
 
 .card{
-
-background:#1e293b;
-
+width:100%;
+max-width:900px;
+background:#111827;
 padding:25px;
-
-border-radius:15px;
-
+border-radius:22px;
 }
 
+
+
+#chat{
+height:420px;
+overflow:auto;
+background:#070d18;
+padding:18px;
+border-radius:18px;
+}
+
+
+
+.user{
+text-align:right;
+margin:10px;
+}
+
+
+.user span{
+background:#38bdf8;
+color:black;
+padding:10px;
+border-radius:18px;
+}
+
+
+
+.bot{
+margin:10px;
+}
+
+
+.bot span{
+background:#1e293b;
+padding:10px;
+border-radius:18px;
+}
 
 
 
 input{
-
-width:70%;
-
-padding:12px;
-
-border-radius:10px;
-
+width:80%;
+padding:14px;
+border-radius:12px;
 border:0;
-
 }
 
+
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#0008;
+align-items:center;
+justify-content:center;
+}
+
+
+.modal-box{
+background:#111827;
+padding:30px;
+border-radius:20px;
+width:350px;
+}
+
+
+
+.modal-box input{
+width:100%;
+margin:8px 0;
+}
+
+
+
+.planes{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:20px;
+}
+
+
+
+.plan{
+background:#1e293b;
+padding:20px;
+border-radius:18px;
+}
 
 
 </style>
@@ -158,29 +180,26 @@ border:0;
 </head>
 
 
-
-
 <body>
-
 
 
 <header>
 
 
 <div class="logo">
-
 Gestor-IA
-
 </div>
 
 
+<div id="usuario">
 
-<button onclick="ia()">
+<button onclick="login()">Iniciar sesión</button>
 
-🤖 IA
+<button onclick="registro()">Registrarse</button>
 
-</button>
+<button onclick="ia()">🤖 IA</button>
 
+</div>
 
 
 </header>
@@ -188,43 +207,20 @@ Gestor-IA
 
 
 
-
 <div class="container">
-
 
 
 <div class="menu">
 
+<div onclick="inicio()">🏠 Inicio</div>
 
+<div onclick="tareas()">📋 Tareas</div>
 
-<div onclick="inicio()">
+<div onclick="ia()">🤖 IA</div>
 
-🏠 Inicio
+<div onclick="servicios()">🛠 Servicios</div>
 
-</div>
-
-
-<div onclick="tareas()">
-
-📋 Tareas
-
-</div>
-
-
-<div onclick="ia()">
-
-🤖 IA
-
-</div>
-
-
-
-<div onclick="ajustes()">
-
-⚙ Ajustes
-
-</div>
-
+<div onclick="ajustes()">⚙ Ajustes</div>
 
 
 </div>
@@ -232,18 +228,19 @@ Gestor-IA
 
 
 
-
-
-
-<div class="content" id="contenido">
+<div class="content" id="contenido"></div>
 
 
 </div>
 
 
 
-</div>
 
+<div class="modal" id="modal">
+
+<div class="modal-box" id="modalContenido"></div>
+
+</div>
 
 
 
@@ -252,50 +249,21 @@ Gestor-IA
 <script>
 
 
+let usuarioActual="";
+
+
 
 function inicio(){
 
+contenido.innerHTML=`
 
-contenido.innerHTML=
-
-`
+<div class="card">
 
 <h1>Gestor-IA</h1>
 
-<div class="card">
+<h2>Automatización administrativa</h2>
 
-Tu asistente inteligente 🚀
-
-</div>
-
-`;
-
-}
-
-
-
-
-function tareas(){
-
-
-contenido.innerHTML=
-
-`
-
-<h1>📋 Tareas</h1>
-
-<div class="card">
-
-
-<input placeholder="Nueva tarea">
-
-
-<button>
-
-Añadir
-
-</button>
-
+<p>Gestiona trámites y procesos con inteligencia artificial.</p>
 
 </div>
 
@@ -306,76 +274,144 @@ Añadir
 
 
 
+function login(){
 
-function ia(){
+modalContenido.innerHTML=`
 
+<h2>Iniciar sesión</h2>
 
-contenido.innerHTML=
+<input id="loginEmail" placeholder="Correo">
 
-`
+<input id="loginPass" type="password" placeholder="Contraseña">
 
-<h1>🤖 Gestor-IA</h1>
+<br><br>
 
-
-<div class="card">
-
-
-<input id="pregunta"
-placeholder="Escribe a la IA">
-
-
-<button onclick="preguntarIA()">
-
-Enviar
-
-</button>
-
-
-<p id="respuesta">
-
-Esperando...
-
-</p>
-
-
-</div>
+<button onclick="entrar()">Entrar</button>
 
 `;
+
+modal.style.display="flex";
 
 }
 
 
 
 
-async function preguntarIA(){
+
+async function entrar(){
 
 
-let texto=document
-.getElementById("pregunta")
-.value;
+let email=document.getElementById("loginEmail").value;
+let pass=document.getElementById("loginPass").value;
 
 
-
-document.getElementById("respuesta")
-.innerHTML="🤖 Pensando...";
-
-
-
-let res=await fetch("/api/chat",
-{
+let res=await fetch("/api/login",{
 
 method:"POST",
 
 headers:{
-
 "Content-Type":"application/json"
-
 },
-
 
 body:JSON.stringify({
 
-mensaje:texto
+email:email,
+password:pass
+
+})
+
+});
+
+
+let datos=await res.json();
+
+
+if(datos.ok){
+
+
+usuarioActual=datos.usuario;
+
+
+document.getElementById("usuario").innerHTML=
+
+`
+👤 ${usuarioActual}
+
+<button onclick="ia()">🤖 IA</button>
+`;
+
+
+cerrar();
+
+
+}else{
+
+alert(datos.mensaje);
+
+}
+
+
+}
+
+
+
+
+
+function registro(){
+
+
+modalContenido.innerHTML=`
+
+<h2>Crear cuenta</h2>
+
+
+<input id="regNombre" placeholder="Nombre">
+
+<input id="regEmail" placeholder="Correo">
+
+<input id="regPass" type="password" placeholder="Contraseña">
+
+
+<br><br>
+
+<button onclick="crearCuenta()">Crear cuenta</button>
+
+`;
+
+modal.style.display="flex";
+
+}
+
+
+
+
+
+async function crearCuenta(){
+
+
+let nombre=document.getElementById("regNombre").value;
+
+let email=document.getElementById("regEmail").value;
+
+let pass=document.getElementById("regPass").value;
+
+
+
+let res=await fetch("/api/registro",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+nombre:nombre,
+
+email:email,
+
+password:pass
 
 })
 
@@ -387,8 +423,23 @@ let datos=await res.json();
 
 
 
-document.getElementById("respuesta")
-.innerHTML=datos.respuesta;
+if(datos.ok){
+
+
+alert("Cuenta creada");
+
+
+cerrar();
+
+
+
+}else{
+
+
+alert(datos.mensaje);
+
+
+}
 
 
 }
@@ -396,19 +447,29 @@ document.getElementById("respuesta")
 
 
 
-function ajustes(){
 
 
-contenido.innerHTML=
+function cerrar(){
 
-`
+modal.style.display="none";
 
-<h1>⚙ Ajustes</h1>
+}
 
+
+
+
+
+function tareas(){
+
+contenido.innerHTML=`
 
 <div class="card">
 
-Configuración
+<h1>📋 Tareas</h1>
+
+<input placeholder="Nueva tarea">
+
+<button>Añadir</button>
 
 </div>
 
@@ -418,15 +479,230 @@ Configuración
 
 
 
-inicio();
 
+
+
+
+function servicios(){
+
+
+contenido.innerHTML=`
+
+<div class="card">
+
+
+<h1>🛠 Servicios</h1>
+
+
+<div class="planes">
+
+
+<div class="plan">
+
+<h2>🟢 Básico</h2>
+
+<h1>25€/mes</h1>
+
+<p>✔ IA administrativa</p>
+
+<p>✔ Certificados</p>
+
+<p>✔ Documentos</p>
+
+<p>✔ Historial</p>
+
+<button>Contratar</button>
+
+</div>
+
+
+
+
+<div class="plan">
+
+<h2>🔵 Profesional</h2>
+
+<h1>59€/mes</h1>
+
+<p>✔ Todo Básico</p>
+
+<p>✔ Robots</p>
+
+<p>✔ Prioridad</p>
+
+<button>Contratar</button>
+
+</div>
+
+
+
+
+<div class="plan">
+
+<h2>🟣 Empresa</h2>
+
+<h1>149€/mes</h1>
+
+<p>✔ Usuarios</p>
+
+<p>✔ Flujos personalizados</p>
+
+<p>✔ Integraciones</p>
+
+<button>Contactar</button>
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+`;
+
+}
+
+
+
+
+
+
+
+function ia(){
+
+
+contenido.innerHTML=`
+
+<div class="card">
+
+
+<h1>🤖 Gestor-IA</h1>
+
+
+<div id="chat">
+
+<div class="bot">
+
+<span>
+
+🤖 Hola, soy Gestor-IA. ¿En qué puedo ayudarte?
+
+</span>
+
+</div>
+
+
+</div>
+
+
+<input id="pregunta" placeholder="Escribe un mensaje..." onkeydown="enterEnviar(event)">
+
+
+<button onclick="preguntarIA()">Enviar</button>
+
+
+</div>
+
+`;
+
+}
+
+
+
+
+function enterEnviar(e){
+
+if(e.key==="Enter") preguntarIA();
+
+}
+
+
+
+
+async function preguntarIA(){
+
+
+let texto=document.getElementById("pregunta").value;
+
+if(!texto)return;
+
+
+let chat=document.getElementById("chat");
+
+
+chat.innerHTML+=`
+
+<div class="user">
+
+<span>${texto}</span>
+
+</div>
+
+`;
+
+
+
+let res=await fetch("/api/chat",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+mensaje:texto
+
+})
+
+});
+
+
+let datos=await res.json();
+
+
+
+chat.innerHTML+=`
+
+<div class="bot">
+
+<span>🤖 ${datos.respuesta}</span>
+
+</div>
+
+`;
+
+}
+
+
+
+function ajustes(){
+
+contenido.innerHTML=`
+
+<div class="card">
+
+<h1>⚙ Ajustes</h1>
+
+<p>Configuración de cuenta</p>
+
+</div>
+
+`;
+
+}
+
+
+inicio();
 
 
 </script>
 
 
-
-
 </body>
+</html>
 
 </html>
