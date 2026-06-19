@@ -1,42 +1,166 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Gestor-IA</title>
 
 <style>
-body {
-    font-family: Arial;
-    background: #111827;
-    color: white;
-    text-align: center;
+
+*{
+    box-sizing:border-box;
 }
 
-h1 {
-    color: #38bdf8;
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#0f172a;
+    color:white;
 }
 
-.card {
-    background: #1f2937;
-    padding: 20px;
-    margin: 30px auto;
-    width: 300px;
-    border-radius: 15px;
+
+header{
+    padding:20px;
+    background:#111827;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
+
+
+.logo{
+    font-size:26px;
+    color:#38bdf8;
+    font-weight:bold;
+}
+
+
+button{
+    background:#38bdf8;
+    border:none;
+    padding:10px 20px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+
+.container{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    min-height:90vh;
+}
+
+
+.menu{
+    background:#111827;
+    padding:20px;
+}
+
+
+.menu p{
+    cursor:pointer;
+    padding:10px;
+}
+
+
+.menu p:hover{
+    background:#1f2937;
+    border-radius:10px;
+}
+
+
+.content{
+    padding:30px;
+}
+
+
+.card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+}
+
+
 </style>
 
 </head>
 
+
 <body>
 
-<h1>Gestor-IA</h1>
 
-<div class="card">
-<h2>Panel principal</h2>
-<p>Tu gestor inteligente está activo.</p>
+<header>
+
+<div class="logo">
+🤖 Gestor-IA
 </div>
 
+<button>
+Nuevo
+</button>
+
+</header>
+
+
+
+<div class="container">
+
+
+<div class="menu">
+
+<p>🏠 Inicio</p>
+
+<p>📋 Tareas</p>
+
+<p>📁 Proyectos</p>
+
+<p>🤖 IA</p>
+
+<p>⚙ Configuración</p>
+
+</div>
+
+
+
+<div class="content">
+
+
+<h1>Panel principal</h1>
+
+
+<div class="card">
+
+<h2>Bienvenido a Gestor-IA</h2>
+
+<p>
+Gestiona tus tareas con inteligencia artificial.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Estado</h2>
+
+<p>
+Sistema funcionando correctamente ✅
+</p>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
 </body>
+
 </html>
