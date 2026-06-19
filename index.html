@@ -8,11 +8,13 @@
 
 <title>Gestor-IA</title>
 
+
 <style>
 
 *{
 box-sizing:border-box;
 }
+
 
 body{
 margin:0;
@@ -43,13 +45,6 @@ color:#38bdf8;
 }
 
 
-.header-buttons button{
-
-margin-left:10px;
-
-}
-
-
 
 button{
 
@@ -73,12 +68,14 @@ min-height:calc(100vh - 80px);
 
 
 
+
 .menu{
 
 background:#111827;
 padding:20px;
 
 }
+
 
 
 
@@ -94,11 +91,13 @@ cursor:pointer;
 
 
 
+
 .menu div:hover{
 
 background:#334155;
 
 }
+
 
 
 
@@ -110,35 +109,23 @@ padding:30px;
 
 
 
+
 .card{
 
 background:#1e293b;
 padding:25px;
 border-radius:15px;
-margin-bottom:20px;
 
 }
+
 
 
 
 input{
 
-padding:12px;
-border-radius:10px;
-border:0;
 width:70%;
-margin:5px;
-
-}
-
-
-
-li{
-
-list-style:none;
-background:#334155;
 padding:12px;
-margin:10px;
+border:0;
 border-radius:10px;
 
 }
@@ -163,16 +150,16 @@ border-radius:10px;
 </div>
 
 
+<div>
 
-<div class="header-buttons" id="botones">
 
 <button onclick="mostrarLogin()">
-Iniciar sesión
+Login
 </button>
 
 
 <button onclick="mostrarRegistro()">
-Registrarse
+Registro
 </button>
 
 
@@ -193,28 +180,44 @@ Registrarse
 <div class="menu">
 
 
-<div onclick="inicio()">🏠 Inicio</div>
+<div onclick="inicio()">
+🏠 Inicio
+</div>
 
-<div onclick="mostrarTareas()">📋 Tareas</div>
 
-<div onclick="proyectos()">📁 Proyectos</div>
+<div onclick="tareas()">
+📋 Tareas
+</div>
 
-<div onclick="ia()">🤖 IA</div>
 
-<div onclick="ajustes()">⚙ Ajustes</div>
+<div onclick="ia()">
+🤖 IA
+</div>
+
+
+<div onclick="ajustes()">
+⚙ Ajustes
+</div>
+
 
 
 </div>
+
+
 
 
 
 <div class="content" id="contenido">
 
 
+
 </div>
 
 
+
 </div>
+
+
 
 
 
@@ -223,238 +226,13 @@ Registrarse
 <script>
 
 
-let usuario =
-localStorage.getItem("usuario");
-
-
-let tareas =
-JSON.parse(localStorage.getItem("tareas")) || [];
-
-
-
-actualizarBotones();
-
-
-if(usuario){
-
-inicio();
-
-}else{
-
-mostrarLogin();
-
-}
-
-
-
-
-
-function actualizarBotones(){
-
-
-if(usuario){
-
-
-document.getElementById("botones").innerHTML=
-
-`
-
-<button onclick="cerrarSesion()">
-
-Salir
-
-</button>
-
-`;
-
-}
-
-}
-
-
-
-
-
-function mostrarLogin(){
-
-
-document.getElementById("contenido").innerHTML=
-
-`
-
-<h1>🔐 Iniciar sesión</h1>
-
-
-<div class="card">
-
-
-<input id="nombreLogin" placeholder="Usuario">
-
-
-<br>
-
-
-<input id="passLogin" type="password" placeholder="Contraseña">
-
-
-<br>
-
-
-<button onclick="login()">
-
-Entrar
-
-</button>
-
-
-</div>
-
-`;
-
-}
-
-
-
-
-
-function mostrarRegistro(){
-
-
-document.getElementById("contenido").innerHTML=
-
-`
-
-<h1>📝 Registro</h1>
-
-
-<div class="card">
-
-
-<input id="nuevoUsuario" placeholder="Nuevo usuario">
-
-
-<br>
-
-
-<input id="nuevoPass" type="password" placeholder="Contraseña">
-
-
-<br>
-
-
-<button onclick="registrar()">
-
-Crear cuenta
-
-</button>
-
-
-</div>
-
-`;
-
-}
-
-
-
-
-function registrar(){
-
-
-let u =
-document.getElementById("nuevoUsuario").value;
-
-
-
-let p =
-document.getElementById("nuevoPass").value;
-
-
-
-if(u=="" || p==""){
-
-alert("Completa los datos");
-
-return;
-
-}
-
-
-
-localStorage.setItem("usuario",u);
-
-
-usuario=u;
-
-
-actualizarBotones();
-
-
-inicio();
-
-
-}
-
-
-
-
-
-function login(){
-
-
-let u =
-document.getElementById("nombreLogin").value;
-
-
-
-if(u==""){
-
-alert("Pon usuario");
-
-return;
-
-}
-
-
-
-localStorage.setItem("usuario",u);
-
-
-usuario=u;
-
-
-actualizarBotones();
-
-
-inicio();
-
-
-}
-
-
-
-
-function cerrarSesion(){
-
-
-localStorage.removeItem("usuario");
-
-
-usuario=null;
-
-
-location.reload();
-
-
-}
-
-
 
 
 function inicio(){
 
 
-document.getElementById("contenido").innerHTML=
+contenido.innerHTML=
+
 
 `
 
@@ -463,15 +241,13 @@ document.getElementById("contenido").innerHTML=
 
 <div class="card">
 
-Hola ${usuario}
-
-<br><br>
-
 Bienvenido a Gestor-IA 🚀
 
 </div>
 
 `;
+
+
 
 }
 
@@ -479,38 +255,11 @@ Bienvenido a Gestor-IA 🚀
 
 
 
-function mostrarTareas(){
-
-
-let lista="";
-
-
-tareas.forEach((t,i)=>{
-
-
-lista+=
-
-`
-
-<li>
-
-${t}
-
-<button onclick="borrar(${i})">
-
-❌
-
-</button>
-
-</li>
-
-`;
-
-});
+function tareas(){
 
 
 
-document.getElementById("contenido").innerHTML=
+contenido.innerHTML=
 
 `
 
@@ -520,108 +269,25 @@ document.getElementById("contenido").innerHTML=
 <div class="card">
 
 
-<input id="nueva" placeholder="Nueva tarea">
+<input placeholder="Nueva tarea">
 
 
-<button onclick="agregar()">
+<button>
 
 Añadir
 
 </button>
 
 
-<ul>
-
-${lista}
-
-</ul>
-
-
 </div>
+
 
 `;
 
-}
-
-
-
-
-function agregar(){
-
-
-let texto =
-document.getElementById("nueva").value;
-
-
-if(texto=="")return;
-
-
-tareas.push(texto);
-
-
-guardar();
-
-
-mostrarTareas();
 
 
 }
 
-
-
-
-
-function borrar(i){
-
-
-tareas.splice(i,1);
-
-
-guardar();
-
-
-mostrarTareas();
-
-
-}
-
-
-
-
-
-function guardar(){
-
-
-localStorage.setItem(
-"tareas",
-JSON.stringify(tareas)
-);
-
-
-}
-
-
-
-
-
-function proyectos(){
-
-
-contenido.innerHTML=
-
-`
-
-<h1>📁 Proyectos</h1>
-
-<div class="card">
-
-Zona de proyectos
-
-</div>
-
-`;
-
-}
 
 
 
@@ -634,17 +300,179 @@ contenido.innerHTML=
 
 `
 
-<h1>🤖 IA</h1>
+<h1>🤖 Gestor-IA</h1>
+
 
 <div class="card">
 
-Asistente Gestor-IA preparado
+
+<input 
+id="pregunta"
+placeholder="Escribe a la IA...">
+
+
+<button onclick="preguntarIA()">
+
+Enviar
+
+</button>
+
+
+
+<p id="respuesta">
+
+Esperando mensaje...
+
+</p>
+
+
 
 </div>
 
 `;
 
+
+
 }
+
+
+
+
+
+async function preguntarIA(){
+
+
+let texto =
+document.getElementById("pregunta").value;
+
+
+
+if(texto==""){
+
+alert("Escribe algo");
+
+return;
+
+}
+
+
+
+
+document.getElementById("respuesta")
+.innerHTML =
+"🤖 Pensando...";
+
+
+
+let respuesta =
+await fetch("/api/chat",
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+body:JSON.stringify({
+
+mensaje:texto
+
+})
+
+});
+
+
+
+
+let datos =
+await respuesta.json();
+
+
+
+document.getElementById("respuesta")
+.innerHTML =
+datos.respuesta;
+
+
+
+}
+
+
+
+
+
+
+
+function mostrarLogin(){
+
+
+contenido.innerHTML=
+
+`
+
+<h1>🔐 Login</h1>
+
+
+<div class="card">
+
+
+<input placeholder="Usuario">
+
+
+<br><br>
+
+
+<input placeholder="Contraseña">
+
+
+</div>
+
+`;
+
+
+
+}
+
+
+
+
+
+function mostrarRegistro(){
+
+
+contenido.innerHTML=
+
+`
+
+<h1>📝 Registro</h1>
+
+
+<div class="card">
+
+
+<input placeholder="Correo">
+
+
+<br><br>
+
+
+<input placeholder="Contraseña">
+
+
+</div>
+
+
+`;
+
+
+
+}
+
+
+
 
 
 
@@ -658,18 +486,28 @@ contenido.innerHTML=
 
 <h1>⚙ Ajustes</h1>
 
+
 <div class="card">
 
-Configuración
+Configuración Gestor-IA
 
 </div>
 
+
 `;
+
+
 
 }
 
 
+
+inicio();
+
+
 </script>
+
+
 
 
 </body>
