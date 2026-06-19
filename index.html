@@ -11,14 +11,9 @@
 
 <style>
 
-*{
-box-sizing:border-box;
-}
-
-
 body{
 margin:0;
-font-family:Arial;
+font-family:Arial, sans-serif;
 background:#0f172a;
 color:white;
 }
@@ -26,21 +21,23 @@ color:white;
 
 header{
 
-height:80px;
 background:#111827;
+height:80px;
+
 display:flex;
-justify-content:space-between;
 align-items:center;
-padding:20px;
+justify-content:space-between;
+
+padding:0 30px;
 
 }
 
 
-.logo{
 
-font-size:28px;
-font-weight:bold;
-color:#38bdf8;
+.logo img{
+
+width:180px;
+height:auto;
 
 }
 
@@ -49,8 +46,8 @@ color:#38bdf8;
 button{
 
 background:#38bdf8;
-border:0;
-padding:10px 15px;
+border:none;
+padding:12px 18px;
 border-radius:10px;
 cursor:pointer;
 
@@ -62,10 +59,9 @@ cursor:pointer;
 
 display:grid;
 grid-template-columns:220px 1fr;
-min-height:calc(100vh - 80px);
+height:calc(100vh - 80px);
 
 }
-
 
 
 
@@ -78,26 +74,16 @@ padding:20px;
 
 
 
-
 .menu div{
 
-padding:15px;
-margin-bottom:10px;
 background:#1e293b;
+padding:15px;
+margin-bottom:15px;
+
 border-radius:10px;
 cursor:pointer;
 
 }
-
-
-
-
-.menu div:hover{
-
-background:#334155;
-
-}
-
 
 
 
@@ -106,7 +92,6 @@ background:#334155;
 padding:30px;
 
 }
-
 
 
 
@@ -120,51 +105,42 @@ border-radius:15px;
 
 
 
-
 input{
 
 width:70%;
 padding:12px;
-border:0;
+
 border-radius:10px;
+border:0;
 
 }
 
 
-
 </style>
-
 
 </head>
 
 
-<body>
 
+<body>
 
 
 <header>
 
 
 <div class="logo">
-🤖 Gestor-IA
-</div>
 
-
-<div>
-
-
-<button onclick="mostrarLogin()">
-Login
-</button>
-
-
-<button onclick="mostrarRegistro()">
-Registro
-</button>
-
+<img src="imagenes/logo.png">
 
 </div>
 
+
+
+<button onclick="ia()">
+
+🤖 IA
+
+</button>
 
 
 </header>
@@ -181,28 +157,28 @@ Registro
 
 
 <div onclick="inicio()">
+
 🏠 Inicio
+
 </div>
 
 
 <div onclick="tareas()">
+
 📋 Tareas
+
 </div>
 
 
 <div onclick="ia()">
+
 🤖 IA
-</div>
 
-
-<div onclick="ajustes()">
-⚙ Ajustes
 </div>
 
 
 
 </div>
-
 
 
 
@@ -210,14 +186,12 @@ Registro
 <div class="content" id="contenido">
 
 
-
 </div>
 
 
 
+
 </div>
-
-
 
 
 
@@ -227,27 +201,22 @@ Registro
 
 
 
-
 function inicio(){
 
 
 contenido.innerHTML=
 
-
 `
 
-<h1>🏠 Inicio</h1>
-
+<h1>Gestor-IA</h1>
 
 <div class="card">
 
-Bienvenido a Gestor-IA 🚀
+Bienvenido a tu asistente inteligente 🚀
 
 </div>
 
 `;
-
-
 
 }
 
@@ -256,7 +225,6 @@ Bienvenido a Gestor-IA 🚀
 
 
 function tareas(){
-
 
 
 contenido.innerHTML=
@@ -281,13 +249,9 @@ Añadir
 
 </div>
 
-
 `;
 
-
-
 }
-
 
 
 
@@ -306,9 +270,8 @@ contenido.innerHTML=
 <div class="card">
 
 
-<input 
-id="pregunta"
-placeholder="Escribe a la IA...">
+<input id="pregunta"
+placeholder="Escribe a la IA">
 
 
 <button onclick="preguntarIA()">
@@ -318,20 +281,16 @@ Enviar
 </button>
 
 
-
 <p id="respuesta">
 
-Esperando mensaje...
+Esperando...
 
 </p>
-
 
 
 </div>
 
 `;
-
-
 
 }
 
@@ -346,25 +305,13 @@ let texto =
 document.getElementById("pregunta").value;
 
 
-
-if(texto==""){
-
-alert("Escribe algo");
-
-return;
-
-}
-
-
-
-
 document.getElementById("respuesta")
 .innerHTML =
 "🤖 Pensando...";
 
 
 
-let respuesta =
+let res =
 await fetch("/api/chat",
 {
 
@@ -376,19 +323,20 @@ headers:{
 
 },
 
+
 body:JSON.stringify({
 
 mensaje:texto
 
 })
 
+
 });
 
 
 
-
 let datos =
-await respuesta.json();
+await res.json();
 
 
 
@@ -402,114 +350,14 @@ datos.respuesta;
 
 
 
-
-
-
-
-function mostrarLogin(){
-
-
-contenido.innerHTML=
-
-`
-
-<h1>🔐 Login</h1>
-
-
-<div class="card">
-
-
-<input placeholder="Usuario">
-
-
-<br><br>
-
-
-<input placeholder="Contraseña">
-
-
-</div>
-
-`;
-
-
-
-}
-
-
-
-
-
-function mostrarRegistro(){
-
-
-contenido.innerHTML=
-
-`
-
-<h1>📝 Registro</h1>
-
-
-<div class="card">
-
-
-<input placeholder="Correo">
-
-
-<br><br>
-
-
-<input placeholder="Contraseña">
-
-
-</div>
-
-
-`;
-
-
-
-}
-
-
-
-
-
-
-
-function ajustes(){
-
-
-contenido.innerHTML=
-
-`
-
-<h1>⚙ Ajustes</h1>
-
-
-<div class="card">
-
-Configuración Gestor-IA
-
-</div>
-
-
-`;
-
-
-
-}
-
-
-
 inicio();
+
 
 
 </script>
 
 
-
-
 </body>
+
 
 </html>
