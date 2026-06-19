@@ -16,97 +16,133 @@ box-sizing:border-box;
 
 body{
 margin:0;
-font-family:Arial, sans-serif;
+font-family:Arial;
 background:#0f172a;
 color:white;
 }
 
 
 header{
+
 height:80px;
 background:#111827;
 display:flex;
-align-items:center;
 justify-content:space-between;
+align-items:center;
 padding:20px;
+
 }
 
 
 .logo{
+
 font-size:28px;
 font-weight:bold;
 color:#38bdf8;
+
 }
 
 
 button{
+
 background:#38bdf8;
-border:none;
+border:0;
 padding:10px 15px;
 border-radius:10px;
 cursor:pointer;
+
 }
 
 
 .container{
+
 display:grid;
 grid-template-columns:220px 1fr;
 min-height:calc(100vh - 80px);
+
 }
 
 
+
 .menu{
+
 background:#111827;
 padding:20px;
+
 }
 
 
 .menu div{
+
 padding:15px;
 margin-bottom:10px;
 background:#1e293b;
 border-radius:10px;
+cursor:pointer;
+
 }
+
+
+
+.menu div:hover{
+
+background:#334155;
+
+}
+
 
 
 .content{
+
 padding:30px;
+
 }
 
 
+
 .card{
+
 background:#1e293b;
 padding:25px;
 border-radius:15px;
 margin-bottom:20px;
+
 }
+
 
 
 input{
+
 padding:12px;
 border-radius:10px;
-border:none;
+border:0;
 width:70%;
+
 }
+
 
 
 li{
+
 list-style:none;
 background:#334155;
 padding:12px;
-margin:10px 0;
+margin:10px;
 border-radius:10px;
-display:flex;
-justify-content:space-between;
+
 }
+
 
 
 </style>
 
+
 </head>
 
 
+
 <body>
+
 
 
 <header>
@@ -115,84 +151,63 @@ justify-content:space-between;
 🤖 Gestor-IA
 </div>
 
-<button onclick="saludo()">
+
+<button onclick="ia()">
 IA
 </button>
 
+
 </header>
+
 
 
 
 <div class="container">
 
 
+
 <div class="menu">
 
-<div>🏠 Inicio</div>
 
-<div>📋 Tareas</div>
+<div onclick="inicio()">🏠 Inicio</div>
 
-<div>📁 Proyectos</div>
+<div onclick="mostrarTareas()">📋 Tareas</div>
 
-<div>🤖 IA</div>
+<div onclick="proyectos()">📁 Proyectos</div>
 
-<div>⚙ Ajustes</div>
+<div onclick="ia()">🤖 IA</div>
+
+<div onclick="ajustes()">⚙ Ajustes</div>
+
 
 </div>
 
 
 
-<div class="content">
 
 
-<h1>Panel principal</h1>
+<div class="content" id="contenido">
 
+
+<h1>Bienvenido</h1>
 
 
 <div class="card">
 
+Gestor-IA funcionando correctamente ✅
 
-<h2>📋 Mis tareas</h2>
-
-
-<input 
-id="tarea"
-placeholder="Nueva tarea">
+</div>
 
 
-<button onclick="agregarTarea()">
-Añadir
-</button>
+</div>
 
 
-<ul id="lista">
-
-</ul>
 
 
 </div>
 
 
 
-
-<div class="card">
-
-<h2 id="mensaje">
-🤖 Gestor-IA preparado
-</h2>
-
-<p>
-Tu asistente inteligente está activo.
-</p>
-
-</div>
-
-
-
-</div>
-
-
-</div>
 
 
 
@@ -200,119 +215,130 @@ Tu asistente inteligente está activo.
 <script>
 
 
-function cargarTareas(){
-
-
 let tareas =
 JSON.parse(localStorage.getItem("tareas")) || [];
 
 
-let lista =
-document.getElementById("lista");
 
 
-lista.innerHTML="";
+function guardar(){
+
+localStorage.setItem(
+"tareas",
+JSON.stringify(tareas)
+);
+
+}
 
 
-tareas.forEach(function(tarea){
 
 
-crearTarea(tarea);
+function inicio(){
 
+document.getElementById("contenido").innerHTML=
+
+`
+<h1>🏠 Inicio</h1>
+
+<div class="card">
+
+Bienvenido a Gestor-IA 🚀
+
+</div>
+`;
+
+}
+
+
+
+
+function mostrarTareas(){
+
+
+let lista="";
+
+
+tareas.forEach((t,i)=>{
+
+
+lista +=
+
+`
+<li>
+
+${t}
+
+<button onclick="borrar(${i})">
+
+❌
+
+</button>
+
+</li>
+
+`;
 
 });
 
 
+
+
+document.getElementById("contenido").innerHTML=
+
+`
+
+<h1>📋 Tareas</h1>
+
+
+<div class="card">
+
+
+<input id="nueva" placeholder="Nueva tarea">
+
+
+<button onclick="agregar()">
+
+Añadir
+
+</button>
+
+
+
+<ul>
+
+${lista}
+
+</ul>
+
+
+
+</div>
+
+`;
+
 }
 
 
 
 
-function agregarTarea(){
 
-
-let caja =
-document.getElementById("tarea");
+function agregar(){
 
 
 let texto =
-caja.value;
+document.getElementById("nueva").value;
 
 
-
-if(texto.trim()==""){
-
-alert("Escribe una tarea");
-
-return;
-
-}
-
-
-
-let tareas =
-JSON.parse(localStorage.getItem("tareas")) || [];
+if(texto=="") return;
 
 
 tareas.push(texto);
 
 
-
-localStorage.setItem(
-"tareas",
-JSON.stringify(tareas)
-);
+guardar();
 
 
-
-crearTarea(texto);
-
-
-caja.value="";
-
-
-}
-
-
-
-
-function crearTarea(texto){
-
-
-let li =
-document.createElement("li");
-
-
-
-li.innerHTML =
-"<span>"+texto+"</span>";
-
-
-
-let boton =
-document.createElement("button");
-
-
-boton.innerHTML="❌";
-
-
-boton.onclick=function(){
-
-
-borrarTarea(texto);
-
-
-};
-
-
-
-li.appendChild(boton);
-
-
-
-document.getElementById("lista")
-.appendChild(li);
-
+mostrarTareas();
 
 
 }
@@ -321,31 +347,16 @@ document.getElementById("lista")
 
 
 
-function borrarTarea(texto){
+function borrar(i){
 
 
-let tareas =
-JSON.parse(localStorage.getItem("tareas")) || [];
+tareas.splice(i,1);
 
 
-
-tareas =
-tareas.filter(function(t){
-
-return t !== texto;
-
-});
+guardar();
 
 
-
-localStorage.setItem(
-"tareas",
-JSON.stringify(tareas)
-);
-
-
-
-cargarTareas();
+mostrarTareas();
 
 
 }
@@ -353,23 +364,82 @@ cargarTareas();
 
 
 
-function saludo(){
 
 
-document.getElementById("mensaje")
-.innerHTML =
-"🤖 Hola, soy Gestor-IA y estoy funcionando";
+function proyectos(){
 
+
+document.getElementById("contenido").innerHTML=
+
+`
+
+<h1>📁 Proyectos</h1>
+
+
+<div class="card">
+
+Zona de proyectos próximamente
+
+</div>
+
+`;
 
 }
 
 
 
 
-cargarTareas();
+function ia(){
+
+
+document.getElementById("contenido").innerHTML=
+
+`
+
+<h1>🤖 IA</h1>
+
+
+<div class="card">
+
+Hola 👋 soy Gestor-IA
+
+<br><br>
+
+Asistente preparado.
+
+</div>
+
+`;
+
+}
+
+
+
+
+function ajustes(){
+
+
+document.getElementById("contenido").innerHTML=
+
+`
+
+<h1>⚙ Ajustes</h1>
+
+
+<div class="card">
+
+Configuración del sistema
+
+</div>
+
+`;
+
+}
+
 
 
 </script>
+
 
 
 
