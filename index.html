@@ -40,92 +40,65 @@ color:#38bdf8;
 
 
 button{
-
 background:#38bdf8;
 border:none;
 padding:10px 15px;
 border-radius:10px;
 cursor:pointer;
-
 }
 
 
 .container{
-
 display:grid;
 grid-template-columns:220px 1fr;
 min-height:calc(100vh - 80px);
-
 }
-
 
 
 .menu{
-
 background:#111827;
 padding:20px;
-
 }
-
 
 
 .menu div{
-
 padding:15px;
 margin-bottom:10px;
-border-radius:10px;
-cursor:pointer;
-
-}
-
-
-.menu div:hover{
-
 background:#1e293b;
-
+border-radius:10px;
 }
-
 
 
 .content{
-
 padding:30px;
-
 }
 
 
-
 .card{
-
 background:#1e293b;
 padding:25px;
 border-radius:15px;
 margin-bottom:20px;
-
 }
 
 
-
 input{
-
 padding:12px;
 border-radius:10px;
 border:none;
 width:70%;
-
 }
-
 
 
 li{
-
-margin:15px;
+list-style:none;
 background:#334155;
 padding:12px;
+margin:10px 0;
 border-radius:10px;
-
+display:flex;
+justify-content:space-between;
 }
-
 
 
 </style>
@@ -138,16 +111,13 @@ border-radius:10px;
 
 <header>
 
-
 <div class="logo">
 🤖 Gestor-IA
 </div>
 
-
 <button onclick="saludo()">
 IA
 </button>
-
 
 </header>
 
@@ -156,9 +126,7 @@ IA
 <div class="container">
 
 
-
 <div class="menu">
-
 
 <div>🏠 Inicio</div>
 
@@ -170,18 +138,14 @@ IA
 
 <div>⚙ Ajustes</div>
 
-
 </div>
-
 
 
 
 <div class="content">
 
 
-
 <h1>Panel principal</h1>
-
 
 
 
@@ -193,7 +157,7 @@ IA
 
 <input 
 id="tarea"
-placeholder="Escribe una tarea">
+placeholder="Nueva tarea">
 
 
 <button onclick="agregarTarea()">
@@ -206,7 +170,6 @@ Añadir
 </ul>
 
 
-
 </div>
 
 
@@ -214,28 +177,22 @@ Añadir
 
 <div class="card">
 
+<h2 id="mensaje">
+🤖 Gestor-IA preparado
+</h2>
 
-<h2>🤖 Asistente Gestor-IA</h2>
-
-
-<p id="mensaje">
-
-Sistema preparado correctamente ✅
-
+<p>
+Tu asistente inteligente está activo.
 </p>
 
-
-</div>
-
-
-
-
 </div>
 
 
 
 </div>
 
+
+</div>
 
 
 
@@ -243,15 +200,47 @@ Sistema preparado correctamente ✅
 <script>
 
 
+function cargarTareas(){
+
+
+let tareas =
+JSON.parse(localStorage.getItem("tareas")) || [];
+
+
+let lista =
+document.getElementById("lista");
+
+
+lista.innerHTML="";
+
+
+tareas.forEach(function(tarea){
+
+
+crearTarea(tarea);
+
+
+});
+
+
+}
+
+
+
+
 function agregarTarea(){
 
 
+let caja =
+document.getElementById("tarea");
+
+
 let texto =
-document.getElementById("tarea").value;
+caja.value;
 
 
 
-if(texto==""){
+if(texto.trim()==""){
 
 alert("Escribe una tarea");
 
@@ -261,14 +250,63 @@ return;
 
 
 
+let tareas =
+JSON.parse(localStorage.getItem("tareas")) || [];
+
+
+tareas.push(texto);
+
+
+
+localStorage.setItem(
+"tareas",
+JSON.stringify(tareas)
+);
+
+
+
+crearTarea(texto);
+
+
+caja.value="";
+
+
+}
+
+
+
+
+function crearTarea(texto){
+
+
 let li =
 document.createElement("li");
 
 
 
 li.innerHTML =
-texto +
-" <button onclick='this.parentElement.remove()'>❌</button>";
+"<span>"+texto+"</span>";
+
+
+
+let boton =
+document.createElement("button");
+
+
+boton.innerHTML="❌";
+
+
+boton.onclick=function(){
+
+
+borrarTarea(texto);
+
+
+};
+
+
+
+li.appendChild(boton);
 
 
 
@@ -277,12 +315,40 @@ document.getElementById("lista")
 
 
 
-document.getElementById("tarea")
-.value="";
+}
+
+
+
+
+
+function borrarTarea(texto){
+
+
+let tareas =
+JSON.parse(localStorage.getItem("tareas")) || [];
+
+
+
+tareas =
+tareas.filter(function(t){
+
+return t !== texto;
+
+});
+
+
+
+localStorage.setItem(
+"tareas",
+JSON.stringify(tareas)
+);
+
+
+
+cargarTareas();
 
 
 }
-
 
 
 
@@ -292,10 +358,15 @@ function saludo(){
 
 document.getElementById("mensaje")
 .innerHTML =
-"🤖 Hola, soy Gestor-IA. Estoy funcionando.";
+"🤖 Hola, soy Gestor-IA y estoy funcionando";
 
 
 }
+
+
+
+
+cargarTareas();
 
 
 </script>
