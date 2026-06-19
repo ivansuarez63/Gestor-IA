@@ -23,90 +23,130 @@ color:white;
 
 
 header{
+
 height:80px;
 background:#111827;
 display:flex;
 justify-content:space-between;
 align-items:center;
 padding:20px;
+
 }
 
 
 .logo{
+
 font-size:28px;
 font-weight:bold;
 color:#38bdf8;
+
 }
 
 
+.header-buttons button{
+
+margin-left:10px;
+
+}
+
+
+
 button{
+
 background:#38bdf8;
 border:0;
 padding:10px 15px;
 border-radius:10px;
 cursor:pointer;
+
 }
+
 
 
 .container{
+
 display:grid;
 grid-template-columns:220px 1fr;
 min-height:calc(100vh - 80px);
+
 }
+
 
 
 .menu{
+
 background:#111827;
 padding:20px;
+
 }
 
 
+
 .menu div{
+
 padding:15px;
 margin-bottom:10px;
 background:#1e293b;
 border-radius:10px;
 cursor:pointer;
+
 }
+
 
 
 .menu div:hover{
+
 background:#334155;
+
 }
+
 
 
 .content{
+
 padding:30px;
+
 }
 
 
+
 .card{
+
 background:#1e293b;
 padding:25px;
 border-radius:15px;
 margin-bottom:20px;
+
 }
 
 
+
 input{
+
 padding:12px;
 border-radius:10px;
 border:0;
 width:70%;
 margin:5px;
+
 }
 
 
+
 li{
+
 list-style:none;
 background:#334155;
 padding:12px;
 margin:10px;
 border-radius:10px;
+
 }
 
 
+
 </style>
+
 
 </head>
 
@@ -114,17 +154,35 @@ border-radius:10px;
 <body>
 
 
+
 <header>
+
 
 <div class="logo">
 🤖 Gestor-IA
 </div>
 
-<button onclick="cerrarSesion()">
-Salir
+
+
+<div class="header-buttons" id="botones">
+
+<button onclick="mostrarLogin()">
+Iniciar sesión
 </button>
 
+
+<button onclick="mostrarRegistro()">
+Registrarse
+</button>
+
+
+</div>
+
+
+
 </header>
+
+
 
 
 
@@ -133,6 +191,7 @@ Salir
 
 
 <div class="menu">
+
 
 <div onclick="inicio()">🏠 Inicio</div>
 
@@ -161,13 +220,19 @@ Salir
 
 
 
-
 <script>
 
 
 let usuario =
 localStorage.getItem("usuario");
 
+
+let tareas =
+JSON.parse(localStorage.getItem("tareas")) || [];
+
+
+
+actualizarBotones();
 
 
 if(usuario){
@@ -176,7 +241,7 @@ inicio();
 
 }else{
 
-login();
+mostrarLogin();
 
 }
 
@@ -184,39 +249,62 @@ login();
 
 
 
-function login(){
+function actualizarBotones(){
 
 
-document.getElementById("contenido").innerHTML =
+if(usuario){
+
+
+document.getElementById("botones").innerHTML=
 
 `
 
-<h1>🔐 Login Gestor-IA</h1>
+<button onclick="cerrarSesion()">
+
+Salir
+
+</button>
+
+`;
+
+}
+
+}
+
+
+
+
+
+function mostrarLogin(){
+
+
+document.getElementById("contenido").innerHTML=
+
+`
+
+<h1>🔐 Iniciar sesión</h1>
 
 
 <div class="card">
 
 
-<input id="nombre" placeholder="Usuario">
+<input id="nombreLogin" placeholder="Usuario">
 
 
 <br>
 
 
-<input id="password" type="password" placeholder="Contraseña">
+<input id="passLogin" type="password" placeholder="Contraseña">
 
 
 <br>
 
 
-<button onclick="entrar()">
+<button onclick="login()">
 
 Entrar
 
 </button>
-
-
-<p id="error"></p>
 
 
 </div>
@@ -229,23 +317,63 @@ Entrar
 
 
 
-function entrar(){
+function mostrarRegistro(){
 
 
-let nombre =
-document.getElementById("nombre").value;
+document.getElementById("contenido").innerHTML=
+
+`
+
+<h1>📝 Registro</h1>
+
+
+<div class="card">
+
+
+<input id="nuevoUsuario" placeholder="Nuevo usuario">
+
+
+<br>
+
+
+<input id="nuevoPass" type="password" placeholder="Contraseña">
+
+
+<br>
+
+
+<button onclick="registrar()">
+
+Crear cuenta
+
+</button>
+
+
+</div>
+
+`;
+
+}
 
 
 
-let password =
-document.getElementById("password").value;
+
+function registrar(){
+
+
+let u =
+document.getElementById("nuevoUsuario").value;
 
 
 
-if(nombre=="" || password==""){
+let p =
+document.getElementById("nuevoPass").value;
 
-document.getElementById("error").innerHTML=
-"Rellena los campos";
+
+
+if(u=="" || p==""){
+
+alert("Completa los datos");
 
 return;
 
@@ -253,11 +381,13 @@ return;
 
 
 
-localStorage.setItem(
-"usuario",
-nombre
-);
+localStorage.setItem("usuario",u);
 
+
+usuario=u;
+
+
+actualizarBotones();
 
 
 inicio();
@@ -269,17 +399,54 @@ inicio();
 
 
 
+function login(){
+
+
+let u =
+document.getElementById("nombreLogin").value;
+
+
+
+if(u==""){
+
+alert("Pon usuario");
+
+return;
+
+}
+
+
+
+localStorage.setItem("usuario",u);
+
+
+usuario=u;
+
+
+actualizarBotones();
+
+
+inicio();
+
+
+}
+
+
+
+
 function cerrarSesion(){
 
 
 localStorage.removeItem("usuario");
 
 
-login();
+usuario=null;
+
+
+location.reload();
 
 
 }
-
 
 
 
@@ -312,12 +479,6 @@ Bienvenido a Gestor-IA 🚀
 
 
 
-let tareas =
-JSON.parse(localStorage.getItem("tareas")) || [];
-
-
-
-
 function mostrarTareas(){
 
 
@@ -327,7 +488,7 @@ let lista="";
 tareas.forEach((t,i)=>{
 
 
-lista +=
+lista+=
 
 `
 
@@ -392,7 +553,7 @@ let texto =
 document.getElementById("nueva").value;
 
 
-if(texto=="") return;
+if(texto=="")return;
 
 
 tareas.push(texto);
@@ -405,6 +566,7 @@ mostrarTareas();
 
 
 }
+
 
 
 
@@ -422,6 +584,8 @@ mostrarTareas();
 
 
 }
+
+
 
 
 
@@ -443,7 +607,7 @@ JSON.stringify(tareas)
 function proyectos(){
 
 
-document.getElementById("contenido").innerHTML=
+contenido.innerHTML=
 
 `
 
@@ -451,13 +615,14 @@ document.getElementById("contenido").innerHTML=
 
 <div class="card">
 
-Próximamente
+Zona de proyectos
 
 </div>
 
 `;
 
 }
+
 
 
 
@@ -465,7 +630,7 @@ Próximamente
 function ia(){
 
 
-document.getElementById("contenido").innerHTML=
+contenido.innerHTML=
 
 `
 
@@ -473,14 +638,13 @@ document.getElementById("contenido").innerHTML=
 
 <div class="card">
 
-Gestor-IA preparado para conectar inteligencia artificial.
+Asistente Gestor-IA preparado
 
 </div>
 
 `;
 
 }
-
 
 
 
@@ -488,7 +652,7 @@ Gestor-IA preparado para conectar inteligencia artificial.
 function ajustes(){
 
 
-document.getElementById("contenido").innerHTML=
+contenido.innerHTML=
 
 `
 
@@ -496,14 +660,13 @@ document.getElementById("contenido").innerHTML=
 
 <div class="card">
 
-Configuración del usuario
+Configuración
 
 </div>
 
 `;
 
 }
-
 
 
 </script>
