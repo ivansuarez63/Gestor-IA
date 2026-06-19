@@ -11,18 +11,26 @@
 
 <style>
 
+*{
+box-sizing:border-box;
+}
+
+
 body{
+
 margin:0;
-font-family:Arial, sans-serif;
+font-family:Arial,sans-serif;
 background:#0f172a;
 color:white;
+
 }
+
 
 
 header{
 
-background:#111827;
 height:80px;
+background:#111827;
 
 display:flex;
 align-items:center;
@@ -34,10 +42,13 @@ padding:0 30px;
 
 
 
-.logo img{
 
-width:180px;
-height:auto;
+.logo{
+
+font-size:30px;
+font-weight:bold;
+
+color:#38bdf8;
 
 }
 
@@ -46,9 +57,12 @@ height:auto;
 button{
 
 background:#38bdf8;
-border:none;
+border:0;
+
 padding:12px 18px;
+
 border-radius:10px;
+
 cursor:pointer;
 
 }
@@ -58,7 +72,9 @@ cursor:pointer;
 .container{
 
 display:grid;
+
 grid-template-columns:220px 1fr;
+
 height:calc(100vh - 80px);
 
 }
@@ -68,22 +84,36 @@ height:calc(100vh - 80px);
 .menu{
 
 background:#111827;
+
 padding:20px;
 
 }
 
 
 
+
 .menu div{
 
 background:#1e293b;
+
 padding:15px;
+
 margin-bottom:15px;
 
 border-radius:10px;
+
 cursor:pointer;
 
 }
+
+
+
+.menu div:hover{
+
+background:#334155;
+
+}
+
 
 
 
@@ -95,25 +125,32 @@ padding:30px;
 
 
 
+
 .card{
 
 background:#1e293b;
+
 padding:25px;
+
 border-radius:15px;
 
 }
 
 
 
+
 input{
 
 width:70%;
+
 padding:12px;
 
 border-radius:10px;
+
 border:0;
 
 }
+
 
 
 </style>
@@ -122,7 +159,9 @@ border:0;
 
 
 
+
 <body>
+
 
 
 <header>
@@ -130,7 +169,7 @@ border:0;
 
 <div class="logo">
 
-<img src="imagenes/logo.png">
+Gestor-IA
 
 </div>
 
@@ -141,6 +180,7 @@ border:0;
 🤖 IA
 
 </button>
+
 
 
 </header>
@@ -154,6 +194,7 @@ border:0;
 
 
 <div class="menu">
+
 
 
 <div onclick="inicio()">
@@ -178,7 +219,18 @@ border:0;
 
 
 
+<div onclick="ajustes()">
+
+⚙ Ajustes
+
 </div>
+
+
+
+</div>
+
+
+
 
 
 
@@ -190,8 +242,8 @@ border:0;
 
 
 
-
 </div>
+
 
 
 
@@ -212,14 +264,13 @@ contenido.innerHTML=
 
 <div class="card">
 
-Bienvenido a tu asistente inteligente 🚀
+Tu asistente inteligente 🚀
 
 </div>
 
 `;
 
 }
-
 
 
 
@@ -232,7 +283,6 @@ contenido.innerHTML=
 `
 
 <h1>📋 Tareas</h1>
-
 
 <div class="card">
 
@@ -297,22 +347,21 @@ Esperando...
 
 
 
-
 async function preguntarIA(){
 
 
-let texto =
-document.getElementById("pregunta").value;
+let texto=document
+.getElementById("pregunta")
+.value;
+
 
 
 document.getElementById("respuesta")
-.innerHTML =
-"🤖 Pensando...";
+.innerHTML="🤖 Pensando...";
 
 
 
-let res =
-await fetch("/api/chat",
+let res=await fetch("/api/chat",
 {
 
 method:"POST",
@@ -330,21 +379,40 @@ mensaje:texto
 
 })
 
-
 });
 
 
 
-let datos =
-await res.json();
+let datos=await res.json();
 
 
 
 document.getElementById("respuesta")
-.innerHTML =
-datos.respuesta;
+.innerHTML=datos.respuesta;
 
 
+}
+
+
+
+
+function ajustes(){
+
+
+contenido.innerHTML=
+
+`
+
+<h1>⚙ Ajustes</h1>
+
+
+<div class="card">
+
+Configuración
+
+</div>
+
+`;
 
 }
 
@@ -357,7 +425,8 @@ inicio();
 </script>
 
 
-</body>
 
+
+</body>
 
 </html>
