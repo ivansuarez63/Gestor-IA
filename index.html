@@ -23,126 +23,95 @@ color:white;
 
 
 header{
-
 height:80px;
 background:#111827;
 display:flex;
 justify-content:space-between;
 align-items:center;
 padding:20px;
-
 }
 
 
 .logo{
-
 font-size:28px;
 font-weight:bold;
 color:#38bdf8;
-
 }
 
 
 button{
-
 background:#38bdf8;
 border:0;
 padding:10px 15px;
 border-radius:10px;
 cursor:pointer;
-
 }
 
 
 .container{
-
 display:grid;
 grid-template-columns:220px 1fr;
 min-height:calc(100vh - 80px);
-
 }
 
 
-
 .menu{
-
 background:#111827;
 padding:20px;
-
 }
 
 
 .menu div{
-
 padding:15px;
 margin-bottom:10px;
 background:#1e293b;
 border-radius:10px;
 cursor:pointer;
-
 }
-
 
 
 .menu div:hover{
-
 background:#334155;
-
 }
-
 
 
 .content{
-
 padding:30px;
-
 }
 
 
-
 .card{
-
 background:#1e293b;
 padding:25px;
 border-radius:15px;
 margin-bottom:20px;
-
 }
 
 
-
 input{
-
 padding:12px;
 border-radius:10px;
 border:0;
 width:70%;
-
+margin:5px;
 }
 
 
-
 li{
-
 list-style:none;
 background:#334155;
 padding:12px;
 margin:10px;
 border-radius:10px;
-
 }
-
 
 
 </style>
 
-
 </head>
 
 
-
 <body>
-
 
 
 <header>
@@ -151,14 +120,11 @@ border-radius:10px;
 🤖 Gestor-IA
 </div>
 
-
-<button onclick="ia()">
-IA
+<button onclick="cerrarSesion()">
+Salir
 </button>
 
-
 </header>
-
 
 
 
@@ -167,7 +133,6 @@ IA
 
 
 <div class="menu">
-
 
 <div onclick="inicio()">🏠 Inicio</div>
 
@@ -184,28 +149,13 @@ IA
 
 
 
-
-
 <div class="content" id="contenido">
 
 
-<h1>Bienvenido</h1>
-
-
-<div class="card">
-
-Gestor-IA funcionando correctamente ✅
-
 </div>
 
 
 </div>
-
-
-
-
-</div>
-
 
 
 
@@ -215,39 +165,155 @@ Gestor-IA funcionando correctamente ✅
 <script>
 
 
-let tareas =
-JSON.parse(localStorage.getItem("tareas")) || [];
+let usuario =
+localStorage.getItem("usuario");
 
 
 
+if(usuario){
 
-function guardar(){
+inicio();
 
-localStorage.setItem(
-"tareas",
-JSON.stringify(tareas)
-);
+}else{
+
+login();
 
 }
+
+
+
+
+
+function login(){
+
+
+document.getElementById("contenido").innerHTML =
+
+`
+
+<h1>🔐 Login Gestor-IA</h1>
+
+
+<div class="card">
+
+
+<input id="nombre" placeholder="Usuario">
+
+
+<br>
+
+
+<input id="password" type="password" placeholder="Contraseña">
+
+
+<br>
+
+
+<button onclick="entrar()">
+
+Entrar
+
+</button>
+
+
+<p id="error"></p>
+
+
+</div>
+
+`;
+
+}
+
+
+
+
+
+function entrar(){
+
+
+let nombre =
+document.getElementById("nombre").value;
+
+
+
+let password =
+document.getElementById("password").value;
+
+
+
+if(nombre=="" || password==""){
+
+document.getElementById("error").innerHTML=
+"Rellena los campos";
+
+return;
+
+}
+
+
+
+localStorage.setItem(
+"usuario",
+nombre
+);
+
+
+
+inicio();
+
+
+}
+
+
+
+
+
+function cerrarSesion(){
+
+
+localStorage.removeItem("usuario");
+
+
+login();
+
+
+}
+
 
 
 
 
 function inicio(){
 
+
 document.getElementById("contenido").innerHTML=
 
 `
+
 <h1>🏠 Inicio</h1>
 
+
 <div class="card">
+
+Hola ${usuario}
+
+<br><br>
 
 Bienvenido a Gestor-IA 🚀
 
 </div>
+
 `;
 
 }
+
+
+
+
+
+let tareas =
+JSON.parse(localStorage.getItem("tareas")) || [];
 
 
 
@@ -264,6 +330,7 @@ tareas.forEach((t,i)=>{
 lista +=
 
 `
+
 <li>
 
 ${t}
@@ -279,7 +346,6 @@ ${t}
 `;
 
 });
-
 
 
 
@@ -303,7 +369,6 @@ Añadir
 </button>
 
 
-
 <ul>
 
 ${lista}
@@ -311,13 +376,11 @@ ${lista}
 </ul>
 
 
-
 </div>
 
 `;
 
 }
-
 
 
 
@@ -346,7 +409,6 @@ mostrarTareas();
 
 
 
-
 function borrar(i){
 
 
@@ -363,6 +425,18 @@ mostrarTareas();
 
 
 
+function guardar(){
+
+
+localStorage.setItem(
+"tareas",
+JSON.stringify(tareas)
+);
+
+
+}
+
+
 
 
 
@@ -375,10 +449,9 @@ document.getElementById("contenido").innerHTML=
 
 <h1>📁 Proyectos</h1>
 
-
 <div class="card">
 
-Zona de proyectos próximamente
+Próximamente
 
 </div>
 
@@ -398,20 +471,16 @@ document.getElementById("contenido").innerHTML=
 
 <h1>🤖 IA</h1>
 
-
 <div class="card">
 
-Hola 👋 soy Gestor-IA
-
-<br><br>
-
-Asistente preparado.
+Gestor-IA preparado para conectar inteligencia artificial.
 
 </div>
 
 `;
 
 }
+
 
 
 
@@ -425,10 +494,9 @@ document.getElementById("contenido").innerHTML=
 
 <h1>⚙ Ajustes</h1>
 
-
 <div class="card">
 
-Configuración del sistema
+Configuración del usuario
 
 </div>
 
@@ -439,8 +507,6 @@ Configuración del sistema
 
 
 </script>
-
-
 
 
 </body>
