@@ -1,92 +1,81 @@
 export default async function handler(req,res){
 
+if(req.method !== "POST"){
+
+return res.status(405).json({
+error:"Metodo no permitido"
+});
+
+}
+
 
 try{
 
 
-const mensaje =
-req.body.mensaje;
-
-
-
-const respuesta =
-await fetch(
-"https://api.openai.com/v1/chat/completions",
+const r = await fetch(
+"https://api.groq.com/openai/v1/chat/completions",
 {
 
-
 method:"POST",
-
 
 headers:{
 
 "Content-Type":"application/json",
 
 "Authorization":
-"Bearer "+process.env.OPENAI_API_KEY
+`Bearer ${process.env.GROQ_API_KEY}`
 
 },
-
-
 
 body:JSON.stringify({
 
-
-model:"gpt-4.1-mini",
-
+model:"llama-3.1-8b-instant",
 
 messages:[
 
-
 {
 role:"system",
-content:"Eres Gestor-IA, asistente experto."
+content:
+"Eres Gestor-IA, asistente profesional para empresas. Ayudas con trámites, Seguridad Social, documentos y automatización. Responde siempre en español."
 },
-
 
 {
 role:"user",
-content:mensaje
+content:req.body.mensaje
 }
-
 
 ]
 
-
 })
 
-
 });
 
 
-
-const datos =
-await respuesta.json();
+const data = await r.json();
 
 
 
-res.json({
+res.status(200).json({
 
 respuesta:
-datos.choices[0].message.content
+data.choices[0].message.content
 
 });
 
 
+}catch(e){
 
-}
 
-catch(e){
+console.log(e);
 
 
 res.status(500).json({
 
-respuesta:"Error de conexión con IA"
+respuesta:"Error conectando con la IA"
 
 });
 
 
 }
-
 
 }
