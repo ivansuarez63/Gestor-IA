@@ -72,7 +72,7 @@ async function enviarMensaje(){
   agregarMensaje("user", texto);
   input.value = "";
 
-  // TU LÓGICA ORIGINAL DE CERTIFICADOS (RESTURADA)
+  // Lógica de certificados por palabras clave
   if(
     texto.toLowerCase().includes("certificado") ||
     texto.toLowerCase().includes("deuda") ||
@@ -99,7 +99,7 @@ async function enviarMensaje(){
     if(res.ok) {
       agregarMensaje("bot", data.respuesta);
     } else {
-      agregarMensaje("bot", "Error de la IA: " + (data.respuesta || "Fallo en Groq"));
+      agregarMensaje("bot", "Error del servidor: " + (data.respuesta || "No se pudo obtener respuesta."));
     }
   } catch(e) {
     let chat = document.getElementById("chat");
