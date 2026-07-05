@@ -305,7 +305,7 @@ function ajustes(){
 contenido.innerHTML=`
 <div class="card">
 <h1>Ajustes</h1>
-<p>Configura tu cuenta y preferencias.</p>
+<p>Configura tu cuenta y preferences.</p>
 </div>
 `;
 }
@@ -356,7 +356,7 @@ async function enviarMensaje(){
   agregarMensaje("user", texto);
   input.value = "";
 
-  // Mantener la lógica original de certificados
+  // Mantener tu lógica por si piden certificados específicos
   if(
     texto.toLowerCase().includes("certificado") ||
     texto.toLowerCase().includes("deuda") ||
@@ -367,17 +367,17 @@ async function enviarMensaje(){
     return;
   }
 
-  // 2. Mostrar indicador de carga
+  // 2. Mostrar indicador de carga "Pensando..."
   agregarMensaje("bot", "Pensando...");
   
   try {
-    // 3. Llamar a la Serverless Function de Vercel
+    // 3. Llamar a tu Serverless Function conectada a tu backend actual
     let res = await fetch("/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ message: texto })
+      body: JSON.stringify({ mensaje: texto }) // Coincide con tu backend (req.body.mensaje)
     });
 
     let data = await res.json();
@@ -389,14 +389,13 @@ async function enviarMensaje(){
     }
 
     if(res.ok) {
-      // 4. Mostrar respuesta real de Groq
-      agregarMensaje("bot", data.reply);
+      // 4. Mostrar respuesta real recibida de Groq
+      agregarMensaje("bot", data.respuesta); // Coincide con tu backend (data.respuesta)
     } else {
-      agregarMensaje("bot", "Error de IA: " + (data.error || "No se pudo obtener respuesta."));
+      agregarMensaje("bot", "Error de IA: " + (data.respuesta || "No se pudo obtener respuesta."));
     }
 
   } catch(e) {
-    // En caso de error, limpiar el "Pensando..." y avisar
     let chat = document.getElementById("chat");
     if(chat && chat.lastChild) chat.removeChild(chat.lastChild);
     
