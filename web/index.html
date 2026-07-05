@@ -346,26 +346,62 @@ chat.scrollTop=chat.scrollHeight;
 }
 
 async function enviarMensaje(){
-let input=document.getElementById("mensaje");
-if(!input) return;
+  let input = document.getElementById("mensaje");
+  if(!input) return;
 
-let texto=input.value.trim();
-if(!texto) return;
+  let texto = input.value.trim();
+  if(!texto) return;
 
-agregarMensaje("user",texto);
-input.value="";
+  // 1. Mostrar mensaje del usuario en el chat
+  agregarMensaje("user", texto);
+  input.value = "";
 
-if(
-  texto.toLowerCase().includes("certificado") ||
-  texto.toLowerCase().includes("deuda") ||
-  texto.toLowerCase().includes("estar al corriente")
-){
-  agregarMensaje("bot","Voy a pedirte los datos para solicitar el certificado.");
-  await solicitarCertificado();
-  return;
-}
+  // Mantener la lógica original de certificados
+  if(
+    texto.toLowerCase().includes("certificado") ||
+    texto.toLowerCase().includes("deuda") ||
+    texto.toLowerCase().includes("estar al corriente")
+  ){
+    agregarMensaje("bot", "Voy a pedirte los datos para solicitar el certificado.");
+    await solicitarCertificado();
+    return;
+  }
 
-agregarMensaje("bot","Escribe una petición como: quiero el certificado de deuda.");
+  // 2. Mostrar indicador de carga
+  agregarMensaje("bot", "Pensando...");
+  
+  try {
+    // 3. Llamar a la Serverless Function de Vercel
+    let res = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: texto })
+    });
+
+    let data = await res.json();
+
+    // Eliminar el mensaje "Pensando..." antes de poner la respuesta real
+    let chat = document.getElementById("chat");
+    if(chat && chat.lastChild) {
+      chat.removeChild(chat.lastChild); 
+    }
+
+    if(res.ok) {
+      // 4. Mostrar respuesta real de Groq
+      agregarMensaje("bot", data.reply);
+    } else {
+      agregarMensaje("bot", "Error de IA: " + (data.error || "No se pudo obtener respuesta."));
+    }
+
+  } catch(e) {
+    // En caso de error, limpiar el "Pensando..." y avisar
+    let chat = document.getElementById("chat");
+    if(chat && chat.lastChild) chat.removeChild(chat.lastChild);
+    
+    agregarMensaje("bot", "Hubo un problema al conectar con el servidor.");
+  }
 }
 
 async function solicitarCertificado(){
