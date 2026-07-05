@@ -4,7 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import json
 import os
-import robot  # Importamos tu modulo del robot
+import robot  # Tu módulo del robot
+from groq import Groq  # La IA inteligente
 
 app = FastAPI()
 
@@ -50,32 +51,30 @@ def chat(datos: Mensaje):
     texto = datos.mensaje.lower()
     tareas = obtener_tareas()
 
-    # Buscamos si esta empresa ya tiene una tarea pendiente esperando identificacion
+    # 1. Comprobar si la empresa ya estaba en medio de un trámite esperando papeles
     tarea_pendiente = None
     for t in tareas:
         if t.get("empresa") == datos.empresa and t.get("estado") == "esperando_identificacion":
             tarea_pendiente = t
             break
 
-    # CASO 2: La empresa ya tenia la peticion abierta y ahora nos esta mandando los datos/papeles
+    # CASO A: Ya le habíamos pedido los datos y ahora nos los está enviando
     if tarea_pendiente:
         tarea_pendiente["estado"] = "procesando_robot"
         tarea_pendiente["datos_identificacion"] = datos.mensaje
         guardar_todas_las_tareas(tareas)
 
         respuesta = "¡Datos recibidos correctamente! El robot ya está gestionando tu certificado de deudas de forma automática."
-        print("Respuesta:", respuesta)
-        print("====================")
-
-        # LLAMADA AL ROBOT
+        
+        # Activamos tu robot
         try:
             robot.ejecutar_tramite_certificado(datos.mensaje)
         except Exception as e:
-            print("Error al arrancar el robot:", e)
-
+            print("Error al ejecutar robot:", e)
+            
         return {"respuesta": respuesta}
 
-    # CASO 1: El cliente pide el certificado por primera vez
+    # CASO B: El cliente pide el certificado por primera vez
     if (
         "certificado" in texto
         or "deuda" in texto
@@ -83,28 +82,35 @@ def chat(datos: Mensaje):
     ):
         guardar_tarea({
             "empresa": datos.empresa,
-            \"tramite\": "certificado_deuda_ss",
-            \"estado\": "esperando_identificacion"
+            "tramite": "certificado_deuda_ss",
+            "estado": "esperando_identificacion"
         })
-        respuesta = "Perfecto. Para continuar necesito que la empresa se identifique con certificado electrónico o apoderamiento."
+        return {"respuesta": "Perfecto. Para continuar necesito que la empresa se identifique con certificado electrónico o apoderamiento."}
 
-    # CASO POR DEFECTO
-    else:
-        respuesta = "Dime qué trámite necesitas."
+    # CASO C: Conversación inteligente por defecto (Usa Groq si no es un trámite)
+    try:
+        # Extrae la clave que guardamos en las variables de entorno de Vercel
+        client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+        
+        completion = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[
+                {"role": "system", "content": "Eres un asistente de gestión empresarial inteligente y conciso."},
+                {"role": "user", "content": datos.mensaje}
+            ]
+        )
+        respuesta = completion.choices[0].message.content
+    except Exception as e:
+        print("Error en Groq:", e)
+        respuesta = "Hola, ahora mismo tengo problemas para conectar con mi cerebro de IA, pero dime qué trámite necesitas."
 
     print("Respuesta:", respuesta)
     print("====================")
+    return {"respuesta": respuesta}
 
-    return {
-        "respuesta": respuesta
-    }
-
-# Página web
+# Servir la web
 app.mount(
     "/",
-    StaticFiles(
-        directory="web",
-        html=True
-    ),
+    StaticFiles(directory="web", html=True),
     name="web"
 )
