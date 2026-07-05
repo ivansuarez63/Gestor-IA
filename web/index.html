@@ -1,119 +1,60 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-import json
-import os
-import requests
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor IA - Automatización</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #0d1b2a; color: #e0e1dd; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        #chat-container { width: 100%; max-width: 600px; background: #1b263b; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        #historial { height: 300px; overflow-y: auto; border: 1px solid #415a77; padding: 10px; margin-bottom: 15px; background: #0d1b2a; border-radius: 4px; }
+        .user-msg { color: #5bc0be; margin: 5px 0; font-weight: bold; }
+        .ia-msg { color: #a2d2ff; margin: 5px 0; }
+        #input-panel { display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #415a77; background: #1b263b; color: white; }
+        button { padding: 10px 20px; background: #00b4d8; border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0077b6; }
+    </style>
+</head>
+<body>
 
-try:
-    import robot
-except ImportError:
-    robot = None
+    <h2>Panel de Control - IA y Robot</h2>
+    <div id="chat-container">
+        <div id="historial"></div>
+        <div id="input-panel">
+            <input type="text" id="mensaje" placeholder="Escribe aquí tu trámite..." onkeypress="if(event.key==='Enter') enviar()">
+            <button onclick="enviar()">Enviar</button>
+        </div>
+    </div>
 
-app = FastAPI()
+    <script>
+        const empresaNombre = "Empresa_Demo_123";
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+        async function enviar() {
+            const input = document.getElementById("mensaje");
+            const historial = document.getElementById("historial");
+            const mensaje = input.value.trim();
+            if (!mensaje) return;
 
-# Aumentamos la estructura para soportar textos gigantescos sin capar caracteres
-class Mensaje(BaseModel):
-    empresa: str
-    mensaje: str
+            // Mostrar mensaje del usuario en el chat
+            historial.innerHTML += `<div class="user-msg">Tú: ${mensaje}</div>`;
+            input.value = "";
+            historial.scrollTop = historial.scrollHeight;
 
-ARCHIVO_TAREAS = "tareas_nuevo.json"
-
-def obtener_tareas():
-    try:
-        if os.path.exists(ARCHIVO_TAREAS):
-            with open(ARCHIVO_TAREAS, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except:
-        pass
-    return []
-
-def guardar_todas_las_tareas(tareas):
-    try:
-        with open(ARCHIVO_TAREAS, "w", encoding="utf-8") as f:
-            json.dump(tareas, f, indent=4, ensure_ascii=False)
-    except:
-        pass
-
-def guardar_tarea(tarea):
-    tareas = obtener_tareas()
-    tareas.append(tarea)
-    guardar_todas_las_tareas(tareas)
-
-def consultar_groq_robusto(texto_usuario):
-    try:
-        api_key = os.environ.get("GROQ_API_KEY", "")
-        if not api_key:
-            return "Falta la configuración de la clave de acceso de la IA."
-
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
+            try {
+                // Petición directa a la ruta /chat de tu servidor
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ empresa: empresaNombre, mensaje: mensaje })
+                });
+                const data = await response.json();
+                historial.innerHTML += `<div class="ia-msg">IA: ${data.respuesta}</div>`;
+            } catch (error) {
+                historial.innerHTML += `<div class="ia-msg" style="color:#e63946;">Error al conectar con el servidor.</div>`;
+            }
+            historial.scrollTop = historial.scrollHeight;
         }
-        
-        payload = {
-            "model": "llama3-8b-8192",
-            "messages": [
-                {"role": "system", "content": "Eres un asistente de gestión empresarial inteligente, capaz de procesar textos extensos y documentos corporativos."},
-                {"role": "user", "content": texto_usuario}
-            ],
-            "temperature": 0.2
-        }
-
-        # Cambiado a requests para manejar payloads grandes (9000+ caracteres) sin timeout
-        response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=30)
-        datos_json = response.json()
-        return datos_json["choices"][0]["message"]["content"]
-    except Exception as e:
-        print("Error en conexión Groq:", e)
-        return "Lo siento, la solicitud de texto es demasiado extensa o el servicio está saturado. Intenta reduciendo el tamaño."
-
-@app.post("/chat")
-def chat(datos: Mensaje):
-    texto = datos.mensaje.lower()
-    tareas = obtener_tareas()
-
-    tarea_pendiente = None
-    for t in tareas:
-        if t.get("empresa") == datos.empresa and t.get("estado") == "esperando_identificacion":
-            tarea_pendiente = t
-            break
-
-    if tarea_pendiente:
-        tarea_pendiente["estado"] = "procesando_robot"
-        tarea_pendiente["datos_identificacion"] = datos.mensaje
-        guardar_todas_las_tareas(tareas)
-
-        respuesta = "¡Datos recibidos correctamente! El robot ya está gestionando tu certificado de deudas de forma automática."
-        
-        if robot and hasattr(robot, 'ejecutar_tramite_certificado'):
-            try:
-                robot.ejecutar_tramite_certificado(datos.mensaje)
-            except Exception as e:
-                print("Error al ejecutar el script del robot:", e)
-
-        return {"respuesta": respuesta}
-
-    if "certificado" in texto or "deuda" in texto or "seguridad social" in texto:
-        guardar_tarea({
-            "empresa": datos.empresa,
-            "tramite": "certificado_deuda_ss",
-            "estado": "esperando_identificacion"
-        })
-        return {"respuesta": "Perfecto. Para continuar necesito que la empresa se identifique con certificado electrónico o apoderamiento."}
-    
-    else:
-        respuesta = consultar_groq_robusto(datos.mensaje)
-
-    return {"respuesta": respuesta}
-
-app.mount("/", StaticFiles(directory="web", html=True), name="web")
+    </script>
+</body>
+</html>
