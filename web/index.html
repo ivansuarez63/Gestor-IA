@@ -30,19 +30,21 @@
 <div class="modal-box" id="modalContenido"></div>
 </div>
 <script>
-function inicio(){contenido.innerHTML=`<div class="card"><h1>Gestor-IA</h1><h2>Automatización administrativa</h2><p>Gestiona trámites y procesos con inteligencia artificial.</p><br><button onclick="solicitarCertificado()">Pedir certificado</button></div>`;}
+function inicio(){contenido.innerHTML=`<div class="card"><h1>Gestor-IA</h1><h2>Automatización administrativa</h2><p>Gestiona trámites y procesos con inteligencia artificial.</p></div>`;}
 function login(){modalContenido.innerHTML=`<h2>Iniciar sesión</h2><input id="loginEmail" placeholder="Correo"><input id="loginPass" type="password" placeholder="Contraseña"><br><br><button onclick="entrar()">Entrar</button>`;modal.style.display="flex";}
 async function entrar(){let email=document.getElementById("loginEmail").value;let pass=document.getElementById("loginPass").value;try{let res=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,password:pass})});let data=await res.json();if(data.ok){modal.style.display="none";usuario.innerHTML=`<span>Bienvenido ${data.usuario || email}</span>`;inicio();}else{alert("Login incorrecto");}}catch(e){alert("La API de login no responde");}}
 function registro(){modalContenido.innerHTML=`<h2>Registro</h2><input id="regNombre" placeholder="Nombre"><input id="regEmail" placeholder="Correo"><input id="regPass" type="password" placeholder="Contraseña"><br><br><button onclick="crearCuenta()">Crear cuenta</button>`;modal.style.display="flex";}
 async function crearCuenta(){let nombre=document.getElementById("regNombre").value;let email=document.getElementById("regEmail").value;let pass=document.getElementById("regPass").value;try{let res=await fetch("/api/registro",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre:nombre,email:email,password:pass})});let data=await res.json();if(data.ok){alert("Cuenta creada");modal.style.display="none";}else{alert("No se pudo crear la cuenta");}}catch(e){alert("La API de registro no responde");}}
 function tareas(){contenido.innerHTML=`<div class="card"><h1>Tareas</h1><p>Aquí aparecerán las tareas administrativas.</p></div>`;}
 function servicios(){contenido.innerHTML=`<div class="card"><h1>Servicios</h1><div class="planes"><div class="plan"><h3>Básico</h3><p>Gestiones simples</p></div><div class="plan"><h3>Profesional</h3><p>Automatización avanzada</p></div><div class="plan"><h3>Empresa</h3><p>Integración con IA y robots</p></div></div></div>`;}
-function ajustes(){contenido.innerHTML=`<div class="card"><h1>Ajustes</h1><p>Configura tu cuenta y preferences.</p></div>`;}
+function ajustes(){contenido.innerHTML=`<div class="card"><h1>Ajustes</h1><p>Configura tu cuenta y preferencias.</p></div>`;}
+
 function ia(){
-contenido.innerHTML=`<div class="card"><h1>🤖 IA</h1><div id="chat"></div><div class="fila-chat"><input id="mensaje" placeholder="Escribe tu mensaje"><button id="btnEnviar">Enviar</button></div></div>`;
+contenido.innerHTML=`<div class="card"><h1>🤖 IA Asistente</h1><div id="chat"></div><div class="fila-chat"><input id="mensaje" placeholder="Escribe aquí tu solicitud..."><button id="btnEnviar">Enviar</button></div></div>`;
 document.getElementById("btnEnviar").onclick = enviarMensaje;
 document.getElementById("mensaje").addEventListener("keydown", function(e){if(e.key === "Enter"){enviarMensaje();}});
 }
+
 function agregarMensaje(tipo,texto){
 let chat=document.getElementById("chat");if(!chat) return;let div=document.createElement("div");div.className=tipo;let span=document.createElement("span");span.textContent=texto;div.appendChild(span);chat.appendChild(div);chat.scrollTop=chat.scrollHeight;
 }
@@ -55,13 +57,6 @@ async function enviarMensaje(){
 
   agregarMensaje("user", texto);
   input.value = "";
-
-  if(texto.toLowerCase().includes("certificado") || texto.toLowerCase().includes("deuda") || texto.toLowerCase().includes("estar al corriente")){
-    agregarMensaje("bot", "Voy a pedirte los datos para solicitar el certificado.");
-    await solicitarCertificado();
-    return;
-  }
-
   agregarMensaje("bot", "Pensando...");
   
   try {
@@ -71,11 +66,30 @@ async function enviarMensaje(){
       body: JSON.stringify({ mensaje: texto })
     });
     let data = await res.json();
+    
     let chat = document.getElementById("chat");
     if(chat && chat.lastChild) { chat.removeChild(chat.lastChild); }
 
     if(res.ok) {
+      let respuestaIA = data.respuesta.trim();
+
+      // Intentamos verificar si la respuesta es el JSON de activación
+      if(respuestaIA.startsWith("{") && respuestaIA.endsWith("}")) {
+        try {
+          let comando = JSON.parse(respuestaIA);
+          if(comando.accion === "EJECUTAR") {
+            agregarMensaje("bot", `¡Perfecto! Datos recibidos correctamente. Iniciando el robot para gestionar tu ${comando.tipo.toUpperCase()}.`);
+            await ejecutarRobotSilencioso(comando.nombre, comando.nif, comando.tipo);
+            return;
+          }
+        } catch(err) {
+          // Si falla el parseo, lo trata como texto normal
+        }
+      }
+      
+      // Si no es un JSON de acción, muestra el mensaje de texto conversacional de la IA
       agregarMensaje("bot", data.respuesta);
+
     } else {
       agregarMensaje("bot", "Error de la IA: " + (data.respuesta || "Fallo en Groq"));
     }
@@ -86,7 +100,37 @@ async function enviarMensaje(){
   }
 }
 
-async function solicitarCertificado(){let nombre = prompt("Nombre completo del cliente");if(!nombre) return;let nif = prompt("NIF del cliente");if(!nif) return;let tipo = prompt("Tipo: estar_al_corriente o deuda");if(!tipo) return;contenido.innerHTML = `<div class="card"><h1>Procesando</h1><p>Enviando al robot...</p></div>`;try{let res = await fetch("/api/solicitar-certificado", {method: "POST",headers: {"Content-Type": "application/json"},body: JSON.stringify({nombre: nombre,nif: nif,tipo: tipo})});let data = await res.json();if(data.ok){contenido.innerHTML = `<div class="card"><h1>Solicitud completada</h1><p><b>Mensaje:</b> ${data.robot.mensaje || "Correcto"}</p><p><b>Nombre:</b> ${data.robot.nombre || nombre}</p><p><b>NIF:</b> ${data.robot.nif || nif}</p><p><b>Tipo:</b> ${data.robot.tipo || tipo}</p><p><b>Archivo:</b> ${data.robot.archivo || "Generado"}</p></div>`;} else {contenido.innerHTML = `<div class="card"><h1>Error</h1><p>No se pudo procesar.</p></div>`;}}catch(error){contenido.innerHTML = `<div class="card"><h1>Error</h1><p>El robot no responde.</p></div>`;}}
+async function ejecutarRobotSilencioso(nombre, nif, tipoTramite) {
+  contenido.innerHTML = `<div class="card"><h1>Procesando en segundo plano</h1><p>Ejecutando el robot automatizado para: <b>${nombre} (${nif})</b>...</p></div>`;
+  
+  try {
+    let res = await fetch("/api/solicitar-certificado", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        nombre: nombre,
+        nif: nif,
+        tipo: tipoTramite
+      })
+    });
+    let data = await res.json();
+    if(data.ok){
+      contenido.innerHTML = `
+        <div class="card">
+          <h1>¡Trámite Completado con éxito!</h1>
+          <p><b>Cliente:</b> ${nombre}</p>
+          <p><b>NIF:</b> ${nif}</p>
+          <p><b>Operación:</b> ${tipoTramite.toUpperCase()}</p>
+          <p><b>Estado:</b> El robot ha descargado los ficheros en la carpeta Clientes.</p>
+        </div>`;
+    } else {
+      contenido.innerHTML = `<div class="card"><h1>Error en el Robot</h1><p>El script automatizado falló durante la navegación.</p></div>`;
+    }
+  } catch(error) {
+    contenido.innerHTML = `<div class="card"><h1>Error de Conexión</h1><p>No se pudo establecer comunicación con el backend local.</p></div>`;
+  }
+}
+
 modal.onclick=function(e){if(e.target===modal){modal.style.display="none";}}
 inicio();
 </script>
