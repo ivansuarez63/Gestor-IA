@@ -1,23 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
 <title>Gestor-IA</title>
-
 <style>
-
 *{
 box-sizing:border-box
 }
-
 body{
 margin:0;
 font-family:Segoe UI,Arial;
 background:#0b1220;
 color:white;
 }
-
 header{
 height:80px;
 background:#111827;
@@ -26,13 +21,11 @@ align-items:center;
 justify-content:space-between;
 padding:0 35px;
 }
-
 .logo{
 font-size:30px;
 font-weight:bold;
 color:#38bdf8;
 }
-
 button{
 background:#38bdf8;
 border:0;
@@ -41,18 +34,15 @@ border-radius:12px;
 cursor:pointer;
 font-weight:bold;
 }
-
 .container{
 display:grid;
 grid-template-columns:220px 1fr;
 height:calc(100vh - 80px);
 }
-
 .menu{
 background:#111827;
 padding:20px;
 }
-
 .menu div{
 background:#1e293b;
 padding:15px;
@@ -60,13 +50,11 @@ margin-bottom:15px;
 border-radius:12px;
 cursor:pointer;
 }
-
 .content{
 padding:25px;
 display:flex;
 justify-content:center;
 }
-
 .card{
 width:100%;
 max-width:1200px;
@@ -74,9 +62,8 @@ background:#111827;
 padding:25px;
 border-radius:22px;
 }
-
 #chat{
-height:650px;
+height:500px;
 overflow-y:auto;
 background:#070d18;
 padding:25px;
@@ -84,13 +71,12 @@ border-radius:18px;
 display:flex;
 flex-direction:column;
 gap:15px;
+margin-bottom:15px;
 }
-
 .user{
 display:flex;
 justify-content:flex-end;
 }
-
 .user span{
 background:#38bdf8;
 color:black;
@@ -100,12 +86,10 @@ max-width:75%;
 white-space:pre-wrap;
 overflow-wrap:anywhere;
 }
-
 .bot{
 display:flex;
 justify-content:flex-start;
 }
-
 .bot span{
 background:#1e293b;
 padding:14px 18px;
@@ -114,7 +98,6 @@ max-width:75%;
 white-space:pre-wrap;
 overflow-wrap:anywhere;
 }
-
 input{
 width:85%;
 padding:16px;
@@ -122,7 +105,6 @@ border-radius:12px;
 border:0;
 font-size:16px;
 }
-
 .modal{
 display:none;
 position:fixed;
@@ -134,53 +116,49 @@ background:#0008;
 align-items:center;
 justify-content:center;
 }
-
 .modal-box{
 background:#111827;
 padding:30px;
 border-radius:20px;
 width:350px;
 }
-
 .modal-box input{
 width:100%;
 margin:8px 0;
 }
-
 .planes{
 display:grid;
 grid-template-columns:repeat(3,1fr);
 gap:20px;
 }
-
 .plan{
 background:#1e293b;
 padding:20px;
 border-radius:18px;
 }
-
+.fila-chat{
+display:flex;
+gap:10px;
+align-items:center;
+}
+.fila-chat input{
+flex:1;
+width:auto;
+}
 </style>
-
 </head>
-
 <body>
 
 <header>
-
-<div class="logo">
-Gestor-IA
-</div>
-
+<div class="logo">Gestor-IA</div>
 <div id="usuario">
 <button onclick="login()">Iniciar sesión</button>
 <button onclick="registro()">Registrarse</button>
 <button onclick="ia()">🤖 IA</button>
 </div>
-
 </header>
 
 <div class="container">
-
 <div class="menu">
 <div onclick="inicio()">🏠 Inicio</div>
 <div onclick="tareas()">📋 Tareas</div>
@@ -188,9 +166,7 @@ Gestor-IA
 <div onclick="servicios()">🛠 Servicios</div>
 <div onclick="ajustes()">⚙ Ajustes</div>
 </div>
-
 <div class="content" id="contenido"></div>
-
 </div>
 
 <div class="modal" id="modal">
@@ -198,152 +174,115 @@ Gestor-IA
 </div>
 
 <script>
-
 function inicio(){
-
 contenido.innerHTML=`
-
 <div class="card">
-
 <h1>Gestor-IA</h1>
-
 <h2>Automatización administrativa</h2>
-
 <p>Gestiona trámites y procesos con inteligencia artificial.</p>
-
 <br>
-
 <button onclick="solicitarCertificado()">Pedir certificado</button>
-
 </div>
-
 `;
-
 }
 
 function login(){
-
 modalContenido.innerHTML=`
-
 <h2>Iniciar sesión</h2>
-
 <input id="loginEmail" placeholder="Correo">
-
 <input id="loginPass" type="password" placeholder="Contraseña">
-
 <br><br>
-
 <button onclick="entrar()">Entrar</button>
-
 `;
-
 modal.style.display="flex";
-
 }
 
 async function entrar(){
-
 let email=document.getElementById("loginEmail").value;
 let pass=document.getElementById("loginPass").value;
 
-let res=await fetch("/api/login",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-email:email,
-password:pass
-})
-});
+try{
+  let res=await fetch("/api/login",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      email:email,
+      password:pass
+    })
+  });
 
-let data=await res.json();
+  let data=await res.json();
 
-if(data.ok){
-modal.style.display="none";
-usuario.innerHTML=`<span>Bienvenido ${data.usuario || email}</span>`;
-inicio();
-}else{
-alert("Login incorrecto");
+  if(data.ok){
+    modal.style.display="none";
+    usuario.innerHTML=`<span>Bienvenido ${data.usuario || email}</span>`;
+    inicio();
+  }else{
+    alert("Login incorrecto");
+  }
+}catch(e){
+  alert("La API de login no responde");
 }
-
 }
 
 function registro(){
-
 modalContenido.innerHTML=`
-
 <h2>Registro</h2>
-
 <input id="regNombre" placeholder="Nombre">
-
 <input id="regEmail" placeholder="Correo">
-
 <input id="regPass" type="password" placeholder="Contraseña">
-
 <br><br>
-
 <button onclick="crearCuenta()">Crear cuenta</button>
-
 `;
-
 modal.style.display="flex";
-
 }
 
 async function crearCuenta(){
-
 let nombre=document.getElementById("regNombre").value;
 let email=document.getElementById("regEmail").value;
 let pass=document.getElementById("regPass").value;
 
-let res=await fetch("/api/registro",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-nombre:nombre,
-email:email,
-password:pass
-})
-});
+try{
+  let res=await fetch("/api/registro",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      nombre:nombre,
+      email:email,
+      password:pass
+    })
+  });
 
-let data=await res.json();
+  let data=await res.json();
 
-if(data.ok){
-alert("Cuenta creada");
-modal.style.display="none";
-}else{
-alert("No se pudo crear la cuenta");
+  if(data.ok){
+    alert("Cuenta creada");
+    modal.style.display="none";
+  }else{
+    alert("No se pudo crear la cuenta");
+  }
+}catch(e){
+  alert("La API de registro no responde");
 }
-
 }
 
 function tareas(){
-
 contenido.innerHTML=`
-
 <div class="card">
-
 <h1>Tareas</h1>
-
 <p>Aquí aparecerán las tareas administrativas.</p>
-
 </div>
-
 `;
-
 }
 
 function servicios(){
-
 contenido.innerHTML=`
-
 <div class="card">
-
 <h1>Servicios</h1>
-
 <div class="planes">
   <div class="plan">
     <h3>Básico</h3>
@@ -358,53 +297,40 @@ contenido.innerHTML=`
     <p>Integración con IA y robots</p>
   </div>
 </div>
-
 </div>
-
 `;
-
 }
 
 function ajustes(){
-
 contenido.innerHTML=`
-
 <div class="card">
-
 <h1>Ajustes</h1>
-
 <p>Configura tu cuenta y preferencias.</p>
-
 </div>
-
 `;
-
 }
 
 function ia(){
-
 contenido.innerHTML=`
-
 <div class="card">
-
 <h1>🤖 IA</h1>
-
 <div id="chat"></div>
-
-<br>
-
-<input id="mensaje" placeholder="Escribe tu mensaje">
-
-<button onclick="enviarMensaje()">Enviar</button>
-
+<div class="fila-chat">
+  <input id="mensaje" placeholder="Escribe tu mensaje">
+  <button id="btnEnviar">Enviar</button>
 </div>
-
+</div>
 `;
 
+document.getElementById("btnEnviar").onclick = enviarMensaje;
+document.getElementById("mensaje").addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+    enviarMensaje();
+  }
+});
 }
 
 function agregarMensaje(tipo,texto){
-
 let chat=document.getElementById("chat");
 if(!chat) return;
 
@@ -417,11 +343,9 @@ span.textContent=texto;
 div.appendChild(span);
 chat.appendChild(div);
 chat.scrollTop=chat.scrollHeight;
-
 }
 
 async function enviarMensaje(){
-
 let input=document.getElementById("mensaje");
 if(!input) return;
 
@@ -441,11 +365,10 @@ if(
   return;
 }
 
-agregarMensaje("bot","He recibido tu mensaje. La parte de IA general la puedes conectar después.");
+agregarMensaje("bot","Escribe una petición como: quiero el certificado de deuda.");
 }
 
 async function solicitarCertificado(){
-
 let nombre = prompt("Nombre completo del cliente");
 if(!nombre) return;
 
@@ -456,10 +379,10 @@ let tipo = prompt("Tipo: estar_al_corriente o deuda");
 if(!tipo) return;
 
 contenido.innerHTML = `
-  <div class="card">
-    <h1>Procesando</h1>
-    <p>Enviando al robot...</p>
-  </div>
+<div class="card">
+  <h1>Procesando</h1>
+  <p>Enviando al robot...</p>
+</div>
 `;
 
 try{
@@ -505,7 +428,6 @@ try{
     </div>
   `;
 }
-
 }
 
 modal.onclick=function(e){
@@ -515,7 +437,6 @@ modal.style.display="none";
 }
 
 inicio();
-
 </script>
 
 </body>
