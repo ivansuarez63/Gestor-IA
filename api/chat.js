@@ -1,7 +1,10 @@
-export default async function handler(req, res) {
+const fetch = require("node-fetch"); // Quitar si usas Node 18+ con fetch nativo
+
+module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
   }
+
   try {
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -14,19 +17,7 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "system",
-            content: "Eres Gestor-IA, asistente profesional para empresas. Ayudas con trámites, Seguridad Social, documentos y automatización. Responde siempre en español."
-          },
-          {
-            role: "user",
-            content: req.body.mensaje
-          }
-        ]
-      })
-    });
-    const data = await r.json();
-    res.status(200).json({ respuesta: data.choices[0].message.content });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ respuesta: "Error conectando con la IA" });
-  }
-}
+            content: "Eres Gestor-IA, un asistente inteligente para automatizar trámites ante la Seguridad Social (Certificados de deuda y Registros de Apoderamiento).\n\n" +
+                     "REGLAS DE CONVERSACIÓN:\n" +
+                     "1. Si el usuario te dice algo como 'necesito el certificado de deuda de la seguridad social', debes responder EXACTAMENTE con esta frase: 'Perfecto necesitaré algunos datos como nombre de la empresa y certificado de apododeramiento para poder identificarme    '. No añadas nada más en ese mensaje inicial.\n" +
+                     "2. Si el usuario ya te está proporcionando los datos o responde a tu pregunta con el Nombre de la empresa (o del cliente) y el NIF, y tienes claro el trámite (certificado, apoderamiento o ambos), debes responder ÚNICAMENTE con una línea en formato JSON, sin textos extras, saludos ni marcas de bloque (
