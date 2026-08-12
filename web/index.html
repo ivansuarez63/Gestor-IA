@@ -1,138 +1,1246 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 <meta charset="UTF-8">
-<title>Gestor-IA</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Gestor-IA | Traspasos de vehículos</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial;background:#0b1220;color:white;}header{height:80px;background:#111827;display:flex;align-items:center;justify-content:space-between;padding:0 35px;}.logo{font-size:30px;font-weight:bold;color:#38bdf8;}button{background:#38bdf8;border:0;padding:12px 18px;border-radius:12px;cursor:pointer;font-weight:bold;}.container{display:grid;grid-template-columns:220px 1fr;height:calc(100vh - 80px);}.menu{background:#111827;padding:20px;}.menu div{background:#1e293b;padding:15px;margin-bottom:15px;border-radius:12px;cursor:pointer;}.content{padding:25px;display:flex;justify-content:center;}.card{width:100%;max-width:1200px;background:#111827;padding:25px;border-radius:22px;}#chat{height:500px;overflow-y:auto;background:#070d18;padding:25px;border-radius:18px;display:flex;flex-direction:column;gap:15px;margin-bottom:15px;}.user{display:flex;justify-content:flex-end;}.user span{background:#38bdf8;color:black;padding:14px 18px;border-radius:18px;max-width:75%;white-space:pre-wrap;overflow-wrap:anywhere;}.bot{display:flex;justify-content:flex-start;}.bot span{background:#1e293b;padding:14px 18px;border-radius:18px;max-width:75%;white-space:pre-wrap;overflow-wrap:anywhere;}input{width:85%;padding:16px;border-radius:12px;border:0;font-size:16px;}.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0008;align-items:center;justify-content:center;}.modal-box{background:#111827;padding:30px;border-radius:20px;width:350px;}.modal-box input{width:100%;margin:8px 0;}.planes{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}.plan{background:#1e293b;padding:20px;border-radius:18px;}.fila-chat{display:flex;gap:10px;align-items:center;}.fila-chat input{flex:1;width:auto;}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Segoe UI,Arial,sans-serif;
+    background:#0b1220;
+    color:white;
+}
+
+header{
+    height:80px;
+    background:#111827;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 35px;
+    border-bottom:1px solid #1e293b;
+}
+
+.logo{
+    font-size:30px;
+    font-weight:bold;
+    color:#38bdf8;
+}
+
+button{
+    background:#38bdf8;
+    border:0;
+    padding:12px 18px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:.2s;
+}
+
+button:hover{
+    opacity:.85;
+}
+
+.btn-secundario{
+    background:#1e293b;
+    color:white;
+}
+
+#usuario{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.container{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    min-height:calc(100vh - 80px);
+}
+
+.menu{
+    background:#111827;
+    padding:20px;
+}
+
+.menu div{
+    background:#1e293b;
+    padding:15px;
+    margin-bottom:15px;
+    border-radius:12px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.menu div:hover{
+    background:#273449;
+}
+
+.content{
+    padding:25px;
+    display:flex;
+    justify-content:center;
+}
+
+.card{
+    width:100%;
+    max-width:1200px;
+    background:#111827;
+    padding:30px;
+    border-radius:22px;
+}
+
+.hero{
+    padding:40px;
+}
+
+.hero h1{
+    font-size:44px;
+    margin-bottom:10px;
+}
+
+.hero h2{
+    color:#94a3b8;
+    font-weight:normal;
+}
+
+.hero p{
+    color:#cbd5e1;
+    font-size:18px;
+    max-width:700px;
+    line-height:1.6;
+}
+
+.hero-botones{
+    display:flex;
+    gap:12px;
+    margin-top:30px;
+}
+
+.estado-seguridad{
+    margin-top:35px;
+    padding:18px;
+    background:#0b1220;
+    border-radius:14px;
+    color:#94a3b8;
+}
+
+#chat{
+    height:500px;
+    overflow-y:auto;
+    background:#070d18;
+    padding:25px;
+    border-radius:18px;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    margin-bottom:15px;
+}
+
+.user{
+    display:flex;
+    justify-content:flex-end;
+}
+
+.user span{
+    background:#38bdf8;
+    color:black;
+    padding:14px 18px;
+    border-radius:18px;
+    max-width:75%;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+}
+
+.bot{
+    display:flex;
+    justify-content:flex-start;
+}
+
+.bot span{
+    background:#1e293b;
+    padding:14px 18px;
+    border-radius:18px;
+    max-width:75%;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+}
+
+input{
+    width:85%;
+    padding:16px;
+    border-radius:12px;
+    border:0;
+    font-size:16px;
+    outline:none;
+}
+
+.modal{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:#000a;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+}
+
+.modal-box{
+    background:#111827;
+    padding:30px;
+    border-radius:20px;
+    width:380px;
+    max-width:90%;
+    box-shadow:0 20px 60px #0008;
+}
+
+.modal-box input{
+    width:100%;
+    margin:8px 0;
+}
+
+.modal-box p{
+    color:#94a3b8;
+    line-height:1.5;
+}
+
+.planes{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+}
+
+.plan{
+    background:#1e293b;
+    padding:20px;
+    border-radius:18px;
+}
+
+.fila-chat{
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+.fila-chat input{
+    flex:1;
+    width:auto;
+}
+
+.bloqueado{
+    text-align:center;
+    padding:60px 20px;
+}
+
+.bloqueado-icono{
+    font-size:60px;
+}
+
+.bloqueado p{
+    color:#94a3b8;
+}
+
+@media(max-width:800px){
+
+    .container{
+        grid-template-columns:1fr;
+    }
+
+    .menu{
+        display:none;
+    }
+
+    header{
+        padding:0 15px;
+    }
+
+    .logo{
+        font-size:24px;
+    }
+
+    .hero{
+        padding:20px;
+    }
+
+    .hero h1{
+        font-size:32px;
+    }
+
+    .planes{
+        grid-template-columns:1fr;
+    }
+
+}
+
 </style>
+
 </head>
+
 <body>
+
 <header>
-<div class="logo">Gestor-IA</div>
-<div id="usuario">
-<button onclick="login()">Iniciar sesión</button>
-<button onclick="registro()">Registrarse</button>
-<button onclick="ia()">🤖 IA</button>
-</div>
+
+    <div class="logo">
+        Gestor-IA
+    </div>
+
+    <div id="usuario">
+
+        <button
+            class="btn-secundario"
+            onclick="login()">
+            Iniciar sesión
+        </button>
+
+        <button onclick="registro()">
+            Registrarse
+        </button>
+
+    </div>
+
 </header>
+
+
 <div class="container">
-<div class="menu">
-<div onclick="inicio()">🏠 Inicio</div>
-<div onclick="tareas()">📋 Tareas</div>
-<div onclick="ia()">🤖 IA</div>
-<div onclick="servicios()">🛠 Servicios</div>
-<div onclick="ajustes()">⚙ Ajustes</div>
+
+    <div class="menu" id="menu">
+
+        <div onclick="inicio()">
+            🏠 Inicio
+        </div>
+
+        <div onclick="nuevoTraspaso()">
+            🚗 Traspasar vehículo
+        </div>
+
+        <div onclick="ia()">
+            🤖 IA
+        </div>
+
+        <div onclick="servicios()">
+            💰 Servicios
+        </div>
+
+        <div onclick="ajustes()">
+            ⚙ Ajustes
+        </div>
+
+    </div>
+
+
+    <div
+        class="content"
+        id="contenido">
+    </div>
+
 </div>
-<div class="content" id="contenido"></div>
+
+
+<div
+    class="modal"
+    id="modal">
+
+    <div
+        class="modal-box"
+        id="modalContenido">
+    </div>
+
 </div>
-<div class="modal" id="modal">
-<div class="modal-box" id="modalContenido"></div>
-</div>
+
+
 <script>
-function inicio(){contenido.innerHTML=`<div class="card"><h1>Gestor-IA</h1><h2>Automatización administrativa</h2><p>Gestiona trámites y procesos con inteligencia artificial.</p></div>`;}
-function login(){modalContenido.innerHTML=`<h2>Iniciar sesión</h2><input id="loginEmail" placeholder="Correo"><input id="loginPass" type="password" placeholder="Contraseña"><br><br><button onclick="entrar()">Entrar</button>`;modal.style.display="flex";}
-async function entrar(){let email=document.getElementById("loginEmail").value;let pass=document.getElementById("loginPass").value;try{let res=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,password:pass})});let data=await res.json();if(data.ok){modal.style.display="none";usuario.innerHTML=`<span>Bienvenido ${data.usuario || email}</span>`;inicio();}else{alert("Login incorrecto");}}catch(e){alert("La API de login no responde");}}
-function registro(){modalContenido.innerHTML=`<h2>Registro</h2><input id="regNombre" placeholder="Nombre"><input id="regEmail" placeholder="Correo"><input id="regPass" type="password" placeholder="Contraseña"><br><br><button onclick="crearCuenta()">Crear cuenta</button>`;modal.style.display="flex";}
-async function crearCuenta(){let nombre=document.getElementById("regNombre").value;let email=document.getElementById("regEmail").value;let pass=document.getElementById("regPass").value;try{let res=await fetch("/api/registro",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre:nombre,email:email,password:pass})});let data=await res.json();if(data.ok){alert("Cuenta creada");modal.style.display="none";}else{alert("No se pudo crear la cuenta");}}catch(e){alert("La API de registro no responde");}}
-function tareas(){contenido.innerHTML=`<div class="card"><h1>Tareas</h1><p>Aquí aparecerán las tareas administrativas.</p></div>`;}
-function servicios(){contenido.innerHTML=`<div class="card"><h1>Servicios</h1><div class="planes"><div class="plan"><h3>Básico</h3><p>Gestiones simples</p></div><div class="plan"><h3>Profesional</h3><p>Automatización avanzada</p></div><div class="plan"><h3>Empresa</h3><p>Integración con IA y robots</p></div></div></div>`;}
-function ajustes(){contenido.innerHTML=`<div class="card"><h1>Ajustes</h1><p>Configura tu cuenta y preferencias.</p></div>`;}
+
+/* ==========================================
+   SESIÓN
+========================================== */
+
+let sesionActiva = false;
+let usuarioActual = null;
+
+
+/* ==========================================
+   COMPROBAR SESIÓN
+========================================== */
+
+function requiereSesion(){
+
+    if(!sesionActiva){
+
+        modalContenido.innerHTML = `
+
+            <div class="bloqueado">
+
+                <div class="bloqueado-icono">
+                    🔒
+                </div>
+
+                <h2>
+                    Acceso restringido
+                </h2>
+
+                <p>
+                    Necesitas iniciar sesión o crear
+                    una cuenta para utilizar Gestor-IA.
+                </p>
+
+                <br>
+
+                <button onclick="login()">
+                    Iniciar sesión
+                </button>
+
+                <button
+                    class="btn-secundario"
+                    onclick="registro()">
+                    Crear cuenta
+                </button>
+
+            </div>
+
+        `;
+
+        modal.style.display="flex";
+
+        return false;
+    }
+
+    return true;
+}
+
+
+/* ==========================================
+   INICIO
+========================================== */
+
+function inicio(){
+
+    contenido.innerHTML = `
+
+        <div class="card hero">
+
+            <h1>
+                Traspasa tu vehículo
+                de forma sencilla.
+            </h1>
+
+            <h2>
+                Gestiones de vehículos
+                guiadas por inteligencia artificial.
+            </h2>
+
+            <p>
+                Gestor-IA te acompaña durante todo
+                el proceso de cambio de titularidad
+                de tu vehículo.
+            </p>
+
+            <div class="hero-botones">
+
+                <button onclick="nuevoTraspaso()">
+                    🚗 Iniciar traspaso
+                </button>
+
+                <button
+                    class="btn-secundario"
+                    onclick="servicios()">
+                    Ver precios
+                </button>
+
+            </div>
+
+            <div class="estado-seguridad">
+
+                🔐 Nunca te pediremos tu contraseña
+                de Cl@ve.
+
+                <br><br>
+
+                📄 Podrás consultar el estado de
+                tu expediente desde tu cuenta.
+
+            </div>
+
+        </div>
+
+    `;
+}
+
+
+/* ==========================================
+   LOGIN
+========================================== */
+
+function login(){
+
+    modalContenido.innerHTML = `
+
+        <h2>
+            Iniciar sesión
+        </h2>
+
+        <input
+            id="loginEmail"
+            type="email"
+            placeholder="Correo electrónico">
+
+        <input
+            id="loginPass"
+            type="password"
+            placeholder="Contraseña">
+
+        <br><br>
+
+        <button onclick="entrar()">
+            Entrar
+        </button>
+
+        <button
+            class="btn-secundario"
+            onclick="registro()">
+            Crear cuenta
+        </button>
+
+    `;
+
+    modal.style.display="flex";
+}
+
+
+/* ==========================================
+   ENTRAR
+========================================== */
+
+async function entrar(){
+
+    let email =
+        document.getElementById("loginEmail").value;
+
+    let pass =
+        document.getElementById("loginPass").value;
+
+    if(!email || !pass){
+
+        alert(
+            "Introduce correo y contraseña."
+        );
+
+        return;
+    }
+
+    try{
+
+        let res = await fetch(
+            "/api/login",
+            {
+                method:"POST",
+
+                headers:{
+                    "Content-Type":
+                    "application/json"
+                },
+
+                body:JSON.stringify({
+                    email:email,
+                    password:pass
+                })
+            }
+        );
+
+        let data = await res.json();
+
+        if(data.ok){
+
+            sesionActiva = true;
+
+            usuarioActual =
+                data.usuario || email;
+
+            modal.style.display="none";
+
+            actualizarUsuario();
+
+            panel();
+
+        }else{
+
+            alert(
+                "Correo o contraseña incorrectos."
+            );
+
+        }
+
+    }catch(e){
+
+        alert(
+            "La API de login no responde."
+        );
+
+    }
+}
+
+
+/* ==========================================
+   REGISTRO
+========================================== */
+
+function registro(){
+
+    modalContenido.innerHTML = `
+
+        <h2>
+            Crear cuenta
+        </h2>
+
+        <input
+            id="regNombre"
+            placeholder="Nombre">
+
+        <input
+            id="regEmail"
+            type="email"
+            placeholder="Correo electrónico">
+
+        <input
+            id="regPass"
+            type="password"
+            placeholder="Contraseña">
+
+        <br><br>
+
+        <button onclick="crearCuenta()">
+            Crear cuenta
+        </button>
+
+        <button
+            class="btn-secundario"
+            onclick="login()">
+            Ya tengo cuenta
+        </button>
+
+    `;
+
+    modal.style.display="flex";
+}
+
+
+/* ==========================================
+   CREAR CUENTA
+========================================== */
+
+async function crearCuenta(){
+
+    let nombre =
+        document.getElementById(
+            "regNombre"
+        ).value;
+
+    let email =
+        document.getElementById(
+            "regEmail"
+        ).value;
+
+    let pass =
+        document.getElementById(
+            "regPass"
+        ).value;
+
+
+    if(!nombre || !email || !pass){
+
+        alert(
+            "Completa todos los campos."
+        );
+
+        return;
+    }
+
+
+    try{
+
+        let res = await fetch(
+            "/api/registro",
+            {
+
+                method:"POST",
+
+                headers:{
+                    "Content-Type":
+                    "application/json"
+                },
+
+                body:JSON.stringify({
+
+                    nombre:nombre,
+
+                    email:email,
+
+                    password:pass
+
+                })
+
+            }
+        );
+
+
+        let data = await res.json();
+
+
+        if(data.ok){
+
+            alert(
+                "Cuenta creada correctamente."
+            );
+
+            modal.style.display="none";
+
+            login();
+
+        }else{
+
+            alert(
+                data.error ||
+                "No se pudo crear la cuenta."
+            );
+
+        }
+
+    }catch(e){
+
+        alert(
+            "La API de registro no responde."
+        );
+
+    }
+
+}
+
+
+/* ==========================================
+   USUARIO LOGUEADO
+========================================== */
+
+function actualizarUsuario(){
+
+    usuario.innerHTML = `
+
+        <span>
+            👤 ${usuarioActual}
+        </span>
+
+        <button
+            onclick="panel()">
+            Mi cuenta
+        </button>
+
+        <button
+            class="btn-secundario"
+            onclick="cerrarSesion()">
+            Salir
+        </button>
+
+    `;
+
+}
+
+
+/* ==========================================
+   CERRAR SESIÓN
+========================================== */
+
+function cerrarSesion(){
+
+    sesionActiva = false;
+
+    usuarioActual = null;
+
+
+    usuario.innerHTML = `
+
+        <button
+            class="btn-secundario"
+            onclick="login()">
+            Iniciar sesión
+        </button>
+
+        <button onclick="registro()">
+            Registrarse
+        </button>
+
+    `;
+
+
+    inicio();
+
+}
+
+
+/* ==========================================
+   PANEL
+========================================== */
+
+function panel(){
+
+    if(!requiereSesion()) return;
+
+
+    contenido.innerHTML = `
+
+        <div class="card">
+
+            <h1>
+                👋 Bienvenido
+            </h1>
+
+            <p>
+                Desde aquí podrás gestionar
+                tus traspasos de vehículos.
+            </p>
+
+            <br>
+
+            <button onclick="nuevoTraspaso()">
+                🚗 Nuevo traspaso
+            </button>
+
+            <button
+                class="btn-secundario"
+                onclick="ia()">
+                🤖 Hablar con Gestor-IA
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ==========================================
+   NUEVO TRASPASO
+========================================== */
+
+function nuevoTraspaso(){
+
+    if(!requiereSesion()) return;
+
+
+    contenido.innerHTML = `
+
+        <div class="card">
+
+            <h1>
+                🚗 Nuevo traspaso
+            </h1>
+
+            <p>
+                Vamos a crear un nuevo expediente
+                para el cambio de titularidad.
+            </p>
+
+            <br>
+
+            <h3>
+                Próximamente:
+            </h3>
+
+            <p>
+                1. Datos del vehículo
+            </p>
+
+            <p>
+                2. Autorizaciones
+            </p>
+
+            <p>
+                3. Documentación
+            </p>
+
+            <p>
+                4. Impuestos
+            </p>
+
+            <p>
+                5. DGT
+            </p>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ==========================================
+   SERVICIOS
+========================================== */
+
+function servicios(){
+
+    contenido.innerHTML = `
+
+        <div class="card">
+
+            <h1>
+                Servicios
+            </h1>
+
+            <div class="planes">
+
+                <div class="plan">
+
+                    <h3>
+                        🚗 Traspaso de vehículo
+                    </h3>
+
+                    <h2>
+                        Próximamente
+                    </h2>
+
+                    <p>
+                        Gestión online del cambio
+                        de titularidad.
+                    </p>
+
+                </div>
+
+
+                <div class="plan">
+
+                    <h3>
+                        🤖 Asistente IA
+                    </h3>
+
+                    <p>
+                        Te guía durante todo
+                        el proceso.
+                    </p>
+
+                </div>
+
+
+                <div class="plan">
+
+                    <h3>
+                        📁 Expediente digital
+                    </h3>
+
+                    <p>
+                        Toda la documentación
+                        del trámite organizada.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ==========================================
+   AJUSTES
+========================================== */
+
+function ajustes(){
+
+    if(!requiereSesion()) return;
+
+
+    contenido.innerHTML = `
+
+        <div class="card">
+
+            <h1>
+                ⚙ Ajustes
+            </h1>
+
+            <p>
+                Configura tu cuenta
+                y tus preferencias.
+            </p>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ==========================================
+   IA
+========================================== */
 
 function ia(){
-contenido.innerHTML=`<div class="card"><h1>🤖 IA Asistente</h1><div id="chat"></div><div class="fila-chat"><input id="mensaje" placeholder="Escribe aquí tu solicitud..."><button id="btnEnviar">Enviar</button></div></div>`;
-document.getElementById("btnEnviar").onclick = enviarMensaje;
-document.getElementById("mensaje").addEventListener("keydown", function(e){if(e.key === "Enter"){enviarMensaje();}});
+
+    if(!requiereSesion()) return;
+
+
+    contenido.innerHTML = `
+
+        <div class="card">
+
+            <h1>
+                🤖 Gestor-IA
+            </h1>
+
+            <p>
+                Asistente especializado
+                en trámites de vehículos.
+            </p>
+
+            <div id="chat"></div>
+
+
+            <div class="fila-chat">
+
+                <input
+                    id="mensaje"
+                    placeholder="Escribe aquí tu solicitud...">
+
+                <button id="btnEnviar">
+                    Enviar
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.getElementById(
+        "btnEnviar"
+    ).onclick = enviarMensaje;
+
+
+    document.getElementById(
+        "mensaje"
+    ).addEventListener(
+        "keydown",
+        function(e){
+
+            if(e.key === "Enter"){
+                enviarMensaje();
+            }
+
+        }
+    );
+
+
+    agregarMensaje(
+        "bot",
+        "Hola. Soy Gestor-IA. Puedo ayudarte con la gestión de tu vehículo."
+    );
+
 }
+
+
+/* ==========================================
+   MENSAJES CHAT
+========================================== */
 
 function agregarMensaje(tipo,texto){
-let chat=document.getElementById("chat");if(!chat) return;let div=document.createElement("div");div.className=tipo;let span=document.createElement("span");span.textContent=texto;div.appendChild(span);chat.appendChild(div);chat.scrollTop=chat.scrollHeight;
+
+    let chat =
+        document.getElementById("chat");
+
+    if(!chat) return;
+
+
+    let div =
+        document.createElement("div");
+
+    div.className=tipo;
+
+
+    let span =
+        document.createElement("span");
+
+    span.textContent=texto;
+
+
+    div.appendChild(span);
+
+    chat.appendChild(div);
+
+    chat.scrollTop =
+        chat.scrollHeight;
+
 }
+
+
+/* ==========================================
+   ENVIAR MENSAJE IA
+========================================== */
 
 async function enviarMensaje(){
-  let input = document.getElementById("mensaje");
-  if(!input) return;
-  let texto = input.value.trim();
-  if(!texto) return;
 
-  agregarMensaje("user", texto);
-  input.value = "";
-  agregarMensaje("bot", "Pensando...");
-  
-  try {
-    let res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mensaje: texto })
-    });
-    let data = await res.json();
-    
-    let chat = document.getElementById("chat");
-    if(chat && chat.lastChild) { chat.removeChild(chat.lastChild); }
+    /*
+    Segunda comprobación.
+    Aunque hayan abierto el chat,
+    comprobamos de nuevo la sesión.
+    */
 
-    if(res.ok) {
-      let respuestaIA = data.respuesta.trim();
+    if(!sesionActiva){
 
-      // Intentamos verificar si la respuesta es el JSON de activación
-      if(respuestaIA.startsWith("{") && respuestaIA.endsWith("}")) {
-        try {
-          let comando = JSON.parse(respuestaIA);
-          if(comando.accion === "EJECUTAR") {
-            agregarMensaje("bot", `¡Perfecto! Datos recibidos correctamente. Iniciando el robot para gestionar tu ${comando.tipo.toUpperCase()}.`);
-            await ejecutarRobotSilencioso(comando.nombre, comando.nif, comando.tipo);
-            return;
-          }
-        } catch(err) {
-          // Si falla el parseo, lo trata como texto normal
+        agregarMensaje(
+            "bot",
+            "Tu sesión ha finalizado. Inicia sesión nuevamente."
+        );
+
+        return;
+    }
+
+
+    let input =
+        document.getElementById("mensaje");
+
+    if(!input) return;
+
+
+    let texto =
+        input.value.trim();
+
+    if(!texto) return;
+
+
+    agregarMensaje(
+        "user",
+        texto
+    );
+
+
+    input.value="";
+
+
+    agregarMensaje(
+        "bot",
+        "Pensando..."
+    );
+
+
+    try{
+
+        let res =
+            await fetch(
+                "/api/chat",
+                {
+
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                        "application/json"
+                    },
+
+                    body:JSON.stringify({
+                        mensaje:texto
+                    })
+
+                }
+            );
+
+
+        let data =
+            await res.json();
+
+
+        let chat =
+            document.getElementById("chat");
+
+
+        if(chat && chat.lastChild){
+
+            chat.removeChild(
+                chat.lastChild
+            );
+
         }
-      }
-      
-      // Si no es un JSON de acción, muestra el mensaje de texto conversacional de la IA
-      agregarMensaje("bot", data.respuesta);
 
-    } else {
-      agregarMensaje("bot", "Error de la IA: " + (data.respuesta || "Fallo en Groq"));
+
+        if(res.ok){
+
+            agregarMensaje(
+                "bot",
+                data.respuesta
+            );
+
+        }else{
+
+            agregarMensaje(
+                "bot",
+                data.respuesta ||
+                "No se pudo procesar la solicitud."
+            );
+
+        }
+
+
+    }catch(e){
+
+        let chat =
+            document.getElementById(
+                "chat"
+            );
+
+
+        if(chat && chat.lastChild){
+
+            chat.removeChild(
+                chat.lastChild
+            );
+
+        }
+
+
+        agregarMensaje(
+            "bot",
+            "Hubo un problema al conectar con el servidor."
+        );
+
     }
-  } catch(e) {
-    let chat = document.getElementById("chat");
-    if(chat && chat.lastChild) chat.removeChild(chat.lastChild);
-    agregarMensaje("bot", "Hubo un problema al conectar con el servidor.");
-  }
+
 }
 
-async function ejecutarRobotSilencioso(nombre, nif, tipoTramite) {
-  contenido.innerHTML = `<div class="card"><h1>Procesando en segundo plano</h1><p>Ejecutando el robot automatizado para: <b>${nombre} (${nif})</b>...</p></div>`;
-  
-  try {
-    let res = await fetch("/api/solicitar-certificado", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        nombre: nombre,
-        nif: nif,
-        tipo: tipoTramite
-      })
-    });
-    let data = await res.json();
-    if(data.ok){
-      contenido.innerHTML = `
-        <div class="card">
-          <h1>¡Trámite Completado con éxito!</h1>
-          <p><b>Cliente:</b> ${nombre}</p>
-          <p><b>NIF:</b> ${nif}</p>
-          <p><b>Operación:</b> ${tipoTramite.toUpperCase()}</p>
-          <p><b>Estado:</b> El robot ha descargado los ficheros en la carpeta Clientes.</p>
-        </div>`;
-    } else {
-      contenido.innerHTML = `<div class="card"><h1>Error en el Robot</h1><p>El script automatizado falló durante la navegación.</p></div>`;
-    }
-  } catch(error) {
-    contenido.innerHTML = `<div class="card"><h1>Error de Conexión</h1><p>No se pudo establecer comunicación con el backend local.</p></div>`;
-  }
-}
 
-modal.onclick=function(e){if(e.target===modal){modal.style.display="none";}}
+/* ==========================================
+   CERRAR MODAL
+========================================== */
+
+modal.onclick=function(e){
+
+    if(e.target===modal){
+
+        modal.style.display="none";
+
+    }
+
+};
+
+
+/* ==========================================
+   ARRANCAR WEB
+========================================== */
+
 inicio();
+
 </script>
+
 </body>
+
 </html>
