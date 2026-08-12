@@ -8,7 +8,6 @@
 <title>Gestor-IA | Traspasos de vehículos</title>
 
 <style>
-
 *{
     box-sizing:border-box;
 }
@@ -201,7 +200,7 @@ input{
     background:#111827;
     padding:30px;
     border-radius:20px;
-    width:380px;
+    width:400px;
     max-width:90%;
     box-shadow:0 20px 60px #0008;
 }
@@ -241,7 +240,7 @@ input{
 
 .bloqueado{
     text-align:center;
-    padding:60px 20px;
+    padding:50px 15px;
 }
 
 .bloqueado-icono{
@@ -250,6 +249,20 @@ input{
 
 .bloqueado p{
     color:#94a3b8;
+}
+
+.pasos{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:10px;
+    margin-top:30px;
+}
+
+.paso{
+    background:#1e293b;
+    padding:18px;
+    border-radius:14px;
+    text-align:center;
 }
 
 @media(max-width:800px){
@@ -282,10 +295,11 @@ input{
         grid-template-columns:1fr;
     }
 
+    .pasos{
+        grid-template-columns:1fr;
+    }
 }
-
 </style>
-
 </head>
 
 <body>
@@ -312,10 +326,9 @@ input{
 
 </header>
 
-
 <div class="container">
 
-    <div class="menu" id="menu">
+    <div class="menu">
 
         <div onclick="inicio()">
             🏠 Inicio
@@ -323,6 +336,10 @@ input{
 
         <div onclick="nuevoTraspaso()">
             🚗 Traspasar vehículo
+        </div>
+
+        <div onclick="misExpedientes()">
+            📁 Mis expedientes
         </div>
 
         <div onclick="ia()">
@@ -339,14 +356,12 @@ input{
 
     </div>
 
-
     <div
         class="content"
         id="contenido">
     </div>
 
 </div>
-
 
 <div
     class="modal"
@@ -359,27 +374,28 @@ input{
 
 </div>
 
-
 <script>
 
-/* ==========================================
+/* =========================
    SESIÓN
-========================================== */
+========================= */
 
 let sesionActiva = false;
 let usuarioActual = null;
 
 
-/* ==========================================
+/* =========================
    COMPROBAR SESIÓN
-========================================== */
+========================= */
 
 function requiereSesion(){
 
-    if(!sesionActiva){
+    const token =
+        localStorage.getItem("gestorIA_token");
+
+    if(!sesionActiva || !token){
 
         modalContenido.innerHTML = `
-
             <div class="bloqueado">
 
                 <div class="bloqueado-icono">
@@ -391,8 +407,8 @@ function requiereSesion(){
                 </h2>
 
                 <p>
-                    Necesitas iniciar sesión o crear
-                    una cuenta para utilizar Gestor-IA.
+                    Necesitas iniciar sesión o crear una cuenta
+                    para utilizar Gestor-IA.
                 </p>
 
                 <br>
@@ -408,7 +424,6 @@ function requiereSesion(){
                 </button>
 
             </div>
-
         `;
 
         modal.style.display="flex";
@@ -420,14 +435,13 @@ function requiereSesion(){
 }
 
 
-/* ==========================================
+/* =========================
    INICIO
-========================================== */
+========================= */
 
 function inicio(){
 
     contenido.innerHTML = `
-
         <div class="card hero">
 
             <h1>
@@ -441,9 +455,8 @@ function inicio(){
             </h2>
 
             <p>
-                Gestor-IA te acompaña durante todo
-                el proceso de cambio de titularidad
-                de tu vehículo.
+                Gestor-IA te acompaña durante todo el proceso
+                de cambio de titularidad de tu vehículo.
             </p>
 
             <div class="hero-botones">
@@ -461,31 +474,23 @@ function inicio(){
             </div>
 
             <div class="estado-seguridad">
-
-                🔐 Nunca te pediremos tu contraseña
-                de Cl@ve.
-
+                🔐 Nunca te pediremos tu contraseña de Cl@ve.
                 <br><br>
-
-                📄 Podrás consultar el estado de
-                tu expediente desde tu cuenta.
-
+                📄 Podrás consultar el estado de tu expediente desde tu cuenta.
             </div>
 
         </div>
-
     `;
 }
 
 
-/* ==========================================
+/* =========================
    LOGIN
-========================================== */
+========================= */
 
 function login(){
 
     modalContenido.innerHTML = `
-
         <h2>
             Iniciar sesión
         </h2>
@@ -511,16 +516,15 @@ function login(){
             onclick="registro()">
             Crear cuenta
         </button>
-
     `;
 
     modal.style.display="flex";
 }
 
 
-/* ==========================================
+/* =========================
    ENTRAR
-========================================== */
+========================= */
 
 async function entrar(){
 
@@ -532,9 +536,7 @@ async function entrar(){
 
     if(!email || !pass){
 
-        alert(
-            "Introduce correo y contraseña."
-        );
+        alert("Introduce correo y contraseña.");
 
         return;
     }
@@ -547,8 +549,7 @@ async function entrar(){
                 method:"POST",
 
                 headers:{
-                    "Content-Type":
-                    "application/json"
+                    "Content-Type":"application/json"
                 },
 
                 body:JSON.stringify({
@@ -567,6 +568,18 @@ async function entrar(){
             usuarioActual =
                 data.usuario || email;
 
+            localStorage.setItem(
+                "gestorIA_token",
+                data.access_token
+            );
+
+            if(data.refresh_token){
+                localStorage.setItem(
+                    "gestorIA_refresh_token",
+                    data.refresh_token
+                );
+            }
+
             modal.style.display="none";
 
             actualizarUsuario();
@@ -576,6 +589,7 @@ async function entrar(){
         }else{
 
             alert(
+                data.error ||
                 "Correo o contraseña incorrectos."
             );
 
@@ -591,14 +605,13 @@ async function entrar(){
 }
 
 
-/* ==========================================
+/* =========================
    REGISTRO
-========================================== */
+========================= */
 
 function registro(){
 
     modalContenido.innerHTML = `
-
         <h2>
             Crear cuenta
         </h2>
@@ -617,7 +630,11 @@ function registro(){
             type="password"
             placeholder="Contraseña">
 
-        <br><br>
+        <p>
+            La contraseña debe tener al menos 8 caracteres.
+        </p>
+
+        <br>
 
         <button onclick="crearCuenta()">
             Crear cuenta
@@ -628,84 +645,103 @@ function registro(){
             onclick="login()">
             Ya tengo cuenta
         </button>
-
     `;
 
     modal.style.display="flex";
 }
 
 
-/* ==========================================
+/* =========================
    CREAR CUENTA
-========================================== */
+========================= */
 
 async function crearCuenta(){
 
     let nombre =
-        document.getElementById(
-            "regNombre"
-        ).value;
+        document.getElementById("regNombre").value.trim();
 
     let email =
-        document.getElementById(
-            "regEmail"
-        ).value;
+        document.getElementById("regEmail").value.trim();
 
     let pass =
-        document.getElementById(
-            "regPass"
-        ).value;
-
+        document.getElementById("regPass").value;
 
     if(!nombre || !email || !pass){
 
-        alert(
-            "Completa todos los campos."
-        );
+        alert("Completa todos los campos.");
 
         return;
     }
 
+    if(pass.length < 8){
+
+        alert(
+            "La contraseña debe tener al menos 8 caracteres."
+        );
+
+        return;
+    }
 
     try{
 
         let res = await fetch(
             "/api/registro",
             {
-
                 method:"POST",
 
                 headers:{
-                    "Content-Type":
-                    "application/json"
+                    "Content-Type":"application/json"
                 },
 
                 body:JSON.stringify({
-
                     nombre:nombre,
-
                     email:email,
-
                     password:pass
-
                 })
-
             }
         );
 
-
         let data = await res.json();
-
 
         if(data.ok){
 
-            alert(
-                "Cuenta creada correctamente."
-            );
+            modalContenido.innerHTML = `
+                <div class="bloqueado">
 
-            modal.style.display="none";
+                    <div class="bloqueado-icono">
+                        ✉️
+                    </div>
 
-            login();
+                    <h2>
+                        Revisa tu correo
+                    </h2>
+
+                    <p>
+                        Hemos enviado un correo de verificación a:
+                    </p>
+
+                    <p>
+                        <b>${email}</b>
+                    </p>
+
+                    <p>
+                        Verifica tu dirección antes de iniciar sesión.
+                    </p>
+
+                    <br>
+
+                    <button onclick="login()">
+                        Ir a iniciar sesión
+                    </button>
+
+                    <button
+                        class="btn-secundario"
+                        onclick="reenviarVerificacion('${email}')">
+                        Reenviar correo
+                    </button>
+
+                </div>
+            `;
 
         }else{
 
@@ -723,24 +759,73 @@ async function crearCuenta(){
         );
 
     }
-
 }
 
 
-/* ==========================================
+/* =========================
+   REENVIAR VERIFICACIÓN
+========================= */
+
+async function reenviarVerificacion(email){
+
+    try{
+
+        let res =
+            await fetch(
+                "/api/reenviar-verificacion",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+
+                    body:JSON.stringify({
+                        email:email
+                    })
+                }
+            );
+
+        let data =
+            await res.json();
+
+        if(data.ok){
+
+            alert(
+                "Correo de verificación reenviado."
+            );
+
+        }else{
+
+            alert(
+                data.error ||
+                "No se pudo reenviar."
+            );
+
+        }
+
+    }catch(e){
+
+        alert(
+            "No se pudo conectar con el servidor."
+        );
+
+    }
+}
+
+
+/* =========================
    USUARIO LOGUEADO
-========================================== */
+========================= */
 
 function actualizarUsuario(){
 
     usuario.innerHTML = `
-
         <span>
             👤 ${usuarioActual}
         </span>
 
-        <button
-            onclick="panel()">
+        <button onclick="panel()">
             Mi cuenta
         </button>
 
@@ -749,15 +834,13 @@ function actualizarUsuario(){
             onclick="cerrarSesion()">
             Salir
         </button>
-
     `;
-
 }
 
 
-/* ==========================================
+/* =========================
    CERRAR SESIÓN
-========================================== */
+========================= */
 
 function cerrarSesion(){
 
@@ -765,9 +848,15 @@ function cerrarSesion(){
 
     usuarioActual = null;
 
+    localStorage.removeItem(
+        "gestorIA_token"
+    );
+
+    localStorage.removeItem(
+        "gestorIA_refresh_token"
+    );
 
     usuario.innerHTML = `
-
         <button
             class="btn-secundario"
             onclick="login()">
@@ -777,30 +866,25 @@ function cerrarSesion(){
         <button onclick="registro()">
             Registrarse
         </button>
-
     `;
 
-
     inicio();
-
 }
 
 
-/* ==========================================
+/* =========================
    PANEL
-========================================== */
+========================= */
 
 function panel(){
 
     if(!requiereSesion()) return;
 
-
     contenido.innerHTML = `
-
         <div class="card">
 
             <h1>
-                👋 Bienvenido
+                👋 Bienvenido a Gestor-IA
             </h1>
 
             <p>
@@ -816,28 +900,30 @@ function panel(){
 
             <button
                 class="btn-secundario"
+                onclick="misExpedientes()">
+                📁 Mis expedientes
+            </button>
+
+            <button
+                class="btn-secundario"
                 onclick="ia()">
                 🤖 Hablar con Gestor-IA
             </button>
 
         </div>
-
     `;
-
 }
 
 
-/* ==========================================
+/* =========================
    NUEVO TRASPASO
-========================================== */
+========================= */
 
 function nuevoTraspaso(){
 
     if(!requiereSesion()) return;
 
-
     contenido.innerHTML = `
-
         <div class="card">
 
             <h1>
@@ -849,47 +935,95 @@ function nuevoTraspaso(){
                 para el cambio de titularidad.
             </p>
 
-            <br>
+            <div class="pasos">
 
-            <h3>
-                Próximamente:
-            </h3>
+                <div class="paso">
+                    <b>1</b>
+                    <br><br>
+                    Datos
+                </div>
+
+                <div class="paso">
+                    <b>2</b>
+                    <br><br>
+                    Autorizaciones
+                </div>
+
+                <div class="paso">
+                    <b>3</b>
+                    <br><br>
+                    Documentos
+                </div>
+
+                <div class="paso">
+                    <b>4</b>
+                    <br><br>
+                    Impuestos
+                </div>
+
+                <div class="paso">
+                    <b>5</b>
+                    <br><br>
+                    DGT
+                </div>
+
+            </div>
+
+            <br><br>
 
             <p>
-                1. Datos del vehículo
-            </p>
-
-            <p>
-                2. Autorizaciones
-            </p>
-
-            <p>
-                3. Documentación
-            </p>
-
-            <p>
-                4. Impuestos
-            </p>
-
-            <p>
-                5. DGT
+                En el siguiente paso añadiremos
+                matrícula, comprador, vendedor
+                y ubicación fiscal.
             </p>
 
         </div>
-
     `;
-
 }
 
 
-/* ==========================================
+/* =========================
+   EXPEDIENTES
+========================= */
+
+function misExpedientes(){
+
+    if(!requiereSesion()) return;
+
+    contenido.innerHTML = `
+        <div class="card">
+
+            <h1>
+                📁 Mis expedientes
+            </h1>
+
+            <p>
+                Aquí aparecerán todos tus
+                traspasos de vehículos.
+            </p>
+
+            <br>
+
+            <p>
+                Todavía no tienes expedientes.
+            </p>
+
+            <button onclick="nuevoTraspaso()">
+                Crear primer traspaso
+            </button>
+
+        </div>
+    `;
+}
+
+
+/* =========================
    SERVICIOS
-========================================== */
+========================= */
 
 function servicios(){
 
     contenido.innerHTML = `
-
         <div class="card">
 
             <h1>
@@ -904,17 +1038,12 @@ function servicios(){
                         🚗 Traspaso de vehículo
                     </h3>
 
-                    <h2>
-                        Próximamente
-                    </h2>
-
                     <p>
                         Gestión online del cambio
                         de titularidad.
                     </p>
 
                 </div>
-
 
                 <div class="plan">
 
@@ -923,12 +1052,11 @@ function servicios(){
                     </h3>
 
                     <p>
-                        Te guía durante todo
-                        el proceso.
+                        Te guía durante
+                        todo el proceso.
                     </p>
 
                 </div>
-
 
                 <div class="plan">
 
@@ -938,7 +1066,7 @@ function servicios(){
 
                     <p>
                         Toda la documentación
-                        del trámite organizada.
+                        organizada en un mismo lugar.
                     </p>
 
                 </div>
@@ -946,23 +1074,19 @@ function servicios(){
             </div>
 
         </div>
-
     `;
-
 }
 
 
-/* ==========================================
+/* =========================
    AJUSTES
-========================================== */
+========================= */
 
 function ajustes(){
 
     if(!requiereSesion()) return;
 
-
     contenido.innerHTML = `
-
         <div class="card">
 
             <h1>
@@ -975,23 +1099,19 @@ function ajustes(){
             </p>
 
         </div>
-
     `;
-
 }
 
 
-/* ==========================================
+/* =========================
    IA
-========================================== */
+========================= */
 
 function ia(){
 
     if(!requiereSesion()) return;
 
-
     contenido.innerHTML = `
-
         <div class="card">
 
             <h1>
@@ -1004,7 +1124,6 @@ function ia(){
             </p>
 
             <div id="chat"></div>
-
 
             <div class="fila-chat">
 
@@ -1019,14 +1138,11 @@ function ia(){
             </div>
 
         </div>
-
     `;
-
 
     document.getElementById(
         "btnEnviar"
     ).onclick = enviarMensaje;
-
 
     document.getElementById(
         "mensaje"
@@ -1041,18 +1157,16 @@ function ia(){
         }
     );
 
-
     agregarMensaje(
         "bot",
         "Hola. Soy Gestor-IA. Puedo ayudarte con la gestión de tu vehículo."
     );
-
 }
 
 
-/* ==========================================
-   MENSAJES CHAT
-========================================== */
+/* =========================
+   MENSAJES
+========================= */
 
 function agregarMensaje(tipo,texto){
 
@@ -1061,18 +1175,15 @@ function agregarMensaje(tipo,texto){
 
     if(!chat) return;
 
-
     let div =
         document.createElement("div");
 
     div.className=tipo;
 
-
     let span =
         document.createElement("span");
 
     span.textContent=texto;
-
 
     div.appendChild(span);
 
@@ -1080,59 +1191,54 @@ function agregarMensaje(tipo,texto){
 
     chat.scrollTop =
         chat.scrollHeight;
-
 }
 
 
-/* ==========================================
-   ENVIAR MENSAJE IA
-========================================== */
+/* =========================
+   ENVIAR MENSAJE
+========================= */
 
 async function enviarMensaje(){
 
-    /*
-    Segunda comprobación.
-    Aunque hayan abierto el chat,
-    comprobamos de nuevo la sesión.
-    */
-
-    if(!sesionActiva){
-
-        agregarMensaje(
-            "bot",
-            "Tu sesión ha finalizado. Inicia sesión nuevamente."
-        );
-
-        return;
-    }
-
+    if(!requiereSesion()) return;
 
     let input =
         document.getElementById("mensaje");
 
     if(!input) return;
 
-
     let texto =
         input.value.trim();
 
     if(!texto) return;
 
+    let token =
+        localStorage.getItem(
+            "gestorIA_token"
+        );
+
+    if(!token){
+
+        cerrarSesion();
+
+        alert(
+            "Tu sesión ha finalizado."
+        );
+
+        return;
+    }
 
     agregarMensaje(
         "user",
         texto
     );
 
-
     input.value="";
-
 
     agregarMensaje(
         "bot",
         "Pensando..."
     );
-
 
     try{
 
@@ -1140,38 +1246,43 @@ async function enviarMensaje(){
             await fetch(
                 "/api/chat",
                 {
-
                     method:"POST",
 
                     headers:{
-                        "Content-Type":
-                        "application/json"
+                        "Content-Type":"application/json",
+                        "Authorization":
+                            "Bearer " + token
                     },
 
                     body:JSON.stringify({
                         mensaje:texto
                     })
-
                 }
             );
-
 
         let data =
             await res.json();
 
-
         let chat =
             document.getElementById("chat");
 
-
         if(chat && chat.lastChild){
-
             chat.removeChild(
                 chat.lastChild
             );
-
         }
 
+        if(res.status === 401){
+
+            agregarMensaje(
+                "bot",
+                "Tu sesión no es válida. Inicia sesión de nuevo."
+            );
+
+            cerrarSesion();
+
+            return;
+        }
 
         if(res.ok){
 
@@ -1185,11 +1296,11 @@ async function enviarMensaje(){
             agregarMensaje(
                 "bot",
                 data.respuesta ||
+                data.error ||
                 "No se pudo procesar la solicitud."
             );
 
         }
-
 
     }catch(e){
 
@@ -1198,49 +1309,41 @@ async function enviarMensaje(){
                 "chat"
             );
 
-
         if(chat && chat.lastChild){
 
             chat.removeChild(
                 chat.lastChild
             );
-
         }
-
 
         agregarMensaje(
             "bot",
             "Hubo un problema al conectar con el servidor."
         );
-
     }
-
 }
 
 
-/* ==========================================
+/* =========================
    CERRAR MODAL
-========================================== */
+========================= */
 
 modal.onclick=function(e){
 
     if(e.target===modal){
 
         modal.style.display="none";
-
     }
-
 };
 
 
-/* ==========================================
-   ARRANCAR WEB
-========================================== */
+/* =========================
+   ARRANCAR
+========================= */
 
 inicio();
 
 </script>
 
 </body>
-
 </html>
