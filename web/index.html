@@ -1034,7 +1034,7 @@ async function crearExpediente(){
 
         const res =
             await fetch(
-                "/api/crear-expediente",
+                "/api/expediente?action=crear",
                 {
                     method:"POST",
 
@@ -1699,7 +1699,7 @@ async function simularPago(){
 
         const res =
             await fetch(
-                "/api/simular-pago",
+                "/api/expediente?action=simular-pago",
                 {
                     method:"POST",
 
@@ -1807,7 +1807,7 @@ async function generarInvitacion(){
 
         const res =
             await fetch(
-                "/api/generar-invitacion",
+                "/api/expediente?action=generar-invitacion",
                 {
                     method:"POST",
 
@@ -1900,8 +1900,6 @@ function copiarInvitacion(){
         document.getElementById(
             "enlaceInvitacion"
         );
-
-    input.select();
 
     navigator.clipboard
         .writeText(
@@ -2071,8 +2069,10 @@ async function misExpedientes(){
 
         const res =
             await fetch(
-                "/api/mis-expedientes",
+                "/api/expediente?action=listar",
                 {
+                    method:"GET",
+
                     headers:{
                         "Authorization":
                             "Bearer " +
@@ -2139,51 +2139,53 @@ async function misExpedientes(){
 
         let tarjetas="";
 
-        for(
-            const exp
-            of data.expedientes
-        ){
+        data.expedientes.forEach(
+            function(exp,index){
 
-            tarjetas += `
+                tarjetas += `
 
-            <div class="expediente-card">
+                <div class="expediente-card">
 
-                <div class="expediente-top">
+                    <div class="expediente-top">
 
-                    <div>
+                        <div>
 
-                        <div class="expediente-matricula">
-                            🚗 ${exp.matricula}
+                            <div class="expediente-matricula">
+                                🚗 ${exp.matricula}
+                            </div>
+
+                            <br>
+
+                            <span class="estado-pill">
+                                ${textoEstado(exp.estado)}
+                            </span>
+
                         </div>
 
-                        <br>
+                        <button
+                            onclick="continuarExpedientePorIndice(${index})">
 
-                        <span class="estado-pill">
-                            ${textoEstado(exp.estado)}
-                        </span>
+                            ${
+                                exp.estado ===
+                                "FINALIZADO"
+                                ?
+                                "Ver expediente"
+                                :
+                                "Continuar"
+                            }
+
+                        </button>
 
                     </div>
 
-                    <button
-                        onclick='continuarExpediente(${JSON.stringify(exp)})'>
-
-                        ${
-                            exp.estado ===
-                            "FINALIZADO"
-                            ?
-                            "Ver expediente"
-                            :
-                            "Continuar"
-                        }
-
-                    </button>
-
                 </div>
 
-            </div>
+                `;
+            }
+        );
 
-            `;
-        }
+        window.expedientesCargados =
+            data.expedientes;
 
         contenido.innerHTML=`
 
@@ -2221,6 +2223,17 @@ async function misExpedientes(){
 
         `;
     }
+}
+
+
+function continuarExpedientePorIndice(index){
+
+    const exp =
+        window.expedientesCargados?.[index];
+
+    if(!exp) return;
+
+    continuarExpediente(exp);
 }
 
 
