@@ -11,6 +11,76 @@ const supabase = createClient(
     }
 );
 
+function clienteAutenticado(token) {
+    return createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_ANON_KEY,
+        {
+            global: {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            },
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false
+            }
+        }
+    );
+}
+
+function limpiarNumero(texto) {
+    return String(texto || "")
+        .replace(/\./g, "")
+        .replace(",", ".")
+        .replace(/[^\d.]/g, "")
+        .trim();
+}
+
+function siguientePregunta(expediente) {
+
+    switch (expediente.paso_actual) {
+
+        case "PRECIO":
+            return "¿Cuál fue el precio de compraventa del vehículo?";
+
+        case "FECHA":
+            return "¿En qué fecha se realizó la compraventa? Puedes escribirla como 13/08/2026.";
+
+        case "MARCA":
+            return "¿Cuál es la marca del vehículo?";
+
+        case "MODELO":
+            return "¿Cuál es el modelo del vehículo?";
+
+        case "KILOMETROS":
+            return "¿Cuántos kilómetros tiene actualmente el vehículo?";
+
+        case "COMUNIDAD":
+            return "¿En qué comunidad autónoma debe tramitarse la compraventa?";
+
+        case "PAGO_PENDIENTE":
+            return "Ya tengo los datos iniciales de la operación. El siguiente paso será calcular el coste y preparar el pago.";
+
+        default:
+            return "Vamos a continuar con tu traspaso.";
+    }
+}
+
+function siguientePaso(actual) {
+
+    const pasos = {
+        PRECIO: "FECHA",
+        FECHA: "MARCA",
+        MARCA: "MODELO",
+        MODELO: "KILOMETROS",
+        KILOMETROS: "COMUNIDAD",
+        COMUNIDAD: "PAGO_PENDIENTE"
+    };
+
+    return pasos[actual] || actual;
+}
+
 export default async function handler(req, res) {
 
     if (req.method !== "POST") {
@@ -22,20 +92,14 @@ export default async function handler(req, res) {
 
     try {
 
-        /* ==============================
-           AUTENTICACIÓN
-        ============================== */
-
         const authorization =
             req.headers.authorization || "";
 
         if (!authorization.startsWith("Bearer ")) {
-
             return res.status(401).json({
                 ok: false,
                 error: "Necesitas iniciar sesión."
             });
-
         }
 
         const token =
@@ -47,123 +111,76 @@ export default async function handler(req, res) {
         } = await supabase.auth.getUser(token);
 
         if (userError || !userData?.user) {
-
             return res.status(401).json({
                 ok: false,
-                error: "Tu sesión no es válida."
+                error: "Sesión no válida."
             });
-
         }
 
         const usuario = userData.user;
 
-        const mensaje =
-            String(req.body?.mensaje || "").trim();
-
         const expedienteId =
             String(req.body?.expediente_id || "").trim();
 
-        if (!mensaje || !expedienteId) {
+        const mensaje =
+            String(req.body?.mensaje || "").trim();
 
+        if (!expedienteId) {
             return res.status(400).json({
                 ok: false,
-                error: "Falta el mensaje o el expediente."
+                error: "Falta el expediente."
             });
-
         }
 
-        if (mensaje.length > 4000) {
-
-            return res.status(400).json({
-                ok: false,
-                error: "El mensaje es demasiado largo."
-            });
-
-        }
-
-
-        /* ==============================
-           CLIENTE SUPABASE DEL USUARIO
-        ============================== */
-
-        const clienteUsuario = createClient(
-            process.env.SUPABASE_URL,
-            process.env.SUPABASE_ANON_KEY,
-            {
-                global: {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                },
-                auth: {
-                    persistSession: false,
-                    autoRefreshToken: false
-                }
-            }
-        );
-
-
-        /* ==============================
-           EXPEDIENTE
-        ============================== */
+        const db =
+            clienteAutenticado(token);
 
         const {
             data: expediente,
             error: expedienteError
-        } = await clienteUsuario
+        } = await db
             .from("expedientes")
             .select("*")
             .eq("id", expedienteId)
             .single();
 
-        if (
-            expedienteError ||
-            !expediente
-        ) {
-
+        if (expedienteError || !expediente) {
             return res.status(403).json({
                 ok: false,
                 error: "No tienes acceso a este expediente."
             });
-
         }
-
-
-        /* ==============================
-           PARTICIPANTE
-        ============================== */
 
         const {
             data: participantes
-        } = await clienteUsuario
+        } = await db
             .from("participantes")
-            .select(
-                "nombre,dni_nie,telefono,email,rol,estado"
-            )
+            .select("nombre,rol,estado,email")
             .eq("expediente_id", expedienteId);
 
+        const primerParticipante =
+            participantes?.find(
+                p => p.estado === "DATOS_COMPLETOS"
+            );
 
-        /* ==============================
-           HISTORIAL
-        ============================== */
+        /*
+        IMPORTANTE:
+        Nunca damos por unido a otro participante
+        solo porque alguien escriba su nombre/DNI.
+        */
 
-        const {
-            data: historial
-        } = await clienteUsuario
-            .from("mensajes")
-            .select("autor,contenido,created_at")
-            .eq("expediente_id", expedienteId)
-            .order("created_at", {
-                ascending: true
-            })
-            .limit(30);
+        if (!mensaje) {
 
+            return res.status(200).json({
+                ok: true,
+                respuesta:
+                    siguientePregunta(expediente),
+                paso_actual:
+                    expediente.paso_actual
+            });
+        }
 
-        /* ==============================
-           GUARDAR MENSAJE USUARIO
-        ============================== */
-
-        await clienteUsuario
+        await db
             .from("mensajes")
             .insert({
                 expediente_id: expedienteId,
@@ -172,225 +189,261 @@ export default async function handler(req, res) {
                 contenido: mensaje
             });
 
+        let update = {};
+        let errorValidacion = null;
 
-        /* ==============================
-           CONTEXTO
-        ============================== */
+        switch (expediente.paso_actual) {
 
-        const contextoParticipantes =
-            JSON.stringify(
-                participantes || [],
-                null,
-                2
-            );
+            case "PRECIO": {
 
-        const mensajesIA = [
+                const numero =
+                    limpiarNumero(mensaje);
 
-            {
-                role: "system",
-                content: `
-Eres Gestor-IA.
+                const precio =
+                    Number(numero);
 
-Trabajas exclusivamente dentro de un expediente de cambio de titularidad de vehículo en España.
+                if (
+                    !Number.isFinite(precio) ||
+                    precio <= 0
+                ) {
+                    errorValidacion =
+                        "Indícame el precio de compraventa, por ejemplo: 8500 €.";
+                } else {
+                    update.precio_compraventa =
+                        precio;
+                }
 
-MATRÍCULA:
-${expediente.matricula}
-
-ESTADO DEL EXPEDIENTE:
-${expediente.estado}
-
-PARTICIPANTES:
-${contextoParticipantes}
-
-TU OBJETIVO ES LLEVAR EL EXPEDIENTE PASO A PASO.
-
-Debes ayudar a recopilar:
-
-- Datos del comprador.
-- Datos del vendedor.
-- Datos del vehículo.
-- Precio de compraventa.
-- Fecha de compraventa.
-- Documentación necesaria.
-- Datos necesarios para generar el contrato.
-- Comunidad autónoma competente.
-- Información necesaria para determinar impuestos.
-- Información necesaria para preparar el cambio de titularidad.
-
-REGLAS MUY IMPORTANTES
-
-1. Solo trabajas con este expediente.
-
-2. No respondas preguntas generales que no estén relacionadas con este traspaso.
-
-3. Nunca pidas contraseñas de Cl@ve.
-
-4. Nunca pidas claves bancarias.
-
-5. Nunca pidas certificados digitales privados.
-
-6. No afirmes que has presentado el modelo 620 si el backend no confirma que se ha presentado.
-
-7. No afirmes que un impuesto está pagado si el backend no lo confirma.
-
-8. No afirmes que el vehículo ya está transferido si el backend no lo confirma.
-
-9. Puedes preparar la información necesaria para un contrato de compraventa.
-
-10. Puedes detectar qué datos faltan para poder generar ese contrato.
-
-11. Cuando dispongamos del motor fiscal del backend, utilizarás sus resultados para mostrar el ITP.
-
-12. Hasta que exista ese cálculo oficial del backend, NO inventes porcentajes ni importes fiscales.
-
-13. El modelo puede variar dependiendo de la comunidad autónoma y del supuesto. No lo inventes.
-
-14. La IA conversa y organiza. Las acciones reales las ejecuta el backend.
-
-15. Haz una pregunta cada vez cuando necesites información del cliente.
-
-16. Sé breve y claro.
-
-17. Responde siempre en español.
-
-Cuando acabas de recibir los datos iniciales del primer participante, empieza solicitando la información de la compraventa que todavía falte.
-`
+                break;
             }
 
-        ];
+            case "FECHA": {
 
+                const match =
+                    mensaje.match(
+                        /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/
+                    );
 
-        for (const item of historial || []) {
+                if (!match) {
 
-            mensajesIA.push({
-                role:
-                    item.autor === "ia"
-                        ? "assistant"
-                        : "user",
+                    errorValidacion =
+                        "Indícame la fecha en formato día/mes/año, por ejemplo 13/08/2026.";
 
-                content:
-                    item.contenido
-            });
+                } else {
 
-        }
+                    const dia =
+                        match[1].padStart(2, "0");
 
+                    const mes =
+                        match[2].padStart(2, "0");
 
-        mensajesIA.push({
-            role: "user",
-            content: mensaje
-        });
+                    const anio =
+                        match[3];
 
-
-        /* ==============================
-           GROQ
-        ============================== */
-
-        const apiKey =
-            process.env.GROQ_API_KEY;
-
-        if (!apiKey) {
-
-            return res.status(500).json({
-                ok: false,
-                error: "La IA no está configurada."
-            });
-
-        }
-
-
-        const respuesta =
-            await fetch(
-                "https://api.groq.com/openai/v1/chat/completions",
-                {
-
-                    method: "POST",
-
-                    headers: {
-
-                        "Authorization":
-                            `Bearer ${apiKey}`,
-
-                        "Content-Type":
-                            "application/json"
-
-                    },
-
-                    body: JSON.stringify({
-
-                        model:
-                            "llama-3.1-8b-instant",
-
-                        temperature: 0.2,
-
-                        max_tokens: 700,
-
-                        messages:
-                            mensajesIA
-
-                    })
-
+                    update.fecha_compraventa =
+                        `${anio}-${mes}-${dia}`;
                 }
+
+                break;
+            }
+
+            case "MARCA": {
+
+                if (mensaje.length < 2) {
+                    errorValidacion =
+                        "Indícame la marca del vehículo.";
+                } else {
+                    update.marca =
+                        mensaje.trim();
+                }
+
+                break;
+            }
+
+            case "MODELO": {
+
+                if (mensaje.length < 1) {
+                    errorValidacion =
+                        "Indícame el modelo del vehículo.";
+                } else {
+                    update.modelo =
+                        mensaje.trim();
+                }
+
+                break;
+            }
+
+            case "KILOMETROS": {
+
+                const numero =
+                    Number(
+                        mensaje.replace(/[^\d]/g, "")
+                    );
+
+                if (
+                    !Number.isInteger(numero) ||
+                    numero < 0
+                ) {
+                    errorValidacion =
+                        "Indícame los kilómetros del vehículo, por ejemplo: 125000.";
+                } else {
+                    update.kilometros =
+                        numero;
+                }
+
+                break;
+            }
+
+            case "COMUNIDAD": {
+
+                if (mensaje.length < 3) {
+                    errorValidacion =
+                        "Indícame la comunidad autónoma.";
+                } else {
+                    update.comunidad_autonoma =
+                        mensaje.trim();
+                }
+
+                break;
+            }
+
+            case "PAGO_PENDIENTE": {
+
+                return res.status(200).json({
+                    ok: true,
+                    respuesta:
+                        "Ya he recogido los datos iniciales. El siguiente paso será calcular el coste del trámite y preparar el pago. La invitación a la otra persona se habilitará cuando Gestor-IA valide ese pago.",
+                    paso_actual:
+                        "PAGO_PENDIENTE"
+                });
+            }
+
+            default: {
+
+                return res.status(200).json({
+                    ok: true,
+                    respuesta:
+                        "Este expediente ya ha completado la recogida inicial de datos.",
+                    paso_actual:
+                        expediente.paso_actual
+                });
+            }
+        }
+
+        if (errorValidacion) {
+
+            await db
+                .from("mensajes")
+                .insert({
+                    expediente_id:
+                        expedienteId,
+                    usuario_id:
+                        usuario.id,
+                    autor:
+                        "ia",
+                    contenido:
+                        errorValidacion
+                });
+
+            return res.status(200).json({
+                ok: true,
+                respuesta:
+                    errorValidacion,
+                paso_actual:
+                    expediente.paso_actual
+            });
+        }
+
+        const nuevoPaso =
+            siguientePaso(
+                expediente.paso_actual
             );
 
+        update.paso_actual =
+            nuevoPaso;
 
-        const datos =
-            await respuesta.json();
+        if (
+            nuevoPaso ===
+            "PAGO_PENDIENTE"
+        ) {
 
+            update.estado =
+                "PAGO_PENDIENTE";
+        }
 
-        if (!respuesta.ok) {
+        update.updated_at =
+            new Date().toISOString();
 
-            console.error(datos);
+        const {
+            error: updateError
+        } = await db
+            .from("expedientes")
+            .update(update)
+            .eq("id", expedienteId);
+
+        if (updateError) {
+
+            console.error(updateError);
 
             return res.status(500).json({
                 ok: false,
-                error: "No se pudo conectar con la IA."
+                error:
+                    "No se pudo guardar el avance del expediente."
             });
-
         }
 
+        const expedienteActualizado = {
+            ...expediente,
+            ...update
+        };
 
-        const textoIA =
-            datos?.choices?.[0]?.message?.content;
+        let respuestaIA =
+            siguientePregunta(
+                expedienteActualizado
+            );
 
+        if (
+            nuevoPaso ===
+            "PAGO_PENDIENTE"
+        ) {
 
-        if (!textoIA) {
-
-            return res.status(500).json({
-                ok: false,
-                error: "La IA no devolvió respuesta."
-            });
-
+            respuestaIA =
+                `Perfecto, ${primerParticipante?.nombre || "ya tengo tus datos"}. Ya tengo la información inicial de la operación. El siguiente paso será calcular el coste del trámite y preparar el pago. No voy a pedirte los datos personales de la otra persona: los introducirá ella misma cuando reciba su invitación.`;
         }
 
-
-        /* ==============================
-           GUARDAR RESPUESTA IA
-        ============================== */
-
-        await clienteUsuario
+        await db
             .from("mensajes")
             .insert({
-                expediente_id: expedienteId,
-                usuario_id: usuario.id,
-                autor: "ia",
-                contenido: textoIA
+                expediente_id:
+                    expedienteId,
+                usuario_id:
+                    usuario.id,
+                autor:
+                    "ia",
+                contenido:
+                    respuestaIA
             });
-
 
         return res.status(200).json({
 
             ok: true,
 
-            respuesta: textoIA,
+            respuesta:
+                respuestaIA,
+
+            paso_actual:
+                nuevoPaso,
 
             expediente: {
-                id: expediente.id,
-                matricula: expediente.matricula,
-                estado: expediente.estado
+                id:
+                    expediente.id,
+                matricula:
+                    expediente.matricula,
+                estado:
+                    update.estado ||
+                    expediente.estado
             }
 
         });
-
 
     } catch (error) {
 
@@ -398,9 +451,8 @@ Cuando acabas de recibir los datos iniciales del primer participante, empieza so
 
         return res.status(500).json({
             ok: false,
-            error: "Error interno del servidor."
+            error:
+                "Error interno del servidor."
         });
-
     }
-
 }
