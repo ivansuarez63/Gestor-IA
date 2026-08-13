@@ -2,20 +2,12 @@
 <html lang="es">
 
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
-<title>
-Gestor-IA | Traspasos de vehículos
-</title>
+<title>Gestor-IA | Traspasos de vehículos</title>
 
 <style>
-
 *{
     box-sizing:border-box;
 }
@@ -69,7 +61,7 @@ button:hover{
 
 .container{
     display:grid;
-    grid-template-columns:220px 1fr;
+    grid-template-columns:230px 1fr;
     min-height:calc(100vh - 80px);
 }
 
@@ -105,17 +97,70 @@ button:hover{
 }
 
 .hero{
-    padding:40px;
+    padding:50px;
 }
 
 .hero h1{
-    font-size:44px;
+    font-size:52px;
+    margin-bottom:5px;
+}
+
+.hero h2{
+    margin-top:0;
+    color:#38bdf8;
+    font-weight:500;
+    font-size:28px;
 }
 
 .hero p{
     color:#cbd5e1;
     font-size:18px;
-    line-height:1.6;
+    line-height:1.7;
+    max-width:720px;
+}
+
+.hero-botones{
+    margin-top:30px;
+    display:flex;
+    gap:12px;
+}
+
+.seguridad{
+    margin-top:35px;
+    background:#0b1220;
+    border-radius:15px;
+    padding:20px;
+    color:#94a3b8;
+}
+
+.servicios-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+    margin-top:30px;
+}
+
+.servicio{
+    background:#1e293b;
+    padding:25px;
+    border-radius:18px;
+}
+
+.servicio h2{
+    margin-top:0;
+}
+
+.precio{
+    font-size:32px;
+    font-weight:bold;
+    color:#38bdf8;
+    margin:15px 0;
+}
+
+.servicio ul{
+    padding-left:20px;
+    color:#cbd5e1;
+    line-height:1.8;
 }
 
 input,
@@ -215,6 +260,14 @@ select{
     margin:20px 0;
 }
 
+@media(max-width:900px){
+
+    .servicios-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
 @media(max-width:800px){
 
     .container{
@@ -225,80 +278,89 @@ select{
         display:none;
     }
 
+    .hero{
+        padding:25px;
+    }
+
+    .hero h1{
+        font-size:38px;
+    }
 }
-
 </style>
-
 </head>
 
 <body>
 
 <header>
 
-<div class="logo">
-Gestor-IA
-</div>
+    <div class="logo">
+        Gestor-IA
+    </div>
 
-<div id="usuario">
+    <div id="usuario">
 
-<button
-    class="btn-secundario"
-    onclick="login()"
->
-Iniciar sesión
-</button>
+        <button
+            class="btn-secundario"
+            onclick="login()">
+            Iniciar sesión
+        </button>
 
-<button onclick="registro()">
-Registrarse
-</button>
+        <button onclick="registro()">
+            Registrarse
+        </button>
 
-</div>
+    </div>
 
 </header>
 
 
 <div class="container">
 
-<div class="menu">
+    <div class="menu">
 
-<div onclick="inicio()">
-🏠 Inicio
-</div>
+        <div onclick="inicio()">
+            🏠 Inicio
+        </div>
 
-<div onclick="nuevoTraspaso()">
-🚗 Iniciar traspaso
-</div>
+        <div onclick="nuevoTraspaso()">
+            🚗 Iniciar traspaso
+        </div>
 
-<div onclick="misExpedientes()">
-📁 Mis expedientes
-</div>
+        <div onclick="servicios()">
+            💳 Servicios
+        </div>
 
-<div onclick="ajustes()">
-⚙ Ajustes
-</div>
+        <div onclick="quienesSomos()">
+            👥 Quiénes somos
+        </div>
 
-</div>
+        <div onclick="misExpedientes()">
+            📁 Mis expedientes
+        </div>
+
+        <div onclick="ayuda()">
+            ❓ Ayuda
+        </div>
+
+    </div>
 
 
-<div
-    class="content"
-    id="contenido"
->
-</div>
+    <div
+        class="content"
+        id="contenido">
+    </div>
 
 </div>
 
 
 <div
     class="modal"
-    id="modal"
->
+    id="modal">
 
-<div
-    class="modal-box"
-    id="modalContenido"
->
-</div>
+    <div
+        class="modal-box"
+        id="modalContenido">
+    </div>
 
 </div>
 
@@ -306,9 +368,7 @@ Registrarse
 <script>
 
 let sesionActiva = false;
-
 let usuarioActual = null;
-
 let expedienteActual = null;
 
 
@@ -319,9 +379,7 @@ let expedienteActual = null;
 function requiereSesion(){
 
     const token =
-        localStorage.getItem(
-            "gestorIA_token"
-        );
+        localStorage.getItem("gestorIA_token");
 
     if(!sesionActiva || !token){
 
@@ -341,14 +399,11 @@ function requiereSesion(){
 async function restaurarSesion(){
 
     const token =
-        localStorage.getItem(
-            "gestorIA_token"
-        );
+        localStorage.getItem("gestorIA_token");
 
     if(!token){
 
         sesionActiva = false;
-
         usuarioActual = null;
 
         inicio();
@@ -362,14 +417,12 @@ async function restaurarSesion(){
             await fetch(
                 "/api/sesion",
                 {
-
                     method:"GET",
 
                     headers:{
                         "Authorization":
                             "Bearer " + token
                     }
-
                 }
             );
 
@@ -387,7 +440,6 @@ async function restaurarSesion(){
             );
 
             sesionActiva=false;
-
             usuarioActual=null;
 
             inicio();
@@ -412,9 +464,7 @@ async function restaurarSesion(){
         );
 
         inicio();
-
     }
-
 }
 
 
@@ -429,19 +479,327 @@ function inicio(){
         <div class="card hero">
 
             <h1>
-                Traspasa tu vehículo
-                de forma sencilla.
+                Gestor-IA
+            </h1>
+
+            <h2>
+                Tu asesor IA las 24 horas del día
+            </h2>
+
+            <p>
+                Gestiona tu traspaso de vehículo
+                de forma guiada y sencilla.
+                Gestor-IA organiza tu expediente,
+                recopila la información necesaria
+                y te acompaña durante todo el proceso.
+            </p>
+
+            <div class="hero-botones">
+
+                <button onclick="nuevoTraspaso()">
+                    🚗 Iniciar traspaso
+                </button>
+
+                <button
+                    class="btn-secundario"
+                    onclick="servicios()">
+                    Ver servicios
+                </button>
+
+            </div>
+
+            <div class="seguridad">
+
+                🔐 Nunca te pediremos tu contraseña de Cl@ve.
+
+                <br><br>
+
+                📁 Tu traspaso queda organizado
+                dentro de un expediente digital.
+
+                <br><br>
+
+                🤖 Gestor-IA te guía durante
+                cada fase del proceso.
+
+            </div>
+
+        </div>
+
+    `;
+}
+
+
+/* =============================
+   SERVICIOS
+============================= */
+
+function servicios(){
+
+    contenido.innerHTML=`
+
+        <div class="card">
+
+            <h1>
+                💳 Servicios
             </h1>
 
             <p>
-                Inicia el expediente y
-                Gestor-IA te guiará durante
-                todo el proceso.
+                El precio corresponde al servicio
+                de gestión de Gestor-IA.
+                Los impuestos y tasas oficiales
+                aplicables se calculan aparte.
             </p>
 
-            <button onclick="nuevoTraspaso()">
-                🚗 Iniciar traspaso
-            </button>
+            <div class="servicios-grid">
+
+
+                <div class="servicio">
+
+                    <h2>
+                        Estándar
+                    </h2>
+
+                    <div class="precio">
+                        60 €
+                    </div>
+
+                    <p>
+                        + impuestos y tasas oficiales
+                    </p>
+
+                    <p>
+                        De lunes a viernes
+                        de 08:30 a 18:00,
+                        excepto días festivos.
+                    </p>
+
+                    <ul>
+                        <li>
+                            Guía durante todo el proceso.
+                        </li>
+
+                        <li>
+                            Expediente digital del traspaso.
+                        </li>
+
+                        <li>
+                            Recogida guiada de datos.
+                        </li>
+
+                        <li>
+                            Contrato de compraventa
+                            elaborado con los datos aportados.
+                        </li>
+
+                        <li>
+                            Seguimiento del estado
+                            del expediente.
+                        </li>
+
+                        <li>
+                            Identificación de información
+                            pendiente.
+                        </li>
+
+                        <li>
+                            Preparación de la información
+                            necesaria para impuestos y DGT.
+                        </li>
+
+                        <li>
+                            Acceso al asistente
+                            del expediente.
+                        </li>
+                    </ul>
+
+                </div>
+
+
+                <div class="servicio">
+
+                    <h2>
+                        Fuera de horario
+                    </h2>
+
+                    <div class="precio">
+                        65 €
+                    </div>
+
+                    <p>
+                        + impuestos y tasas oficiales
+                    </p>
+
+                    <p>
+                        De lunes a viernes
+                        fuera del horario
+                        de 08:30 a 18:00,
+                        además de sábados
+                        y domingos.
+                    </p>
+
+                    <ul>
+                        <li>
+                            Guía durante todo el proceso.
+                        </li>
+
+                        <li>
+                            Expediente digital del traspaso.
+                        </li>
+
+                        <li>
+                            Recogida guiada de datos.
+                        </li>
+
+                        <li>
+                            Contrato de compraventa
+                            elaborado con los datos aportados.
+                        </li>
+
+                        <li>
+                            Seguimiento del expediente.
+                        </li>
+
+                        <li>
+                            Identificación de documentación
+                            e información pendiente.
+                        </li>
+
+                        <li>
+                            Preparación de la información
+                            necesaria para impuestos y DGT.
+                        </li>
+
+                        <li>
+                            Acceso al asistente
+                            del expediente.
+                        </li>
+                    </ul>
+
+                </div>
+
+
+                <div class="servicio">
+
+                    <h2>
+                        Día festivo
+                    </h2>
+
+                    <div class="precio">
+                        70 €
+                    </div>
+
+                    <p>
+                        + impuestos y tasas oficiales
+                    </p>
+
+                    <p>
+                        Aplicable cuando el servicio
+                        se inicia en un día festivo
+                        correspondiente.
+                    </p>
+
+                    <ul>
+                        <li>
+                            Guía durante todo el proceso.
+                        </li>
+
+                        <li>
+                            Expediente digital del traspaso.
+                        </li>
+
+                        <li>
+                            Recogida guiada de datos.
+                        </li>
+
+                        <li>
+                            Contrato de compraventa
+                            elaborado con los datos aportados.
+                        </li>
+
+                        <li>
+                            Seguimiento del expediente.
+                        </li>
+
+                        <li>
+                            Identificación de información
+                            pendiente.
+                        </li>
+
+                        <li>
+                            Preparación de la información
+                            necesaria para impuestos y DGT.
+                        </li>
+
+                        <li>
+                            Acceso al asistente
+                            del expediente.
+                        </li>
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+}
+
+
+/* =============================
+   QUIÉNES SOMOS
+============================= */
+
+function quienesSomos(){
+
+    contenido.innerHTML=`
+
+        <div class="card">
+
+            <h1>
+                👥 Quiénes somos
+            </h1>
+
+            <p>
+                Gestor-IA es una plataforma digital
+                diseñada para simplificar la gestión
+                de cambios de titularidad de vehículos.
+            </p>
+
+            <p>
+                Nuestro sistema organiza cada trámite
+                mediante un expediente digital y utiliza
+                inteligencia artificial para guiar a
+                los participantes durante el proceso.
+            </p>
+
+            <p>
+                El objetivo es reducir pasos innecesarios,
+                organizar la documentación y facilitar
+                al usuario el seguimiento de su traspaso
+                desde un único lugar.
+            </p>
+
+        </div>
+
+    `;
+}
+
+
+/* =============================
+   AYUDA
+============================= */
+
+function ayuda(){
+
+    contenido.innerHTML=`
+
+        <div class="card">
+
+            <h1>
+                ❓ Ayuda
+            </h1>
 
         </div>
 
@@ -480,8 +838,7 @@ function login(){
 
         <button
             class="btn-secundario"
-            onclick="registro()"
-        >
+            onclick="registro()">
             Crear cuenta
         </button>
 
@@ -509,7 +866,6 @@ async function entrar(){
             await fetch(
                 "/api/login",
                 {
-
                     method:"POST",
 
                     headers:{
@@ -521,7 +877,6 @@ async function entrar(){
                         email,
                         password
                     })
-
                 }
             );
 
@@ -554,7 +909,6 @@ async function entrar(){
                 "gestorIA_refresh_token",
                 data.refresh_token
             );
-
         }
 
         modal.style.display="none";
@@ -568,7 +922,6 @@ async function entrar(){
         alert(
             "No se pudo iniciar sesión."
         );
-
     }
 }
 
@@ -637,7 +990,6 @@ async function crearCuenta(){
             await fetch(
                 "/api/registro",
                 {
-
                     method:"POST",
 
                     headers:{
@@ -650,7 +1002,6 @@ async function crearCuenta(){
                         email,
                         password
                     })
-
                 }
             );
 
@@ -682,7 +1033,6 @@ async function crearCuenta(){
                 data.error ||
                 "No se pudo crear la cuenta."
             );
-
         }
 
     }catch(e){
@@ -690,9 +1040,7 @@ async function crearCuenta(){
         alert(
             "No se pudo crear la cuenta."
         );
-
     }
-
 }
 
 
@@ -710,8 +1058,7 @@ function actualizarUsuario(){
 
         <button
             class="btn-secundario"
-            onclick="cerrarSesion()"
-        >
+            onclick="cerrarSesion()">
             Salir
         </button>
 
@@ -730,9 +1077,7 @@ function cerrarSesion(){
     );
 
     sesionActiva=false;
-
     usuarioActual=null;
-
     expedienteActual=null;
 
     location.reload();
@@ -752,12 +1097,12 @@ function panel(){
         <div class="card">
 
             <h1>
-                👋 Bienvenido
+                👋 Bienvenido a Gestor-IA
             </h1>
 
             <p>
-                Inicia un traspaso o consulta
-                tus expedientes.
+                Puedes iniciar un nuevo traspaso
+                o consultar tus expedientes.
             </p>
 
             <br>
@@ -768,8 +1113,7 @@ function panel(){
 
             <button
                 class="btn-secundario"
-                onclick="misExpedientes()"
-            >
+                onclick="misExpedientes()">
                 📁 Mis expedientes
             </button>
 
@@ -796,7 +1140,8 @@ function nuevoTraspaso(){
             </h1>
 
             <p>
-                Introduce la matrícula.
+                Introduce la matrícula
+                del vehículo.
             </p>
 
             <input
@@ -845,21 +1190,19 @@ async function crearExpediente(){
         await fetch(
             "/api/crear-expediente",
             {
-
                 method:"POST",
 
                 headers:{
                     "Content-Type":
-                    "application/json",
+                        "application/json",
 
                     "Authorization":
-                    "Bearer " + token
+                        "Bearer " + token
                 },
 
                 body:JSON.stringify({
                     matricula
                 })
-
             }
         );
 
@@ -884,7 +1227,7 @@ async function crearExpediente(){
 
 
 /* =============================
-   DATOS PARTICIPANTE
+   PARTICIPANTE
 ============================= */
 
 function formularioParticipante(){
@@ -899,9 +1242,7 @@ function formularioParticipante(){
 
             <p>
                 Vehículo:
-                <b>
-                    ${expedienteActual.matricula}
-                </b>
+                <b>${expedienteActual.matricula}</b>
             </p>
 
             <div class="formulario">
@@ -919,7 +1260,6 @@ function formularioParticipante(){
 
                 </div>
 
-
                 <div class="campo">
 
                     <label>
@@ -932,7 +1272,6 @@ function formularioParticipante(){
                     >
 
                 </div>
-
 
                 <div class="campo">
 
@@ -947,7 +1286,6 @@ function formularioParticipante(){
 
                 </div>
 
-
                 <div class="campo">
 
                     <label>
@@ -961,7 +1299,6 @@ function formularioParticipante(){
                     >
 
                 </div>
-
 
                 <div class="campo">
 
@@ -1005,41 +1342,31 @@ async function guardarParticipante(){
 
     const nombre =
         document
-        .getElementById(
-            "participanteNombre"
-        )
+        .getElementById("participanteNombre")
         .value
         .trim();
 
     const dni_nie =
         document
-        .getElementById(
-            "participanteDni"
-        )
+        .getElementById("participanteDni")
         .value
         .trim();
 
     const telefono =
         document
-        .getElementById(
-            "participanteTelefono"
-        )
+        .getElementById("participanteTelefono")
         .value
         .trim();
 
     const email =
         document
-        .getElementById(
-            "participanteEmail"
-        )
+        .getElementById("participanteEmail")
         .value
         .trim();
 
     const rol =
         document
-        .getElementById(
-            "participanteRol"
-        )
+        .getElementById("participanteRol")
         .value;
 
     if(
@@ -1066,17 +1393,14 @@ async function guardarParticipante(){
         await fetch(
             "/api/guardar-participante",
             {
-
                 method:"POST",
 
                 headers:{
-
                     "Content-Type":
                         "application/json",
 
                     "Authorization":
                         "Bearer " + token
-
                 },
 
                 body:JSON.stringify({
@@ -1089,9 +1413,7 @@ async function guardarParticipante(){
                     telefono,
                     email,
                     rol
-
                 })
-
             }
         );
 
@@ -1113,10 +1435,10 @@ async function guardarParticipante(){
 
 
 /* =============================
-   CHAT DEL EXPEDIENTE
+   CHAT
 ============================= */
 
-function abrirChat(){
+async function abrirChat(){
 
     contenido.innerHTML=`
 
@@ -1127,10 +1449,8 @@ function abrirChat(){
             </h1>
 
             <div class="estado">
-
                 🤖 Gestor-IA está gestionando
                 este expediente.
-
             </div>
 
             <div id="chat"></div>
@@ -1143,8 +1463,7 @@ function abrirChat(){
                 >
 
                 <button
-                    onclick="enviarMensaje()"
-                >
+                    onclick="enviarMensaje()">
                     Enviar
                 </button>
 
@@ -1161,48 +1480,89 @@ function abrirChat(){
             function(e){
 
                 if(e.key==="Enter"){
-
                     enviarMensaje();
-
                 }
-
             }
         );
 
-    agregarMensaje(
-        "bot",
-        "Perfecto. Ya tengo tus datos iniciales. Vamos a continuar con el traspaso."
-    );
+    await iniciarConversacion();
 }
 
 
-/* =============================
-   MENSAJES
-============================= */
+async function iniciarConversacion(){
 
-function agregarMensaje(
-    tipo,
-    texto
-){
+    const token =
+        localStorage.getItem(
+            "gestorIA_token"
+        );
+
+    try{
+
+        const res =
+            await fetch(
+                "/api/chat",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            "Bearer " + token
+                    },
+
+                    body:JSON.stringify({
+                        expediente_id:
+                            expedienteActual.id,
+                        mensaje:""
+                    })
+                }
+            );
+
+        const data =
+            await res.json();
+
+        if(!res.ok){
+
+            agregarMensaje(
+                "bot",
+                data.error ||
+                "No se pudo iniciar la conversación."
+            );
+
+            return;
+        }
+
+        agregarMensaje(
+            "bot",
+            data.respuesta
+        );
+
+    }catch(error){
+
+        agregarMensaje(
+            "bot",
+            "No se pudo iniciar Gestor-IA."
+        );
+    }
+}
+
+
+function agregarMensaje(tipo,texto){
 
     const chat =
-        document.getElementById(
-            "chat"
-        );
+        document.getElementById("chat");
 
     if(!chat) return;
 
     const div =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     div.className=tipo;
 
     const span =
-        document.createElement(
-            "span"
-        );
+        document.createElement("span");
 
     span.textContent=texto;
 
@@ -1218,9 +1578,7 @@ function agregarMensaje(
 async function enviarMensaje(){
 
     const input =
-        document.getElementById(
-            "mensaje"
-        );
+        document.getElementById("mensaje");
 
     const mensaje =
         input.value.trim();
@@ -1250,28 +1608,21 @@ async function enviarMensaje(){
             await fetch(
                 "/api/chat",
                 {
-
                     method:"POST",
 
                     headers:{
-
                         "Content-Type":
                             "application/json",
 
                         "Authorization":
                             "Bearer " + token
-
                     },
 
                     body:JSON.stringify({
-
                         expediente_id:
                             expedienteActual.id,
-
                         mensaje
-
                     })
-
                 }
             );
 
@@ -1279,16 +1630,13 @@ async function enviarMensaje(){
             await res.json();
 
         const chat =
-            document.getElementById(
-                "chat"
-            );
+            document.getElementById("chat");
 
         if(chat?.lastChild){
 
             chat.removeChild(
                 chat.lastChild
             );
-
         }
 
         if(!res.ok){
@@ -1307,27 +1655,86 @@ async function enviarMensaje(){
             data.respuesta
         );
 
+        if(
+            data.paso_actual ===
+            "PAGO_PENDIENTE"
+        ){
+
+            setTimeout(
+                pantallaPago,
+                1200
+            );
+        }
+
     }catch(e){
 
         const chat =
-            document.getElementById(
-                "chat"
-            );
+            document.getElementById("chat");
 
         if(chat?.lastChild){
 
             chat.removeChild(
                 chat.lastChild
             );
-
         }
 
         agregarMensaje(
             "bot",
             "Error de conexión."
         );
-
     }
+}
+
+
+/* =============================
+   PAGO
+============================= */
+
+function pantallaPago(){
+
+    contenido.innerHTML=`
+
+        <div class="card">
+
+            <h1>
+                💳 Resumen del traspaso
+            </h1>
+
+            <p>
+                Vehículo:
+                <b>
+                    ${expedienteActual.matricula}
+                </b>
+            </p>
+
+            <div class="estado">
+
+                <p>
+                    El importe final se mostrará
+                    antes de realizar el pago.
+                </p>
+
+                <p>
+                    Incluirá por separado:
+                </p>
+
+                <p>
+                    • Servicio Gestor-IA
+                    <br>
+                    • Tasas oficiales
+                    <br>
+                    • Impuestos aplicables
+                </p>
+
+            </div>
+
+            <button onclick="servicios()">
+                Ver tarifas
+            </button>
+
+        </div>
+
+    `;
 }
 
 
@@ -1348,9 +1755,10 @@ function misExpedientes(){
             </h1>
 
             <p>
-                En el siguiente paso haremos que
-                aparezcan aquí todos tus traspasos
-                y puedas continuar el mismo chat.
+                Próximamente aparecerán aquí
+                todos tus traspasos para que
+                puedas continuar el proceso
+                desde el mismo punto.
             </p>
 
         </div>
@@ -1360,33 +1768,14 @@ function misExpedientes(){
 
 
 /* =============================
-   AJUSTES
+   MODAL
 ============================= */
-
-function ajustes(){
-
-    if(!requiereSesion()) return;
-
-    contenido.innerHTML=`
-
-        <div class="card">
-
-            <h1>
-                ⚙ Ajustes
-            </h1>
-
-        </div>
-
-    `;
-}
-
 
 modal.onclick=function(e){
 
     if(e.target===modal){
 
         modal.style.display="none";
-
     }
 };
 
@@ -1400,5 +1789,4 @@ restaurarSesion();
 </script>
 
 </body>
-
 </html>
