@@ -335,6 +335,90 @@ function requiereSesion(){
 
 
 /* =============================
+   RESTAURAR SESIÓN
+============================= */
+
+async function restaurarSesion(){
+
+    const token =
+        localStorage.getItem(
+            "gestorIA_token"
+        );
+
+    if(!token){
+
+        sesionActiva = false;
+
+        usuarioActual = null;
+
+        inicio();
+
+        return;
+    }
+
+    try{
+
+        const res =
+            await fetch(
+                "/api/sesion",
+                {
+
+                    method:"GET",
+
+                    headers:{
+                        "Authorization":
+                            "Bearer " + token
+                    }
+
+                }
+            );
+
+        const data =
+            await res.json();
+
+        if(!res.ok || !data.ok){
+
+            localStorage.removeItem(
+                "gestorIA_token"
+            );
+
+            localStorage.removeItem(
+                "gestorIA_refresh_token"
+            );
+
+            sesionActiva=false;
+
+            usuarioActual=null;
+
+            inicio();
+
+            return;
+        }
+
+        sesionActiva=true;
+
+        usuarioActual=
+            data.usuario;
+
+        actualizarUsuario();
+
+        panel();
+
+    }catch(error){
+
+        console.error(
+            "Error restaurando sesión:",
+            error
+        );
+
+        inicio();
+
+    }
+
+}
+
+
+/* =============================
    INICIO
 ============================= */
 
@@ -464,6 +548,15 @@ async function entrar(){
             data.access_token
         );
 
+        if(data.refresh_token){
+
+            localStorage.setItem(
+                "gestorIA_refresh_token",
+                data.refresh_token
+            );
+
+        }
+
         modal.style.display="none";
 
         actualizarUsuario();
@@ -538,57 +631,68 @@ async function crearCuenta(){
         .getElementById("regPass")
         .value;
 
-    const res =
-        await fetch(
-            "/api/registro",
-            {
+    try{
 
-                method:"POST",
+        const res =
+            await fetch(
+                "/api/registro",
+                {
 
-                headers:{
-                    "Content-Type":
-                    "application/json"
-                },
+                    method:"POST",
 
-                body:JSON.stringify({
-                    nombre,
-                    email,
-                    password
-                })
+                    headers:{
+                        "Content-Type":
+                        "application/json"
+                    },
 
-            }
-        );
+                    body:JSON.stringify({
+                        nombre,
+                        email,
+                        password
+                    })
 
-    const data =
-        await res.json();
+                }
+            );
 
-    if(data.ok){
+        const data =
+            await res.json();
 
-        modalContenido.innerHTML=`
+        if(data.ok){
 
-            <h2>
-                ✉️ Revisa tu correo
-            </h2>
+            modalContenido.innerHTML=`
 
-            <p>
-                Te hemos enviado un enlace
-                para verificar tu cuenta.
-            </p>
+                <h2>
+                    ✉️ Revisa tu correo
+                </h2>
 
-            <button onclick="login()">
-                Iniciar sesión
-            </button>
+                <p>
+                    Te hemos enviado un enlace
+                    para verificar tu cuenta.
+                </p>
 
-        `;
+                <button onclick="login()">
+                    Iniciar sesión
+                </button>
 
-    }else{
+            `;
+
+        }else{
+
+            alert(
+                data.error ||
+                "No se pudo crear la cuenta."
+            );
+
+        }
+
+    }catch(e){
 
         alert(
-            data.error ||
             "No se pudo crear la cuenta."
         );
 
     }
+
 }
 
 
@@ -619,6 +723,10 @@ function cerrarSesion(){
 
     localStorage.removeItem(
         "gestorIA_token"
+    );
+
+    localStorage.removeItem(
+        "gestorIA_refresh_token"
     );
 
     sesionActiva=false;
@@ -762,7 +870,7 @@ async function crearExpediente(){
 
         alert(
             data.error ||
-            "No se pudo crear."
+            "No se pudo crear el expediente."
         );
 
         return;
@@ -964,10 +1072,10 @@ async function guardarParticipante(){
                 headers:{
 
                     "Content-Type":
-                    "application/json",
+                        "application/json",
 
                     "Authorization":
-                    "Bearer " + token
+                        "Bearer " + token
 
                 },
 
@@ -1201,6 +1309,19 @@ async function enviarMensaje(){
 
     }catch(e){
 
+        const chat =
+            document.getElementById(
+                "chat"
+            );
+
+        if(chat?.lastChild){
+
+            chat.removeChild(
+                chat.lastChild
+            );
+
+        }
+
         agregarMensaje(
             "bot",
             "Error de conexión."
@@ -1270,7 +1391,11 @@ modal.onclick=function(e){
 };
 
 
-inicio();
+/* =============================
+   ARRANCAR
+============================= */
+
+restaurarSesion();
 
 </script>
 
