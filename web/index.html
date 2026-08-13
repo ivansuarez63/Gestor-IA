@@ -8,6 +8,7 @@
 <title>Gestor-IA | Traspasos de vehículos</title>
 
 <style>
+
 *{
     box-sizing:border-box;
 }
@@ -114,7 +115,6 @@ button:disabled{
     margin-top:0;
     color:#38bdf8;
     font-weight:500;
-    font-size:28px;
 }
 
 .hero p{
@@ -130,12 +130,16 @@ button:disabled{
     gap:12px;
 }
 
-.seguridad{
-    margin-top:35px;
+.seguridad,
+.estado,
+.pago-box,
+.autorizacion,
+.expediente-card,
+.invitacion-box{
     background:#0b1220;
     border-radius:15px;
     padding:20px;
-    color:#94a3b8;
+    margin-top:20px;
 }
 
 .servicios-grid{
@@ -151,19 +155,13 @@ button:disabled{
     border-radius:18px;
 }
 
-.servicio h2{
-    margin-top:0;
-}
-
 .precio{
     font-size:32px;
-    font-weight:bold;
     color:#38bdf8;
-    margin:15px 0;
+    font-weight:bold;
 }
 
 .servicio ul{
-    padding-left:20px;
     color:#cbd5e1;
     line-height:1.8;
 }
@@ -179,10 +177,6 @@ select{
     font-size:16px;
 }
 
-.formulario{
-    margin-top:25px;
-}
-
 .campo{
     margin-bottom:15px;
 }
@@ -190,7 +184,6 @@ select{
 .campo label{
     display:block;
     color:#94a3b8;
-    margin-bottom:3px;
 }
 
 #chat{
@@ -202,7 +195,7 @@ select{
     display:flex;
     flex-direction:column;
     gap:15px;
-    margin:20px 0 15px;
+    margin:20px 0;
 }
 
 .user{
@@ -258,18 +251,31 @@ select{
     max-width:90%;
 }
 
-.estado{
-    background:#0b1220;
-    padding:18px;
-    border-radius:14px;
-    margin:20px 0;
+.expedientes-grid{
+    display:grid;
+    gap:15px;
+    margin-top:25px;
 }
 
-.pago-box{
-    background:#0b1220;
-    padding:25px;
-    border-radius:16px;
-    margin-top:25px;
+.expediente-top{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    align-items:center;
+}
+
+.expediente-matricula{
+    font-size:23px;
+    font-weight:bold;
+    color:#38bdf8;
+}
+
+.estado-pill{
+    display:inline-block;
+    padding:7px 11px;
+    background:#1e293b;
+    border-radius:10px;
+    color:#cbd5e1;
 }
 
 .linea-pago{
@@ -280,48 +286,29 @@ select{
     color:#cbd5e1;
 }
 
-.linea-pago.total{
+.total{
     border-top:1px solid #1e293b;
     padding-top:15px;
-    margin-top:18px;
-    color:white;
-    font-size:18px;
     font-weight:bold;
+    color:white;
 }
 
-.aviso{
-    margin-top:20px;
-    color:#94a3b8;
-    line-height:1.6;
-}
-
-.autorizacion{
-    background:#0b1220;
-    border-radius:16px;
-    padding:22px;
-    margin-top:20px;
-}
-
-.autorizacion h2{
-    margin-top:0;
-}
-
-.etiqueta-bloqueado{
-    display:inline-block;
-    margin-top:10px;
-    padding:8px 12px;
-    background:#1e293b;
-    color:#94a3b8;
-    border-radius:10px;
+.enlace-invitacion{
+    width:100%;
+    max-width:none;
+    background:#111827;
+    color:white;
 }
 
 @media(max-width:900px){
+
     .servicios-grid{
         grid-template-columns:1fr;
     }
 }
 
 @media(max-width:800px){
+
     .container{
         grid-template-columns:1fr;
     }
@@ -329,107 +316,114 @@ select{
     .menu{
         display:none;
     }
-
-    .hero{
-        padding:25px;
-    }
-
-    .hero h1{
-        font-size:38px;
-    }
 }
+
 </style>
+
 </head>
 
 <body>
 
+
 <header>
 
-    <div class="logo">
-        Gestor-IA
-    </div>
+<div class="logo">
+Gestor-IA
+</div>
 
-    <div id="usuario">
+<div id="usuario">
 
-        <button
-            class="btn-secundario"
-            onclick="login()">
-            Iniciar sesión
-        </button>
+<button
+class="btn-secundario"
+onclick="login()">
+Iniciar sesión
+</button>
 
-        <button onclick="registro()">
-            Registrarse
-        </button>
+<button onclick="registro()">
+Registrarse
+</button>
 
-    </div>
+</div>
 
 </header>
 
+
 <div class="container">
 
-    <div class="menu">
+<div class="menu">
 
-        <div onclick="inicio()">
-            🏠 Inicio
-        </div>
+<div onclick="inicio()">
+🏠 Inicio
+</div>
 
-        <div onclick="nuevoTraspaso()">
-            🚗 Iniciar traspaso
-        </div>
+<div onclick="nuevoTraspaso()">
+🚗 Iniciar traspaso
+</div>
 
-        <div onclick="servicios()">
-            💳 Servicios
-        </div>
+<div onclick="servicios()">
+💳 Servicios
+</div>
 
-        <div onclick="quienesSomos()">
-            👥 Quiénes somos
-        </div>
+<div onclick="quienesSomos()">
+👥 Quiénes somos
+</div>
 
-        <div onclick="misExpedientes()">
-            📁 Mis expedientes
-        </div>
+<div onclick="misExpedientes()">
+📁 Mis expedientes
+</div>
 
-        <div onclick="ayuda()">
-            ❓ Ayuda
-        </div>
-
-    </div>
-
-    <div
-        class="content"
-        id="contenido">
-    </div>
+<div onclick="ayuda()">
+❓ Ayuda
+</div>
 
 </div>
+
 
 <div
-    class="modal"
-    id="modal">
-
-    <div
-        class="modal-box"
-        id="modalContenido">
-    </div>
+class="content"
+id="contenido">
+</div>
 
 </div>
+
+
+<div
+class="modal"
+id="modal">
+
+<div
+class="modal-box"
+id="modalContenido">
+</div>
+
+</div>
+
 
 <script>
 
-let sesionActiva = false;
-let usuarioActual = null;
-let expedienteActual = null;
+let sesionActiva=false;
+let usuarioActual=null;
+let expedienteActual=null;
 
 
 /* =============================
    SESIÓN
 ============================= */
 
+function tokenActual(){
+
+    return localStorage.getItem(
+        "gestorIA_token"
+    );
+}
+
+
 function requiereSesion(){
 
-    const token =
-        localStorage.getItem("gestorIA_token");
-
-    if(!sesionActiva || !token){
+    if(
+        !sesionActiva ||
+        !tokenActual()
+    ){
 
         login();
 
@@ -443,12 +437,9 @@ function requiereSesion(){
 async function restaurarSesion(){
 
     const token =
-        localStorage.getItem("gestorIA_token");
+        tokenActual();
 
     if(!token){
-
-        sesionActiva=false;
-        usuarioActual=null;
 
         inicio();
 
@@ -457,16 +448,16 @@ async function restaurarSesion(){
 
     try{
 
-        const res = await fetch(
-            "/api/sesion",
-            {
-                method:"GET",
-                headers:{
-                    "Authorization":
-                        "Bearer " + token
+        const res =
+            await fetch(
+                "/api/sesion",
+                {
+                    headers:{
+                        "Authorization":
+                            "Bearer " + token
+                    }
                 }
-            }
-        );
+            );
 
         const data =
             await res.json();
@@ -481,9 +472,6 @@ async function restaurarSesion(){
                 "gestorIA_refresh_token"
             );
 
-            sesionActiva=false;
-            usuarioActual=null;
-
             inicio();
 
             return;
@@ -493,11 +481,10 @@ async function restaurarSesion(){
         usuarioActual=data.usuario;
 
         actualizarUsuario();
-        panel();
+
+        inicio();
 
     }catch(error){
-
-        console.error(error);
 
         inicio();
     }
@@ -512,54 +499,37 @@ function inicio(){
 
     contenido.innerHTML=`
 
-        <div class="card hero">
+    <div class="card hero">
 
-            <h1>
-                Gestor-IA
-            </h1>
+        <h1>
+            Gestor-IA
+        </h1>
 
-            <h2>
-                Tu asesor IA las 24 horas del día
-            </h2>
+        <h2>
+            Tu asesor IA las 24 horas del día
+        </h2>
 
-            <p>
-                Gestiona tu traspaso de vehículo
-                de forma guiada y sencilla.
-                Gestor-IA organiza tu expediente
-                y te acompaña durante todo el proceso.
-            </p>
+        <p>
+            Gestiona tu traspaso de vehículo
+            de forma guiada, sencilla y desde
+            un único expediente digital.
+        </p>
 
-            <div class="hero-botones">
+        <div class="hero-botones">
 
-                <button onclick="nuevoTraspaso()">
-                    🚗 Iniciar traspaso
-                </button>
+            <button onclick="nuevoTraspaso()">
+                🚗 Iniciar traspaso
+            </button>
 
-                <button
-                    class="btn-secundario"
-                    onclick="servicios()">
-                    Ver servicios
-                </button>
-
-            </div>
-
-            <div class="seguridad">
-
-                🔐 Nunca te pediremos tu contraseña de Cl@ve.
-
-                <br><br>
-
-                📁 Tu traspaso queda organizado
-                dentro de un expediente digital.
-
-                <br><br>
-
-                🤖 Gestor-IA te guía durante
-                cada fase del proceso.
-
-            </div>
+            <button
+                class="btn-secundario"
+                onclick="servicios()">
+                Ver servicios
+            </button>
 
         </div>
+
+    </div>
 
     `;
 }
@@ -573,123 +543,100 @@ function servicios(){
 
     contenido.innerHTML=`
 
-        <div class="card">
+    <div class="card">
 
-            <h1>
-                💳 Servicios
-            </h1>
+        <h1>
+            💳 Servicios
+        </h1>
 
-            <p>
-                Los precios corresponden al servicio
-                de gestión de Gestor-IA.
-                Los impuestos y tasas oficiales
-                aplicables se calculan aparte.
-            </p>
+        <p>
+            Impuestos y tasas oficiales
+            se calculan aparte.
+        </p>
 
-            <div class="servicios-grid">
+        <div class="servicios-grid">
 
-                <div class="servicio">
+            <div class="servicio">
 
-                    <h2>
-                        Estándar
-                    </h2>
+                <h2>Estándar</h2>
 
-                    <div class="precio">
-                        60 €
-                    </div>
-
-                    <p>
-                        + impuestos y tasas oficiales
-                    </p>
-
-                    <p>
-                        Lunes a viernes,
-                        08:30 a 18:00,
-                        excepto festivos.
-                    </p>
-
-                    <ul>
-                        <li>Guía durante todo el proceso.</li>
-                        <li>Expediente digital.</li>
-                        <li>Recogida guiada de datos.</li>
-                        <li>Contrato elaborado con los datos aportados.</li>
-                        <li>Seguimiento del expediente.</li>
-                        <li>Detección de información pendiente.</li>
-                        <li>Preparación de información necesaria para impuestos y DGT.</li>
-                        <li>Acceso al asistente del expediente.</li>
-                    </ul>
-
+                <div class="precio">
+                    60 €
                 </div>
 
-                <div class="servicio">
+                <p>
+                    Lunes a viernes,
+                    08:30 - 18:00,
+                    excepto festivos.
+                </p>
 
-                    <h2>
-                        Fuera de horario
-                    </h2>
+                <ul>
+                    <li>Guía durante todo el proceso.</li>
+                    <li>Expediente digital.</li>
+                    <li>Recogida guiada de datos.</li>
+                    <li>Contrato elaborado con los datos aportados.</li>
+                    <li>Seguimiento del expediente.</li>
+                    <li>Preparación de información necesaria para impuestos y DGT.</li>
+                    <li>Asistente del expediente.</li>
+                </ul>
 
-                    <div class="precio">
-                        65 €
-                    </div>
+            </div>
 
-                    <p>
-                        + impuestos y tasas oficiales
-                    </p>
 
-                    <p>
-                        Fuera del horario estándar
-                        de lunes a viernes,
-                        además de sábados y domingos.
-                    </p>
+            <div class="servicio">
 
-                    <ul>
-                        <li>Guía durante todo el proceso.</li>
-                        <li>Expediente digital.</li>
-                        <li>Recogida guiada de datos.</li>
-                        <li>Contrato elaborado con los datos aportados.</li>
-                        <li>Seguimiento del expediente.</li>
-                        <li>Detección de información pendiente.</li>
-                        <li>Preparación de información necesaria para impuestos y DGT.</li>
-                        <li>Acceso al asistente del expediente.</li>
-                    </ul>
+                <h2>Fuera de horario</h2>
 
+                <div class="precio">
+                    65 €
                 </div>
 
-                <div class="servicio">
+                <p>
+                    Fuera del horario estándar,
+                    sábados y domingos.
+                </p>
 
-                    <h2>
-                        Día festivo
-                    </h2>
+                <ul>
+                    <li>Guía durante todo el proceso.</li>
+                    <li>Expediente digital.</li>
+                    <li>Recogida guiada de datos.</li>
+                    <li>Contrato elaborado con los datos aportados.</li>
+                    <li>Seguimiento del expediente.</li>
+                    <li>Preparación de información necesaria para impuestos y DGT.</li>
+                    <li>Asistente del expediente.</li>
+                </ul>
 
-                    <div class="precio">
-                        70 €
-                    </div>
+            </div>
 
-                    <p>
-                        + impuestos y tasas oficiales
-                    </p>
 
-                    <p>
-                        Aplicable cuando el servicio
-                        se inicia en un día festivo
-                        correspondiente.
-                    </p>
+            <div class="servicio">
 
-                    <ul>
-                        <li>Guía durante todo el proceso.</li>
-                        <li>Expediente digital.</li>
-                        <li>Recogida guiada de datos.</li>
-                        <li>Contrato elaborado con los datos aportados.</li>
-                        <li>Seguimiento del expediente.</li>
-                        <li>Detección de información pendiente.</li>
-                        <li>Preparación de información necesaria para impuestos y DGT.</li>
-                        <li>Acceso al asistente del expediente.</li>
-                    </ul>
+                <h2>Día festivo</h2>
 
+                <div class="precio">
+                    70 €
                 </div>
+
+                <p>
+                    Aplicable cuando el servicio
+                    se inicia en día festivo.
+                </p>
+
+                <ul>
+                    <li>Guía durante todo el proceso.</li>
+                    <li>Expediente digital.</li>
+                    <li>Recogida guiada de datos.</li>
+                    <li>Contrato elaborado con los datos aportados.</li>
+                    <li>Seguimiento del expediente.</li>
+                    <li>Preparación de información necesaria para impuestos y DGT.</li>
+                    <li>Asistente del expediente.</li>
+                </ul>
 
             </div>
 
         </div>
+
+    </div>
 
     `;
 }
@@ -703,25 +650,26 @@ function quienesSomos(){
 
     contenido.innerHTML=`
 
-        <div class="card">
+    <div class="card">
 
-            <h1>
-                👥 Quiénes somos
-            </h1>
+        <h1>
+            👥 Quiénes somos
+        </h1>
 
-            <p>
-                Gestor-IA es una plataforma digital
-                diseñada para simplificar la gestión
-                de cambios de titularidad de vehículos.
-            </p>
+        <p>
+            Gestor-IA es una plataforma digital
+            diseñada para simplificar la gestión
+            de cambios de titularidad de vehículos.
+        </p>
 
-            <p>
-                Cada trámite se organiza mediante
-                un expediente digital y un asistente
-                especializado que guía a los participantes.
-            </p>
+        <p>
+            Cada operación se organiza mediante
+            un expediente digital y un asistente
+            que guía a sus participantes durante
+            el proceso.
+        </p>
 
-        </div>
+    </div>
 
     `;
 }
@@ -735,13 +683,13 @@ function ayuda(){
 
     contenido.innerHTML=`
 
-        <div class="card">
+    <div class="card">
 
-            <h1>
-                ❓ Ayuda
-            </h1>
+        <h1>
+            ❓ Ayuda
+        </h1>
 
-        </div>
+    </div>
 
     `;
 }
@@ -755,32 +703,30 @@ function login(){
 
     modalContenido.innerHTML=`
 
-        <h2>
-            Iniciar sesión
-        </h2>
+    <h2>
+        Iniciar sesión
+    </h2>
 
-        <input
-            id="loginEmail"
-            placeholder="Correo"
-        >
+    <input
+        id="loginEmail"
+        placeholder="Correo">
 
-        <input
-            id="loginPass"
-            type="password"
-            placeholder="Contraseña"
-        >
+    <input
+        id="loginPass"
+        type="password"
+        placeholder="Contraseña">
 
-        <br><br>
+    <br><br>
 
-        <button onclick="entrar()">
-            Entrar
-        </button>
+    <button onclick="entrar()">
+        Entrar
+    </button>
 
-        <button
-            class="btn-secundario"
-            onclick="registro()">
-            Crear cuenta
-        </button>
+    <button
+        class="btn-secundario"
+        onclick="registro()">
+        Crear cuenta
+    </button>
 
     `;
 
@@ -791,12 +737,14 @@ function login(){
 async function entrar(){
 
     const email =
-        document.getElementById(
+        document
+        .getElementById(
             "loginEmail"
         ).value;
 
     const password =
-        document.getElementById(
+        document
+        .getElementById(
             "loginPass"
         ).value;
 
@@ -834,6 +782,7 @@ async function entrar(){
         }
 
         sesionActiva=true;
+
         usuarioActual=
             data.usuario || email;
 
@@ -853,7 +802,8 @@ async function entrar(){
         modal.style.display="none";
 
         actualizarUsuario();
-        panel();
+
+        inicio();
 
     }catch(error){
 
@@ -872,32 +822,29 @@ function registro(){
 
     modalContenido.innerHTML=`
 
-        <h2>
-            Crear cuenta
-        </h2>
+    <h2>
+        Crear cuenta
+    </h2>
 
-        <input
-            id="regNombre"
-            placeholder="Nombre"
-        >
+    <input
+        id="regNombre"
+        placeholder="Nombre">
 
-        <input
-            id="regEmail"
-            type="email"
-            placeholder="Correo"
-        >
+    <input
+        id="regEmail"
+        type="email"
+        placeholder="Correo">
 
-        <input
-            id="regPass"
-            type="password"
-            placeholder="Contraseña"
-        >
+    <input
+        id="regPass"
+        type="password"
+        placeholder="Contraseña">
 
-        <br><br>
+    <br><br>
 
-        <button onclick="crearCuenta()">
-            Crear cuenta
-        </button>
+    <button onclick="crearCuenta()">
+        Crear cuenta
+    </button>
 
     `;
 
@@ -908,17 +855,20 @@ function registro(){
 async function crearCuenta(){
 
     const nombre =
-        document.getElementById(
+        document
+        .getElementById(
             "regNombre"
         ).value;
 
     const email =
-        document.getElementById(
+        document
+        .getElementById(
             "regEmail"
         ).value;
 
     const password =
-        document.getElementById(
+        document
+        .getElementById(
             "regPass"
         ).value;
 
@@ -950,18 +900,18 @@ async function crearCuenta(){
 
             modalContenido.innerHTML=`
 
-                <h2>
-                    ✉️ Revisa tu correo
-                </h2>
+            <h2>
+                ✉️ Revisa tu correo
+            </h2>
 
-                <p>
-                    Te hemos enviado un enlace
-                    para verificar tu cuenta.
-                </p>
+            <p>
+                Te hemos enviado un enlace
+                para verificar tu cuenta.
+            </p>
 
-                <button onclick="login()">
-                    Iniciar sesión
-                </button>
+            <button onclick="login()">
+                Iniciar sesión
+            </button>
 
             `;
 
@@ -990,15 +940,15 @@ function actualizarUsuario(){
 
     usuario.innerHTML=`
 
-        <span>
-            👤 ${usuarioActual}
-        </span>
+    <span>
+        👤 ${usuarioActual}
+    </span>
 
-        <button
-            class="btn-secundario"
-            onclick="cerrarSesion()">
-            Salir
-        </button>
+    <button
+        class="btn-secundario"
+        onclick="cerrarSesion()">
+        Salir
+    </button>
 
     `;
 }
@@ -1023,45 +973,6 @@ function cerrarSesion(){
 
 
 /* =============================
-   PANEL
-============================= */
-
-function panel(){
-
-    if(!requiereSesion()) return;
-
-    contenido.innerHTML=`
-
-        <div class="card">
-
-            <h1>
-                👋 Bienvenido a Gestor-IA
-            </h1>
-
-            <p>
-                Inicia un nuevo traspaso
-                o consulta tus expedientes.
-            </p>
-
-            <br>
-
-            <button onclick="nuevoTraspaso()">
-                🚗 Iniciar traspaso
-            </button>
-
-            <button
-                class="btn-secundario"
-                onclick="misExpedientes()">
-                📁 Mis expedientes
-            </button>
-
-        </div>
-
-    `;
-}
-
-
-/* =============================
    NUEVO TRASPASO
 ============================= */
 
@@ -1071,29 +982,29 @@ function nuevoTraspaso(){
 
     contenido.innerHTML=`
 
-        <div class="card">
+    <div class="card">
 
-            <h1>
-                🚗 Iniciar traspaso
-            </h1>
+        <h1>
+            🚗 Iniciar traspaso
+        </h1>
 
-            <p>
-                Introduce la matrícula
-                del vehículo.
-            </p>
+        <p>
+            Introduce la matrícula.
+            El expediente se guardará
+            desde este momento.
+        </p>
 
-            <input
-                id="matriculaTraspaso"
-                placeholder="1234ABC"
-            >
+        <input
+            id="matriculaTraspaso"
+            placeholder="1234ABC">
 
-            <br><br>
+        <br><br>
 
-            <button onclick="crearExpediente()">
-                Continuar
-            </button>
+        <button onclick="crearExpediente()">
+            Continuar
+        </button>
 
-        </div>
+    </div>
 
     `;
 }
@@ -1119,11 +1030,6 @@ async function crearExpediente(){
         return;
     }
 
-    const token =
-        localStorage.getItem(
-            "gestorIA_token"
-        );
-
     try{
 
         const res =
@@ -1137,7 +1043,8 @@ async function crearExpediente(){
                             "application/json",
 
                         "Authorization":
-                            "Bearer " + token
+                            "Bearer " +
+                            tokenActual()
                     },
 
                     body:JSON.stringify({
@@ -1162,6 +1069,27 @@ async function crearExpediente(){
         expedienteActual=
             data.expediente;
 
+        if(data.existente){
+
+            const seguir =
+                confirm(
+                    "Ya tienes un expediente activo para esta matrícula. ¿Quieres continuarlo?"
+                );
+
+            if(seguir){
+
+                continuarExpediente(
+                    expedienteActual
+                );
+
+            }else{
+
+                misExpedientes();
+            }
+
+            return;
+        }
+
         formularioParticipante();
 
     }catch(error){
@@ -1181,85 +1109,101 @@ function formularioParticipante(){
 
     contenido.innerHTML=`
 
-        <div class="card">
+    <div class="card">
 
-            <h1>
-                Tus datos
-            </h1>
+        <h1>
+            Tus datos
+        </h1>
 
-            <p>
-                Vehículo:
-                <b>${expedienteActual.matricula}</b>
-            </p>
+        <p>
+            Vehículo:
+            <b>
+                ${expedienteActual.matricula}
+            </b>
+        </p>
 
-            <div class="formulario">
+        <div class="campo">
 
-                <div class="campo">
-                    <label>Nombre y apellidos</label>
-                    <input
-                        id="participanteNombre"
-                        placeholder="Nombre completo"
-                    >
-                </div>
+            <label>
+                Nombre y apellidos
+            </label>
 
-                <div class="campo">
-                    <label>DNI / NIE</label>
-                    <input
-                        id="participanteDni"
-                        placeholder="DNI o NIE"
-                    >
-                </div>
-
-                <div class="campo">
-                    <label>Teléfono</label>
-                    <input
-                        id="participanteTelefono"
-                        placeholder="Teléfono"
-                    >
-                </div>
-
-                <div class="campo">
-                    <label>Correo</label>
-                    <input
-                        id="participanteEmail"
-                        type="email"
-                        placeholder="Correo electrónico"
-                    >
-                </div>
-
-                <div class="campo">
-
-                    <label>
-                        En este traspaso eres:
-                    </label>
-
-                    <select id="participanteRol">
-
-                        <option value="">
-                            Selecciona
-                        </option>
-
-                        <option value="COMPRADOR">
-                            Comprador
-                        </option>
-
-                        <option value="VENDEDOR">
-                            Vendedor
-                        </option>
-
-                    </select>
-
-                </div>
-
-            </div>
-
-            <br>
-
-            <button onclick="guardarParticipante()">
-                Continuar
-            </button>
+            <input
+                id="participanteNombre"
+                placeholder="Nombre completo">
 
         </div>
+
+        <div class="campo">
+
+            <label>
+                DNI / NIE
+            </label>
+
+            <input
+                id="participanteDni"
+                placeholder="DNI o NIE">
+
+        </div>
+
+        <div class="campo">
+
+            <label>
+                Teléfono
+            </label>
+
+            <input
+                id="participanteTelefono"
+                placeholder="Teléfono">
+
+        </div>
+
+        <div class="campo">
+
+            <label>
+                Correo
+            </label>
+
+            <input
+                id="participanteEmail"
+                type="email"
+                placeholder="Correo electrónico">
+
+        </div>
+
+        <div class="campo">
+
+            <label>
+                En este traspaso eres:
+            </label>
+
+            <select
+                id="participanteRol">
+
+                <option value="">
+                    Selecciona
+                </option>
+
+                <option value="COMPRADOR">
+                    Comprador
+                </option>
+
+                <option value="VENDEDOR">
+                    Vendedor
+                </option>
+
+            </select>
+
+        </div>
+
+        <br>
+
+        <button
+            onclick="guardarParticipante()">
+            Continuar
+        </button>
+
+    </div>
 
     `;
 }
@@ -1269,32 +1213,33 @@ async function guardarParticipante(){
 
     const nombre =
         document
-        .getElementById("participanteNombre")
-        .value
-        .trim();
+        .getElementById(
+            "participanteNombre"
+        ).value.trim();
 
     const dni_nie =
         document
-        .getElementById("participanteDni")
-        .value
-        .trim();
+        .getElementById(
+            "participanteDni"
+        ).value.trim();
 
     const telefono =
         document
-        .getElementById("participanteTelefono")
-        .value
-        .trim();
+        .getElementById(
+            "participanteTelefono"
+        ).value.trim();
 
     const email =
         document
-        .getElementById("participanteEmail")
-        .value
-        .trim();
+        .getElementById(
+            "participanteEmail"
+        ).value.trim();
 
     const rol =
         document
-        .getElementById("participanteRol")
-        .value;
+        .getElementById(
+            "participanteRol"
+        ).value;
 
     if(
         !nombre ||
@@ -1311,11 +1256,6 @@ async function guardarParticipante(){
         return;
     }
 
-    const token =
-        localStorage.getItem(
-            "gestorIA_token"
-        );
-
     try{
 
         const res =
@@ -1329,17 +1269,21 @@ async function guardarParticipante(){
                             "application/json",
 
                         "Authorization":
-                            "Bearer " + token
+                            "Bearer " +
+                            tokenActual()
                     },
 
                     body:JSON.stringify({
+
                         expediente_id:
                             expedienteActual.id,
+
                         nombre,
                         dni_nie,
                         telefono,
                         email,
                         rol
+
                     })
                 }
             );
@@ -1356,6 +1300,9 @@ async function guardarParticipante(){
 
             return;
         }
+
+        expedienteActual.estado=
+            "DATOS_INICIALES";
 
         abrirChat();
 
@@ -1376,61 +1323,54 @@ async function abrirChat(){
 
     contenido.innerHTML=`
 
-        <div class="card">
+    <div class="card">
 
-            <h1>
-                🚗 ${expedienteActual.matricula}
-            </h1>
+        <h1>
+            🚗 ${expedienteActual.matricula}
+        </h1>
 
-            <div class="estado">
+        <div class="estado">
+            🤖 Gestor-IA está gestionando
+            este expediente.
+        </div>
 
-                🤖 Gestor-IA está gestionando
-                este expediente.
+        <div id="chat"></div>
 
-            </div>
+        <div class="fila-chat">
 
-            <div id="chat"></div>
+            <input
+                id="mensaje"
+                placeholder="Escribe tu respuesta...">
 
-            <div class="fila-chat">
-
-                <input
-                    id="mensaje"
-                    placeholder="Escribe tu respuesta..."
-                >
-
-                <button
-                    onclick="enviarMensaje()">
-                    Enviar
-                </button>
-
-            </div>
+            <button
+                onclick="enviarMensaje()">
+                Enviar
+            </button>
 
         </div>
+
+    </div>
 
     `;
 
     document
-        .getElementById("mensaje")
-        .addEventListener(
-            "keydown",
-            function(e){
+    .getElementById("mensaje")
+    .addEventListener(
+        "keydown",
+        function(e){
 
-                if(e.key==="Enter"){
-                    enviarMensaje();
-                }
+            if(e.key==="Enter"){
+
+                enviarMensaje();
             }
-        );
+        }
+    );
 
     await iniciarConversacion();
 }
 
 
 async function iniciarConversacion(){
-
-    const token =
-        localStorage.getItem(
-            "gestorIA_token"
-        );
 
     try{
 
@@ -1445,13 +1385,17 @@ async function iniciarConversacion(){
                             "application/json",
 
                         "Authorization":
-                            "Bearer " + token
+                            "Bearer " +
+                            tokenActual()
                     },
 
                     body:JSON.stringify({
+
                         expediente_id:
                             expedienteActual.id,
+
                         mensaje:""
+
                     })
                 }
             );
@@ -1479,6 +1423,10 @@ async function iniciarConversacion(){
             data.paso_actual ===
             "PAGO_PENDIENTE"
         ){
+
+            expedienteActual.estado=
+                "PAGO_PENDIENTE";
+
             setTimeout(
                 pantallaPago,
                 800
@@ -1495,7 +1443,10 @@ async function iniciarConversacion(){
 }
 
 
-function agregarMensaje(tipo,texto){
+function agregarMensaje(
+    tipo,
+    texto
+){
 
     const chat =
         document.getElementById(
@@ -1505,12 +1456,16 @@ function agregarMensaje(tipo,texto){
     if(!chat) return;
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     div.className=tipo;
 
     const span =
-        document.createElement("span");
+        document.createElement(
+            "span"
+        );
 
     span.textContent=texto;
 
@@ -1547,11 +1502,6 @@ async function enviarMensaje(){
         "Pensando..."
     );
 
-    const token =
-        localStorage.getItem(
-            "gestorIA_token"
-        );
-
     try{
 
         const res =
@@ -1565,13 +1515,17 @@ async function enviarMensaje(){
                             "application/json",
 
                         "Authorization":
-                            "Bearer " + token
+                            "Bearer " +
+                            tokenActual()
                     },
 
                     body:JSON.stringify({
+
                         expediente_id:
                             expedienteActual.id,
+
                         mensaje
+
                     })
                 }
             );
@@ -1612,25 +1566,16 @@ async function enviarMensaje(){
             "PAGO_PENDIENTE"
         ){
 
+            expedienteActual.estado=
+                "PAGO_PENDIENTE";
+
             setTimeout(
                 pantallaPago,
-                1000
+                900
             );
         }
 
     }catch(error){
-
-        const chat =
-            document.getElementById(
-                "chat"
-            );
-
-        if(chat?.lastChild){
-
-            chat.removeChild(
-                chat.lastChild
-            );
-        }
 
         agregarMensaje(
             "bot",
@@ -1648,126 +1593,343 @@ function pantallaPago(){
 
     contenido.innerHTML=`
 
-        <div class="card">
+    <div class="card">
 
-            <h1>
-                💳 Pago del servicio
-            </h1>
+        <h1>
+            💳 Pago del servicio
+        </h1>
 
-            <p>
-                Expediente:
-                <b>
-                    ${expedienteActual.matricula}
-                </b>
-            </p>
+        <p>
+            Expediente:
+            <b>
+                ${expedienteActual.matricula}
+            </b>
+        </p>
 
-            <div class="pago-box">
+        <div class="pago-box">
 
-                <div class="linea-pago">
-                    <span>
-                        Servicio Gestor-IA
-                    </span>
+            <div class="linea-pago">
 
-                    <span>
-                        Pendiente de determinar
-                    </span>
-                </div>
+                <span>
+                    Servicio Gestor-IA
+                </span>
 
-                <div class="linea-pago">
-                    <span>
-                        Tasas oficiales
-                    </span>
-
-                    <span>
-                        Se calcularán
-                    </span>
-                </div>
-
-                <div class="linea-pago">
-                    <span>
-                        Impuestos aplicables
-                    </span>
-
-                    <span>
-                        Se calcularán
-                    </span>
-                </div>
-
-                <div class="linea-pago total">
-                    <span>
-                        Total
-                    </span>
-
-                    <span>
-                        Pendiente
-                    </span>
-                </div>
+                <span>
+                    Según tarifa aplicable
+                </span>
 
             </div>
 
-            <p class="aviso">
+            <div class="linea-pago">
 
-                El pago todavía no está habilitado.
+                <span>
+                    Tasas oficiales
+                </span>
 
-                <br><br>
+                <span>
+                    Pendiente de cálculo
+                </span>
 
-                Cuando el sistema de pago esté disponible,
-                aquí aparecerá el importe exacto y el botón
-                para realizar el pago de forma segura.
+            </div>
 
-            </p>
+            <div class="linea-pago">
 
-            <br>
+                <span>
+                    Impuestos aplicables
+                </span>
 
-            <button disabled>
-                Pago no disponible todavía
-            </button>
+                <span>
+                    Pendiente de cálculo
+                </span>
+
+            </div>
+
+            <div class="linea-pago total">
+
+                <span>
+                    Total
+                </span>
+
+                <span>
+                    Pendiente
+                </span>
+
+            </div>
 
         </div>
+
+        <p>
+            Esta versión está en desarrollo.
+            El pago real todavía no está conectado.
+        </p>
+
+        <button
+            onclick="simularPago()">
+
+            🧪 Simular pago completado
+
+        </button>
+
+        <p style="
+            color:#94a3b8;
+            margin-top:15px;
+            font-size:13px;
+        ">
+            Este botón se eliminará antes
+            de publicar el servicio.
+        </p>
+
+    </div>
+
+    `;
+}
+
+
+async function simularPago(){
+
+    if(
+        !confirm(
+            "¿Simular el pago de este expediente?"
+        )
+    ){
+        return;
+    }
+
+    try{
+
+        const res =
+            await fetch(
+                "/api/simular-pago",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            "Bearer " +
+                            tokenActual()
+                    },
+
+                    body:JSON.stringify({
+                        expediente_id:
+                            expedienteActual.id
+                    })
+                }
+            );
+
+        const data =
+            await res.json();
+
+        if(!res.ok || !data.ok){
+
+            alert(
+                data.error ||
+                "No se pudo simular el pago."
+            );
+
+            return;
+        }
+
+        expedienteActual=
+            data.expediente;
+
+        pantallaPostPago();
+
+    }catch(error){
+
+        alert(
+            "No se pudo simular el pago."
+        );
+    }
+}
+
+
+/* =============================
+   DESPUÉS DEL PAGO
+============================= */
+
+function pantallaPostPago(){
+
+    contenido.innerHTML=`
+
+    <div class="card">
+
+        <h1>
+            ✅ Pago confirmado
+        </h1>
+
+        <p>
+            El expediente
+            <b>
+                ${expedienteActual.matricula}
+            </b>
+            puede continuar.
+        </p>
+
+        <div class="estado">
+
+            Ahora puedes invitar a la
+            otra persona participante
+            en el traspaso.
+
+        </div>
+
+        <button
+            onclick="generarInvitacion()">
+
+            🔗 Generar invitación
+
+        </button>
+
+        <button
+            class="btn-secundario"
+            onclick="pantallaAutorizaciones()">
+
+            🔐 Ver autorizaciones
+
+        </button>
+
+    </div>
 
     `;
 }
 
 
 /* =============================
+   INVITACIÓN
+============================= */
+
+async function generarInvitacion(){
+
+    try{
+
+        const res =
+            await fetch(
+                "/api/generar-invitacion",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            "Bearer " +
+                            tokenActual()
+                    },
+
+                    body:JSON.stringify({
+
+                        expediente_id:
+                            expedienteActual.id
+
+                    })
+                }
+            );
+
+        const data =
+            await res.json();
+
+        if(!res.ok || !data.ok){
+
+            alert(
+                data.error ||
+                "No se pudo generar la invitación."
+            );
+
+            return;
+        }
+
+        contenido.innerHTML=`
+
+        <div class="card">
+
+            <h1>
+                🔗 Invitación creada
+            </h1>
+
+            <p>
+                Envía este enlace a la
+                otra persona del traspaso.
+            </p>
+
+            <div class="invitacion-box">
+
+                <input
+                    class="enlace-invitacion"
+                    id="enlaceInvitacion"
+                    readonly
+                    value="${data.enlace}"
+                >
+
+                <br><br>
+
+                <button
+                    onclick="copiarInvitacion()">
+
+                    Copiar enlace
+
+                </button>
+
+            </div>
+
+            <p>
+                El enlace caduca en 48 horas
+                y está asociado únicamente
+                a este expediente.
+            </p>
+
+        </div>
+
+        `;
+
+    }catch(error){
+
+        alert(
+            "No se pudo generar la invitación."
+        );
+    }
+}
+
+
+function copiarInvitacion(){
+
+    const input =
+        document.getElementById(
+            "enlaceInvitacion"
+        );
+
+    input.select();
+
+    navigator.clipboard
+        .writeText(
+            input.value
+        );
+
+    alert(
+        "Enlace copiado."
+    );
+}
+
+
+/* =============================
    AUTORIZACIONES
-   SOLO TRAS PAGO REAL
 ============================= */
 
 async function pantallaAutorizaciones(){
 
     if(
-        !expedienteActual ||
-        expedienteActual.pago_validado !== true
+        !expedienteActual?.pago_validado
     ){
 
-        contenido.innerHTML=`
-
-            <div class="card">
-
-                <h1>
-                    🔐 Autorizaciones
-                </h1>
-
-                <div class="estado">
-
-                    Las autorizaciones estarán
-                    disponibles después de que
-                    el pago haya sido confirmado.
-
-                </div>
-
-            </div>
-
-        `;
+        alert(
+            "Primero debe confirmarse el pago."
+        );
 
         return;
     }
-
-    const token =
-        localStorage.getItem(
-            "gestorIA_token"
-        );
 
     try{
 
@@ -1782,7 +1944,8 @@ async function pantallaAutorizaciones(){
                             "application/json",
 
                         "Authorization":
-                            "Bearer " + token
+                            "Bearer " +
+                            tokenActual()
                     },
 
                     body:JSON.stringify({
@@ -1807,60 +1970,57 @@ async function pantallaAutorizaciones(){
 
         contenido.innerHTML=`
 
-            <div class="card">
+        <div class="card">
 
-                <h1>
-                    🔐 Autorizaciones
-                </h1>
+            <h1>
+                🔐 Autorizaciones
+            </h1>
+
+            <div class="autorizacion">
+
+                <h2>
+                    🧾 Autorizar gestión tributaria
+                </h2>
 
                 <p>
-                    Para continuar necesitamos
-                    autorización para realizar
-                    las gestiones necesarias
-                    asociadas al expediente.
+                    ${data.tributaria.descripcion}
                 </p>
 
-                <div class="autorizacion">
+                <p>
+                    <b>
+                        ${data.tributaria.organismo}
+                    </b>
+                </p>
 
-                    <h2>
-                        🧾 Autorizar gestión tributaria
-                    </h2>
+                <button
+                    onclick="abrirEnlace('${data.tributaria.enlace}')">
 
-                    <p>
-                        ${data.tributaria.descripcion}
-                    </p>
+                    Autorizar gestión tributaria
 
-                    <p>
-                        <b>
-                            ${data.tributaria.organismo}
-                        </b>
-                    </p>
-
-                    <button
-                        onclick="abrirEnlace('${data.tributaria.enlace}')">
-                        Autorizar gestión tributaria
-                    </button>
-
-                </div>
-
-                <div class="autorizacion">
-
-                    <h2>
-                        🚗 Autorizar gestión ante la DGT
-                    </h2>
-
-                    <p>
-                        ${data.dgt.descripcion}
-                    </p>
-
-                    <button
-                        onclick="abrirEnlace('${data.dgt.enlace}')">
-                        Autorizar en la DGT
-                    </button>
-
-                </div>
+                </button>
 
             </div>
+
+            <div class="autorizacion">
+
+                <h2>
+                    🚗 Autorizar gestión ante la DGT
+                </h2>
+
+                <p>
+                    ${data.dgt.descripcion}
+                </p>
+
+                <button
+                    onclick="abrirEnlace('${data.dgt.enlace}')">
+
+                    Autorizar en la DGT
+
+                </button>
+
+            </div>
+
+        </div>
 
         `;
 
@@ -1884,14 +2044,168 @@ function abrirEnlace(url){
 
 
 /* =============================
-   EXPEDIENTES
+   MIS EXPEDIENTES
 ============================= */
 
-function misExpedientes(){
+async function misExpedientes(){
 
     if(!requiereSesion()) return;
 
     contenido.innerHTML=`
+
+    <div class="card">
+
+        <h1>
+            📁 Mis expedientes
+        </h1>
+
+        <p>
+            Cargando expedientes...
+        </p>
+
+    </div>
+
+    `;
+
+    try{
+
+        const res =
+            await fetch(
+                "/api/mis-expedientes",
+                {
+                    headers:{
+                        "Authorization":
+                            "Bearer " +
+                            tokenActual()
+                    }
+                }
+            );
+
+        const data =
+            await res.json();
+
+        if(!res.ok || !data.ok){
+
+            contenido.innerHTML=`
+
+            <div class="card">
+
+                <h1>
+                    📁 Mis expedientes
+                </h1>
+
+                <p>
+                    ${data.error ||
+                    "No se pudieron cargar."}
+                </p>
+
+            </div>
+
+            `;
+
+            return;
+        }
+
+        if(
+            !data.expedientes.length
+        ){
+
+            contenido.innerHTML=`
+
+            <div class="card">
+
+                <h1>
+                    📁 Mis expedientes
+                </h1>
+
+                <p>
+                    Todavía no tienes
+                    ningún expediente.
+                </p>
+
+                <button
+                    onclick="nuevoTraspaso()">
+
+                    Iniciar traspaso
+
+                </button>
+
+            </div>
+
+            `;
+
+            return;
+        }
+
+        let tarjetas="";
+
+        for(
+            const exp
+            of data.expedientes
+        ){
+
+            tarjetas += `
+
+            <div class="expediente-card">
+
+                <div class="expediente-top">
+
+                    <div>
+
+                        <div class="expediente-matricula">
+                            🚗 ${exp.matricula}
+                        </div>
+
+                        <br>
+
+                        <span class="estado-pill">
+                            ${textoEstado(exp.estado)}
+                        </span>
+
+                    </div>
+
+                    <button
+                        onclick='continuarExpediente(${JSON.stringify(exp)})'>
+
+                        ${
+                            exp.estado ===
+                            "FINALIZADO"
+                            ?
+                            "Ver expediente"
+                            :
+                            "Continuar"
+                        }
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            `;
+        }
+
+        contenido.innerHTML=`
+
+        <div class="card">
+
+            <h1>
+                📁 Mis expedientes
+            </h1>
+
+            <div class="expedientes-grid">
+
+                ${tarjetas}
+
+            </div>
+
+        </div>
+
+        `;
+
+    }catch(error){
+
+        contenido.innerHTML=`
 
         <div class="card">
 
@@ -1900,14 +2214,123 @@ function misExpedientes(){
             </h1>
 
             <p>
-                En el siguiente paso conectaremos
-                esta sección con Supabase para
-                mostrar y continuar tus traspasos.
+                No se pudieron cargar.
             </p>
 
         </div>
 
-    `;
+        `;
+    }
+}
+
+
+function textoEstado(estado){
+
+    const nombres={
+
+        CREADO:
+            "Datos pendientes",
+
+        DATOS_INICIALES:
+            "Recogiendo datos",
+
+        PAGO_PENDIENTE:
+            "Pendiente de pago",
+
+        PAGO_VALIDADO:
+            "Pago confirmado",
+
+        INVITACION_GENERADA:
+            "Esperando participante",
+
+        FINALIZADO:
+            "Finalizado ✅"
+
+    };
+
+    return nombres[estado] ||
+        estado;
+}
+
+
+/* =============================
+   CONTINUAR EXPEDIENTE
+============================= */
+
+function continuarExpediente(exp){
+
+    expedienteActual=exp;
+
+    switch(exp.estado){
+
+        case "CREADO":
+
+            formularioParticipante();
+
+            break;
+
+
+        case "DATOS_INICIALES":
+
+            abrirChat();
+
+            break;
+
+
+        case "PAGO_PENDIENTE":
+
+            pantallaPago();
+
+            break;
+
+
+        case "PAGO_VALIDADO":
+
+            pantallaPostPago();
+
+            break;
+
+
+        case "INVITACION_GENERADA":
+
+            pantallaPostPago();
+
+            break;
+
+
+        case "FINALIZADO":
+
+            contenido.innerHTML=`
+
+            <div class="card">
+
+                <h1>
+                    ✅ Traspaso finalizado
+                </h1>
+
+                <p>
+                    Matrícula:
+                    <b>
+                        ${exp.matricula}
+                    </b>
+                </p>
+
+                <div class="estado">
+                    Este expediente consta
+                    como finalizado.
+                </div>
+
+            </div>
+
+            `;
+
+            break;
+
+
+        default:
+
+            abrirChat();
+    }
 }
 
 

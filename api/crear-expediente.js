@@ -11,214 +11,156 @@ const supabase = createClient(
     }
 );
 
+function crearClienteUsuario(token) {
+    return createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_ANON_KEY,
+        {
+            global: {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            },
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false
+            }
+        }
+    );
+}
+
 export default async function handler(req, res) {
 
     if (req.method !== "POST") {
-
         return res.status(405).json({
             ok: false,
             error: "Método no permitido"
         });
-
     }
 
     try {
-
-        /* ==========================
-           TOKEN
-        ========================== */
 
         const authorization =
             req.headers.authorization || "";
 
         if (!authorization.startsWith("Bearer ")) {
-
             return res.status(401).json({
                 ok: false,
                 error: "Necesitas iniciar sesión."
             });
-
         }
 
         const token =
             authorization.substring(7).trim();
-
-
-        /* ==========================
-           COMPROBAR USUARIO
-        ========================== */
 
         const {
             data: userData,
             error: userError
         } = await supabase.auth.getUser(token);
 
-
-        if (userError) {
-
-            console.error(
-                "ERROR GET USER:",
-                userError
-            );
-
+        if (userError || !userData?.user) {
             return res.status(401).json({
                 ok: false,
-                error:
-                    "Error comprobando la sesión: " +
-                    userError.message
+                error: "Sesión no válida."
             });
-
         }
 
+        const usuario = userData.user;
 
-        if (!userData?.user) {
-
-            return res.status(401).json({
-                ok: false,
-                error: "Usuario no encontrado."
-            });
-
-        }
-
-
-        const usuario =
-            userData.user;
-
-
-        /* ==========================
-           MATRÍCULA
-        ========================== */
-
-        let matricula =
-            String(
-                req.body?.matricula || ""
-            )
-            .trim()
-            .toUpperCase();
-
+        const matricula =
+            String(req.body?.matricula || "")
+                .trim()
+                .replace(/\s/g, "")
+                .toUpperCase();
 
         if (!matricula) {
-
             return res.status(400).json({
                 ok: false,
-                error:
-                    "Introduce la matrícula."
+                error: "Introduce la matrícula."
             });
-
         }
 
+        const db =
+            crearClienteUsuario(token);
 
-        /* ==========================
-           CLIENTE SUPABASE
-           AUTENTICADO
-        ========================== */
+        /*
+        Comprobar si ya existe un expediente activo
+        para esa matrícula y ese usuario.
+        */
 
-        const supabaseUsuario =
-            createClient(
-                process.env.SUPABASE_URL,
-                process.env.SUPABASE_ANON_KEY,
-                {
-                    global: {
-                        headers: {
-                            Authorization:
-                                `Bearer ${token}`
-                        }
-                    },
+        const {
+            data: existente,
+            error: buscarError
+        } = await db
+            .from("expedientes")
+            .select("*")
+            .eq("creador_id", usuario.id)
+            .eq("matricula", matricula)
+            .neq("estado", "FINALIZADO")
+            .order("created_at", {
+                ascending: false
+            })
+            .limit(1)
+            .maybeSingle();
 
-                    auth: {
-                        persistSession: false,
-                        autoRefreshToken: false
-                    }
-                }
+        if (buscarError) {
+            console.error(
+                "Error buscando expediente:",
+                buscarError
             );
+        }
 
-
-        /* ==========================
-           CREAR EXPEDIENTE
-        ========================== */
+        if (existente) {
+            return res.status(200).json({
+                ok: true,
+                existente: true,
+                expediente: existente
+            });
+        }
 
         const {
             data: expediente,
             error: insertarError
-        } = await supabaseUsuario
+        } = await db
             .from("expedientes")
             .insert({
-                creador_id:
-                    usuario.id,
-
-                matricula:
-                    matricula,
-
-                estado:
-                    "CREADO",
-
-                pago_validado:
-                    false,
-
-                invitacion_habilitada:
-                    false
+                creador_id: usuario.id,
+                matricula,
+                estado: "CREADO",
+                pago_validado: false,
+                invitacion_habilitada: false
             })
             .select()
             .single();
 
-
         if (insertarError) {
 
             console.error(
-                "ERROR INSERTANDO EXPEDIENTE:",
+                "Error creando expediente:",
                 insertarError
             );
 
             return res.status(500).json({
-
                 ok: false,
-
                 error:
                     "Supabase: " +
-                    insertarError.message,
-
-                codigo:
-                    insertarError.code,
-
-                detalles:
-                    insertarError.details
-
+                    insertarError.message
             });
-
         }
 
-
-        /* ==========================
-           RESPUESTA
-        ========================== */
-
         return res.status(200).json({
-
             ok: true,
-
-            expediente:
-                expediente
-
+            existente: false,
+            expediente
         });
-
 
     } catch (error) {
 
-        console.error(
-            "ERROR GENERAL:",
-            error
-        );
+        console.error(error);
 
         return res.status(500).json({
-
             ok: false,
-
-            error:
-                "Error interno: " +
-                error.message
-
+            error: "Error interno del servidor."
         });
-
     }
-
 }
