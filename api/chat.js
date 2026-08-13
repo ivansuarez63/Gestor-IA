@@ -43,7 +43,7 @@ function clienteAutenticado(token) {
 
 
 /* =====================================================
-   LIMPIAR NÚMEROS
+   UTILIDADES
 ===================================================== */
 
 function limpiarNumero(texto) {
@@ -56,20 +56,185 @@ function limpiarNumero(texto) {
 }
 
 
-/* =====================================================
-   NORMALIZAR TEXTO
-===================================================== */
-
 function normalizarTexto(texto) {
 
     return String(texto || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .trim()
         .replace(/\s+/g, " ");
 }
 
 
+function convertirFecha(texto) {
+
+    const match =
+        String(texto || "")
+            .match(
+                /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/
+            );
+
+    if (!match) {
+        return null;
+    }
+
+    const dia =
+        match[1].padStart(2, "0");
+
+    const mes =
+        match[2].padStart(2, "0");
+
+    const anio =
+        match[3];
+
+    const fecha =
+        new Date(
+            `${anio}-${mes}-${dia}T00:00:00`
+        );
+
+    if (
+        Number.isNaN(
+            fecha.getTime()
+        )
+    ) {
+        return null;
+    }
+
+    if (
+        fecha.getFullYear() !== Number(anio) ||
+        fecha.getMonth() + 1 !== Number(mes) ||
+        fecha.getDate() !== Number(dia)
+    ) {
+        return null;
+    }
+
+    return `${anio}-${mes}-${dia}`;
+}
+
+
+function obtenerAnio(fecha) {
+
+    if (!fecha) {
+        return null;
+    }
+
+    const match =
+        String(fecha)
+            .match(/^(\d{4})/);
+
+    if (!match) {
+        return null;
+    }
+
+    return Number(match[1]);
+}
+
+
 /* =====================================================
-   SIGUIENTE PREGUNTA
+   POTENCIA
+===================================================== */
+
+function extraerPotencia(texto) {
+
+    const valor =
+        String(texto || "")
+            .toLowerCase()
+            .replace(",", ".");
+
+    const kw =
+        valor.match(
+            /(\d+(?:\.\d+)?)\s*kw/
+        );
+
+    if (kw) {
+
+        return {
+            tipo: "KW",
+            valor: Number(kw[1])
+        };
+    }
+
+
+    const cv =
+        valor.match(
+            /(\d+(?:\.\d+)?)\s*(cv|caballos)/
+        );
+
+    if (cv) {
+
+        return {
+            tipo: "CV",
+            valor: Number(cv[1])
+        };
+    }
+
+
+    /*
+       Si solo escribe un número,
+       lo guardamos pero NO asumimos
+       automáticamente la unidad.
+    */
+
+    const numero =
+        valor.match(
+            /(\d+(?:\.\d+)?)/
+        );
+
+    if (numero) {
+
+        return {
+            tipo: "DESCONOCIDA",
+            valor: Number(numero[1])
+        };
+    }
+
+
+    return null;
+}
+
+
+/* =====================================================
+   IDENTIFICAR CARROCERÍA
+===================================================== */
+
+function esDescapotable(nombre) {
+
+    const n =
+        normalizarTexto(nombre)
+            .toUpperCase();
+
+    return (
+        /\bCABRIO\b/.test(n) ||
+        /\bCABRIOLET\b/.test(n) ||
+        /\bSPIDER\b/.test(n) ||
+        /\bCONVERTIBLE\b/.test(n) ||
+        /\bROADSTER\b/.test(n) ||
+        /\b500 C\b/.test(n)
+    );
+}
+
+
+/* =====================================================
+   IDENTIFICAR TRANSMISIÓN
+===================================================== */
+
+function esSecuencial(nombre) {
+
+    const n =
+        normalizarTexto(nombre)
+            .toUpperCase();
+
+    return (
+        n.includes("SECUENCIAL") ||
+        n.includes("AUT.") ||
+        n.includes("AUTOMATIC") ||
+        n.includes("AUTOMÁTIC")
+    );
+}
+
+
+/* =====================================================
+   PREGUNTAS
 ===================================================== */
 
 function siguientePregunta(expediente) {
@@ -93,7 +258,7 @@ function siguientePregunta(expediente) {
 
         case "MODELO":
 
-            return "¿Cuál es el modelo y, si lo sabes, la versión exacta del vehículo?";
+            return "¿Cuál es el modelo y, si lo sabes, la versión del vehículo?";
 
 
         case "PRIMERA_MATRICULACION":
@@ -113,7 +278,7 @@ function siguientePregunta(expediente) {
 
         case "POTENCIA":
 
-            return "¿Cuál es la potencia del vehículo? Si la tienes en kW, CV o caballos fiscales, indícame también la unidad.";
+            return "¿Cuál es la potencia del vehículo? Indícame también si está expresada en kW o CV. Por ejemplo: 132 kW.";
 
 
         case "KILOMETROS":
@@ -131,9 +296,24 @@ function siguientePregunta(expediente) {
             return "¿En qué provincia tiene su domicilio fiscal el comprador?";
 
 
+        case "CARROCERIA_FISCAL":
+
+            return "Necesito distinguir la versión exacta. ¿El vehículo es la versión normal/cerrada o es descapotable/cabrio?";
+
+
+        case "TRANSMISION_FISCAL":
+
+            return "¿El cambio del vehículo es manual o secuencial/automático?";
+
+
+        case "VERSION_EXACTA":
+
+            return "He encontrado varias versiones fiscales posibles. Indícame la versión exacta del vehículo tal como aparece en su documentación.";
+
+
         case "CALCULO_FISCAL":
 
-            return "Perfecto. Ya tengo los datos principales. Voy a comprobar el cálculo del traspaso antes de mostrarte el importe.";
+            return "Perfecto. El vehículo ya está identificado. Ahora voy a verificar el cálculo fiscal antes de mostrarte el importe.";
 
 
         case "PAGO_PENDIENTE":
@@ -149,7 +329,7 @@ function siguientePregunta(expediente) {
 
 
 /* =====================================================
-   SIGUIENTE PASO
+   SECUENCIA NORMAL
 ===================================================== */
 
 function siguientePaso(actual) {
@@ -187,7 +367,7 @@ function siguientePaso(actual) {
             "PROVINCIA",
 
         PROVINCIA:
-            "CALCULO_FISCAL"
+            "IDENTIFICAR_VEHICULO"
 
     };
 
@@ -196,57 +376,635 @@ function siguientePaso(actual) {
 
 
 /* =====================================================
-   VALIDAR FECHA
+   BUSCAR CANDIDATOS FISCALES
 ===================================================== */
 
-function convertirFecha(texto) {
+async function buscarCandidatos(
+    db,
+    expediente,
+    versionExtra = null
+) {
 
-    const match =
-        String(texto || "")
-            .match(
-                /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/
+    const marca =
+        normalizarTexto(
+            expediente.marca
+        )
+        .toUpperCase();
+
+
+    const modeloBase =
+        versionExtra
+            ?
+            normalizarTexto(
+                versionExtra
+            )
+            :
+            normalizarTexto(
+                expediente.modelo
             );
 
-    if (!match) {
-        return null;
-    }
 
-    const dia =
-        match[1].padStart(2, "0");
-
-    const mes =
-        match[2].padStart(2, "0");
-
-    const anio =
-        match[3];
-
-    const fecha =
-        new Date(
-            `${anio}-${mes}-${dia}T00:00:00`
+    const cilindrada =
+        Number(
+            expediente.cilindrada || 0
         );
 
+
     if (
-        Number.isNaN(
-            fecha.getTime()
+        !marca ||
+        !modeloBase ||
+        !cilindrada
+    ) {
+
+        return [];
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await db
+            .from(
+                "valoraciones_vehiculos"
+            )
+            .select(`
+                id,
+                ejercicio,
+                marca,
+                modelo_tipo,
+                periodo_inicio,
+                periodo_fin,
+                cilindrada,
+                numero_cilindros,
+                tipo_motor,
+                potencia_kw,
+                caballos_fiscales,
+                potencia_cv,
+                valor_oficial,
+                fuente
+            `)
+            .eq(
+                "ejercicio",
+                2026
+            )
+            .ilike(
+                "marca",
+                marca
+            )
+            .eq(
+                "cilindrada",
+                Math.round(cilindrada)
+            )
+            .limit(1000);
+
+
+    if (error) {
+
+        console.error(
+            "Error buscando valoración:",
+            error
+        );
+
+        throw error;
+    }
+
+
+    let candidatos =
+        data || [];
+
+
+    /* =================================================
+       FILTRAR POR TEXTO DEL MODELO
+    ================================================= */
+
+    const palabras =
+        normalizarTexto(
+            modeloBase
         )
-    ) {
-        return null;
-    }
+        .toUpperCase()
+        .split(" ")
+        .filter(
+            palabra =>
+                palabra.length >= 2
+        );
 
-    /*
-       Comprobación adicional para evitar
-       fechas imposibles tipo 31/02/2026.
-    */
 
     if (
-        fecha.getFullYear() !== Number(anio) ||
-        fecha.getMonth() + 1 !== Number(mes) ||
-        fecha.getDate() !== Number(dia)
+        palabras.length > 0
     ) {
+
+        candidatos =
+            candidatos.filter(
+                vehiculo => {
+
+                    const oficial =
+                        normalizarTexto(
+                            vehiculo.modelo_tipo
+                        )
+                        .toUpperCase();
+
+
+                    return palabras.every(
+                        palabra =>
+                            oficial.includes(
+                                palabra
+                            )
+                    );
+                }
+            );
+    }
+
+
+    /* =================================================
+       FILTRAR POR AÑO
+    ================================================= */
+
+    const anio =
+        obtenerAnio(
+            expediente
+                .fecha_primera_matriculacion
+        );
+
+
+    if (
+        Number.isInteger(anio)
+    ) {
+
+        candidatos =
+            candidatos.filter(
+                vehiculo => {
+
+                    const inicio =
+                        vehiculo.periodo_inicio === null
+                            ?
+                            null
+                            :
+                            Number(
+                                vehiculo.periodo_inicio
+                            );
+
+
+                    const fin =
+                        vehiculo.periodo_fin === null
+                            ?
+                            null
+                            :
+                            Number(
+                                vehiculo.periodo_fin
+                            );
+
+
+                    if (
+                        inicio !== null &&
+                        anio < inicio
+                    ) {
+
+                        return false;
+                    }
+
+
+                    if (
+                        fin !== null &&
+                        anio > fin
+                    ) {
+
+                        return false;
+                    }
+
+
+                    return true;
+                }
+            );
+    }
+
+
+    /* =================================================
+       FILTRAR POR POTENCIA
+    ================================================= */
+
+    const potencia =
+        extraerPotencia(
+            expediente
+                .potencia_declarada
+        );
+
+
+    if (
+        potencia &&
+        potencia.tipo !==
+        "DESCONOCIDA"
+    ) {
+
+        const filtrados =
+            candidatos.filter(
+                vehiculo => {
+
+                    if (
+                        potencia.tipo ===
+                        "KW"
+                    ) {
+
+                        const oficial =
+                            Number(
+                                vehiculo.potencia_kw
+                            );
+
+                        return (
+                            Number.isFinite(
+                                oficial
+                            ) &&
+                            Math.abs(
+                                oficial -
+                                potencia.valor
+                            ) <= 0.5
+                        );
+                    }
+
+
+                    if (
+                        potencia.tipo ===
+                        "CV"
+                    ) {
+
+                        const oficial =
+                            Number(
+                                vehiculo.potencia_cv
+                            );
+
+                        return (
+                            Number.isFinite(
+                                oficial
+                            ) &&
+                            Math.abs(
+                                oficial -
+                                potencia.valor
+                            ) <= 1
+                        );
+                    }
+
+
+                    return true;
+                }
+            );
+
+
+        if (
+            filtrados.length > 0
+        ) {
+
+            candidatos =
+                filtrados;
+        }
+    }
+
+
+    /* =================================================
+       CARROCERÍA
+    ================================================= */
+
+    if (
+        expediente
+            .carroceria_fiscal ===
+        "CABRIO"
+    ) {
+
+        candidatos =
+            candidatos.filter(
+                vehiculo =>
+                    esDescapotable(
+                        vehiculo.modelo_tipo
+                    )
+            );
+    }
+
+
+    if (
+        expediente
+            .carroceria_fiscal ===
+        "NORMAL"
+    ) {
+
+        candidatos =
+            candidatos.filter(
+                vehiculo =>
+                    !esDescapotable(
+                        vehiculo.modelo_tipo
+                    )
+            );
+    }
+
+
+    /* =================================================
+       TRANSMISIÓN
+    ================================================= */
+
+    if (
+        expediente
+            .transmision_fiscal ===
+        "SECUENCIAL"
+    ) {
+
+        candidatos =
+            candidatos.filter(
+                vehiculo =>
+                    esSecuencial(
+                        vehiculo.modelo_tipo
+                    )
+            );
+    }
+
+
+    if (
+        expediente
+            .transmision_fiscal ===
+        "MANUAL"
+    ) {
+
+        candidatos =
+            candidatos.filter(
+                vehiculo =>
+                    !esSecuencial(
+                        vehiculo.modelo_tipo
+                    )
+            );
+    }
+
+
+    return candidatos;
+}
+
+
+/* =====================================================
+   DECIDIR QUÉ DATO FALTA
+===================================================== */
+
+function decidirDatoFaltante(
+    candidatos
+) {
+
+    if (
+        candidatos.length <= 1
+    ) {
+
         return null;
     }
 
-    return `${anio}-${mes}-${dia}`;
+
+    const carrocerias =
+        new Set(
+            candidatos.map(
+                vehiculo =>
+                    esDescapotable(
+                        vehiculo.modelo_tipo
+                    )
+                    ?
+                    "CABRIO"
+                    :
+                    "NORMAL"
+            )
+        );
+
+
+    if (
+        carrocerias.size > 1
+    ) {
+
+        return "CARROCERIA_FISCAL";
+    }
+
+
+    const transmisiones =
+        new Set(
+            candidatos.map(
+                vehiculo =>
+                    esSecuencial(
+                        vehiculo.modelo_tipo
+                    )
+                    ?
+                    "SECUENCIAL"
+                    :
+                    "MANUAL"
+            )
+        );
+
+
+    if (
+        transmisiones.size > 1
+    ) {
+
+        return "TRANSMISION_FISCAL";
+    }
+
+
+    return "VERSION_EXACTA";
+}
+
+
+/* =====================================================
+   FINALIZAR IDENTIFICACIÓN
+===================================================== */
+
+async function guardarVehiculoIdentificado(
+    db,
+    expedienteId,
+    vehiculo
+) {
+
+    const {
+        error
+    } =
+        await db
+            .from("expedientes")
+            .update({
+
+                valoracion_id:
+                    vehiculo.id,
+
+                modelo_fiscal_identificado:
+                    vehiculo.modelo_tipo,
+
+                valor_fiscal:
+                    vehiculo.valor_oficial,
+
+                paso_actual:
+                    "CALCULO_FISCAL",
+
+                estado:
+                    "CALCULO_FISCAL",
+
+                calculo_fiscal_verificado:
+                    false,
+
+                updated_at:
+                    new Date()
+                        .toISOString()
+
+            })
+            .eq(
+                "id",
+                expedienteId
+            );
+
+
+    if (error) {
+
+        throw error;
+    }
+}
+
+
+/* =====================================================
+   PROCESAR IDENTIFICACIÓN
+===================================================== */
+
+async function procesarIdentificacion(
+    db,
+    expediente,
+    versionExtra = null
+) {
+
+    const candidatos =
+        await buscarCandidatos(
+            db,
+            expediente,
+            versionExtra
+        );
+
+
+    /* =================================================
+       NO ENCONTRADO
+    ================================================= */
+
+    if (
+        candidatos.length === 0
+    ) {
+
+        return {
+
+            encontrado:
+                false,
+
+            paso:
+                "VERSION_EXACTA",
+
+            respuesta:
+                "No he podido identificar con certeza la versión fiscal del vehículo. Indícame la versión exacta tal como aparece en la documentación del vehículo."
+
+        };
+    }
+
+
+    /* =================================================
+       UNA SOLA VERSIÓN
+    ================================================= */
+
+    if (
+        candidatos.length === 1
+    ) {
+
+        const vehiculo =
+            candidatos[0];
+
+
+        await guardarVehiculoIdentificado(
+            db,
+            expediente.id,
+            vehiculo
+        );
+
+
+        return {
+
+            encontrado:
+                true,
+
+            exacto:
+                true,
+
+            paso:
+                "CALCULO_FISCAL",
+
+            vehiculo,
+
+            respuesta:
+                `Perfecto. He identificado la versión como ${vehiculo.marca} ${vehiculo.modelo_tipo}. Ya puedo continuar con la verificación fiscal del expediente.`
+
+        };
+    }
+
+
+    /* =================================================
+       VARIAS VERSIONES
+    ================================================= */
+
+    const paso =
+        decidirDatoFaltante(
+            candidatos
+        );
+
+
+    let respuesta;
+
+
+    if (
+        paso ===
+        "CARROCERIA_FISCAL"
+    ) {
+
+        respuesta =
+            "He encontrado varias versiones compatibles. Para distinguirlas necesito saber si tu vehículo es la versión normal/cerrada o descapotable/cabrio.";
+
+    } else if (
+        paso ===
+        "TRANSMISION_FISCAL"
+    ) {
+
+        respuesta =
+            "Ya casi lo tengo. ¿El cambio del vehículo es manual o secuencial/automático?";
+
+    } else {
+
+        const nombres =
+            [
+                ...new Set(
+                    candidatos
+                        .map(
+                            vehiculo =>
+                                vehiculo
+                                    .modelo_tipo
+                        )
+                )
+            ]
+            .slice(0, 8);
+
+
+        respuesta =
+            "He encontrado varias versiones fiscales posibles. Indícame cuál corresponde a tu vehículo:\n\n" +
+            nombres
+                .map(
+                    (nombre, index) =>
+                        `${index + 1}. ${nombre}`
+                )
+                .join("\n");
+    }
+
+
+    return {
+
+        encontrado:
+            true,
+
+        exacto:
+            false,
+
+        paso,
+
+        candidatos,
+
+        respuesta
+
+    };
 }
 
 
@@ -254,14 +1012,26 @@ function convertirFecha(texto) {
    HANDLER
 ===================================================== */
 
-export default async function handler(req, res) {
+export default async function handler(
+    req,
+    res
+) {
 
-    if (req.method !== "POST") {
+    if (
+        req.method !==
+        "POST"
+    ) {
 
-        return res.status(405).json({
-            ok: false,
-            error: "Método no permitido"
-        });
+        return res
+            .status(405)
+            .json({
+
+                ok: false,
+
+                error:
+                    "Método no permitido"
+
+            });
     }
 
 
@@ -282,10 +1052,16 @@ export default async function handler(req, res) {
             )
         ) {
 
-            return res.status(401).json({
-                ok: false,
-                error: "Necesitas iniciar sesión."
-            });
+            return res
+                .status(401)
+                .json({
+
+                    ok: false,
+
+                    error:
+                        "Necesitas iniciar sesión."
+
+                });
         }
 
 
@@ -309,10 +1085,16 @@ export default async function handler(req, res) {
             !userData?.user
         ) {
 
-            return res.status(401).json({
-                ok: false,
-                error: "Sesión no válida."
-            });
+            return res
+                .status(401)
+                .json({
+
+                    ok: false,
+
+                    error:
+                        "Sesión no válida."
+
+                });
         }
 
 
@@ -321,33 +1103,40 @@ export default async function handler(req, res) {
 
 
         /* =================================================
-           DATOS RECIBIDOS
+           DATOS
         ================================================= */
 
         const expedienteId =
             String(
-                req.body?.expediente_id || ""
-            ).trim();
+                req.body
+                    ?.expediente_id ||
+                ""
+            )
+            .trim();
 
 
         const mensaje =
             String(
-                req.body?.mensaje || ""
-            ).trim();
+                req.body?.mensaje ||
+                ""
+            )
+            .trim();
 
 
         if (!expedienteId) {
 
-            return res.status(400).json({
-                ok: false,
-                error: "Falta el expediente."
-            });
+            return res
+                .status(400)
+                .json({
+
+                    ok: false,
+
+                    error:
+                        "Falta el expediente."
+
+                });
         }
 
-
-        /* =================================================
-           CLIENTE SUPABASE DEL USUARIO
-        ================================================= */
 
         const db =
             clienteAutenticado(
@@ -378,11 +1167,16 @@ export default async function handler(req, res) {
             !expediente
         ) {
 
-            return res.status(403).json({
-                ok: false,
-                error:
-                    "No tienes acceso a este expediente."
-            });
+            return res
+                .status(403)
+                .json({
+
+                    ok: false,
+
+                    error:
+                        "No tienes acceso a este expediente."
+
+                });
         }
 
 
@@ -391,11 +1185,12 @@ export default async function handler(req, res) {
         ================================================= */
 
         const {
-            data: participantes,
-            error: participantesError
+            data: participantes
         } =
             await db
-                .from("participantes")
+                .from(
+                    "participantes"
+                )
                 .select(
                     "nombre,rol,estado,email"
                 )
@@ -405,147 +1200,180 @@ export default async function handler(req, res) {
                 );
 
 
-        if (participantesError) {
-
-            console.error(
-                "Error participantes:",
-                participantesError
-            );
-        }
-
-
         const primerParticipante =
             participantes?.find(
-                p =>
-                    p.estado ===
+                participante =>
+                    participante.estado ===
                     "DATOS_COMPLETOS"
             );
 
 
         /*
-        IMPORTANTE:
-
-        La IA NO considera que la otra persona
-        forma parte del expediente simplemente
-        porque el usuario escriba su nombre,
-        DNI o cualquier otro dato.
-
-        El segundo participante deberá entrar
-        posteriormente mediante su invitación.
+           La IA nunca añade al segundo
+           participante solo porque alguien
+           escriba sus datos en el chat.
         */
 
 
         /* =================================================
-           PRIMER MENSAJE AUTOMÁTICO
+           PETICIÓN SIN MENSAJE
         ================================================= */
 
         if (!mensaje) {
 
+
             /*
-            Si ya hemos llegado al cálculo fiscal,
-            el chat devuelve al frontend la señal
-            para lanzar el cálculo desde expediente.js.
+               Si llegamos a identificación,
+               intentamos resolverla automáticamente.
             */
 
             if (
-                expediente.paso_actual ===
-                "CALCULO_FISCAL"
+                expediente
+                    .paso_actual ===
+                "IDENTIFICAR_VEHICULO"
             ) {
 
-                return res.status(200).json({
+                const resultado =
+                    await procesarIdentificacion(
+                        db,
+                        expediente
+                    );
 
-                    ok: true,
 
-                    respuesta:
-                        "Perfecto. Ya tengo los datos principales del vehículo y de la operación. Ahora voy a verificar el cálculo antes de enseñarte el importe.",
+                if (
+                    resultado.paso !==
+                    "CALCULO_FISCAL"
+                ) {
 
-                    paso_actual:
-                        "CALCULO_FISCAL",
+                    await db
+                        .from("expedientes")
+                        .update({
 
-                    solicitar_calculo:
-                        true
+                            paso_actual:
+                                resultado.paso,
 
-                });
+                            updated_at:
+                                new Date()
+                                    .toISOString()
+
+                        })
+                        .eq(
+                            "id",
+                            expedienteId
+                        );
+                }
+
+
+                return res
+                    .status(200)
+                    .json({
+
+                        ok: true,
+
+                        respuesta:
+                            resultado.respuesta,
+
+                        paso_actual:
+                            resultado.paso,
+
+                        solicitar_calculo:
+                            resultado.paso ===
+                            "CALCULO_FISCAL",
+
+                        vehiculo:
+                            resultado.vehiculo ||
+                            null
+
+                    });
             }
 
 
             if (
-                expediente.paso_actual ===
-                "PAGO_PENDIENTE"
+                expediente
+                    .paso_actual ===
+                "CALCULO_FISCAL"
             ) {
 
-                return res.status(200).json({
+                return res
+                    .status(200)
+                    .json({
+
+                        ok: true,
+
+                        respuesta:
+                            "El vehículo está identificado. Ahora voy a verificar impuestos, tasas y coste total antes de habilitar el pago.",
+
+                        paso_actual:
+                            "CALCULO_FISCAL",
+
+                        solicitar_calculo:
+                            true
+
+                    });
+            }
+
+
+            return res
+                .status(200)
+                .json({
 
                     ok: true,
 
                     respuesta:
-                        "El cálculo del expediente está preparado. Revisa el desglose antes de continuar con el pago.",
+                        siguientePregunta(
+                            expediente
+                        ),
 
                     paso_actual:
-                        "PAGO_PENDIENTE"
+                        expediente
+                            .paso_actual
 
                 });
-            }
-
-
-            return res.status(200).json({
-
-                ok: true,
-
-                respuesta:
-                    siguientePregunta(
-                        expediente
-                    ),
-
-                paso_actual:
-                    expediente.paso_actual
-
-            });
         }
 
 
         /* =================================================
-           GUARDAR MENSAJE DEL USUARIO
+           GUARDAR MENSAJE USUARIO
         ================================================= */
 
-        const {
-            error: mensajeError
-        } =
-            await db
-                .from("mensajes")
-                .insert({
+        await db
+            .from("mensajes")
+            .insert({
 
-                    expediente_id:
-                        expedienteId,
+                expediente_id:
+                    expedienteId,
 
-                    usuario_id:
-                        usuario.id,
+                usuario_id:
+                    usuario.id,
 
-                    autor:
-                        "usuario",
+                autor:
+                    "usuario",
 
-                    contenido:
-                        mensaje
+                contenido:
+                    mensaje
 
-                });
-
-
-        if (mensajeError) {
-
-            console.error(
-                "Error guardando mensaje:",
-                mensajeError
-            );
-        }
+            });
 
 
         /* =================================================
-           VALIDAR RESPUESTA SEGÚN PASO
+           VALIDACIÓN
         ================================================= */
 
         let update = {};
 
         let errorValidacion =
+            null;
+
+
+        let respuestaDirecta =
+            null;
+
+
+        let pasoDirecto =
+            null;
+
+
+        let vehiculoIdentificado =
             null;
 
 
@@ -573,7 +1401,9 @@ export default async function handler(req, res) {
 
 
                 if (
-                    !Number.isFinite(precio) ||
+                    !Number.isFinite(
+                        precio
+                    ) ||
                     precio <= 0
                 ) {
 
@@ -582,7 +1412,8 @@ export default async function handler(req, res) {
 
                 } else {
 
-                    update.precio_compraventa =
+                    update
+                        .precio_compraventa =
                         precio;
                 }
 
@@ -591,7 +1422,7 @@ export default async function handler(req, res) {
 
 
             /* =============================================
-               FECHA COMPRAVENTA
+               FECHA
             ============================================= */
 
             case "FECHA": {
@@ -609,7 +1440,8 @@ export default async function handler(req, res) {
 
                 } else {
 
-                    update.fecha_compraventa =
+                    update
+                        .fecha_compraventa =
                         fecha;
                 }
 
@@ -647,7 +1479,7 @@ export default async function handler(req, res) {
 
 
             /* =============================================
-               MODELO / VERSIÓN
+               MODELO
             ============================================= */
 
             case "MODELO": {
@@ -658,9 +1490,7 @@ export default async function handler(req, res) {
                     );
 
 
-                if (
-                    valor.length < 1
-                ) {
+                if (!valor) {
 
                     errorValidacion =
                         "Indícame el modelo del vehículo.";
@@ -694,7 +1524,8 @@ export default async function handler(req, res) {
 
                 } else {
 
-                    update.fecha_primera_matriculacion =
+                    update
+                        .fecha_primera_matriculacion =
                         fecha;
                 }
 
@@ -708,23 +1539,23 @@ export default async function handler(req, res) {
 
             case "COMBUSTIBLE": {
 
-                const combustible =
+                const valor =
                     normalizarTexto(
                         mensaje
                     );
 
 
                 if (
-                    combustible.length < 2
+                    valor.length < 2
                 ) {
 
                     errorValidacion =
-                        "Indícame el tipo de combustible del vehículo.";
+                        "Indícame el combustible del vehículo.";
 
                 } else {
 
                     update.combustible =
-                        combustible;
+                        valor;
                 }
 
                 break;
@@ -740,18 +1571,23 @@ export default async function handler(req, res) {
                 const numero =
                     Number(
                         mensaje
-                            .replace(/[^\d]/g, "")
+                            .replace(
+                                /[^\d]/g,
+                                ""
+                            )
                     );
 
 
                 if (
-                    !Number.isInteger(numero) ||
+                    !Number.isInteger(
+                        numero
+                    ) ||
                     numero <= 0 ||
                     numero > 10000
                 ) {
 
                     errorValidacion =
-                        "Indícame la cilindrada en cc. Por ejemplo: 1598.";
+                        "Indícame la cilindrada en cc. Por ejemplo: 1368.";
 
                 } else {
 
@@ -769,23 +1605,30 @@ export default async function handler(req, res) {
 
             case "POTENCIA": {
 
-                const valor =
-                    normalizarTexto(
+                const potencia =
+                    extraerPotencia(
                         mensaje
                     );
 
 
-                if (
-                    valor.length < 1
+                if (!potencia) {
+
+                    errorValidacion =
+                        "Indícame la potencia y su unidad. Por ejemplo: 132 kW o 180 CV.";
+
+                } else if (
+                    potencia.tipo ===
+                    "DESCONOCIDA"
                 ) {
 
                     errorValidacion =
-                        "Indícame la potencia del vehículo y, si es posible, la unidad: kW, CV o caballos fiscales.";
+                        "Necesito saber la unidad de la potencia. Por ejemplo: 132 kW o 180 CV.";
 
                 } else {
 
-                    update.potencia_declarada =
-                        valor;
+                    update
+                        .potencia_declarada =
+                        mensaje.trim();
                 }
 
                 break;
@@ -801,12 +1644,17 @@ export default async function handler(req, res) {
                 const numero =
                     Number(
                         mensaje
-                            .replace(/[^\d]/g, "")
+                            .replace(
+                                /[^\d]/g,
+                                ""
+                            )
                     );
 
 
                 if (
-                    !Number.isInteger(numero) ||
+                    !Number.isInteger(
+                        numero
+                    ) ||
                     numero < 0 ||
                     numero > 5000000
                 ) {
@@ -830,14 +1678,14 @@ export default async function handler(req, res) {
 
             case "COMUNIDAD": {
 
-                const comunidad =
+                const valor =
                     normalizarTexto(
                         mensaje
                     );
 
 
                 if (
-                    comunidad.length < 3
+                    valor.length < 3
                 ) {
 
                     errorValidacion =
@@ -845,8 +1693,9 @@ export default async function handler(req, res) {
 
                 } else {
 
-                    update.comunidad_autonoma =
-                        comunidad;
+                    update
+                        .comunidad_autonoma =
+                        valor;
                 }
 
                 break;
@@ -859,14 +1708,14 @@ export default async function handler(req, res) {
 
             case "PROVINCIA": {
 
-                const provincia =
+                const valor =
                     normalizarTexto(
                         mensaje
                     );
 
 
                 if (
-                    provincia.length < 2
+                    valor.length < 2
                 ) {
 
                     errorValidacion =
@@ -875,7 +1724,7 @@ export default async function handler(req, res) {
                 } else {
 
                     update.provincia =
-                        provincia;
+                        valor;
                 }
 
                 break;
@@ -883,75 +1732,273 @@ export default async function handler(req, res) {
 
 
             /* =============================================
-               CÁLCULO FISCAL
+               CARROCERÍA
+            ============================================= */
+
+            case "CARROCERIA_FISCAL": {
+
+                const valor =
+                    normalizarTexto(
+                        mensaje
+                    )
+                    .toUpperCase();
+
+
+                if (
+                    valor.includes(
+                        "CABRIO"
+                    ) ||
+                    valor.includes(
+                        "DESCAPOT"
+                    ) ||
+                    valor.includes(
+                        "CONVERTIBLE"
+                    ) ||
+                    valor.includes(
+                        "SPIDER"
+                    )
+                ) {
+
+                    update
+                        .carroceria_fiscal =
+                        "CABRIO";
+
+                } else if (
+                    valor.includes(
+                        "NORMAL"
+                    ) ||
+                    valor.includes(
+                        "CERRAD"
+                    ) ||
+                    valor.includes(
+                        "NO DESCAPOT"
+                    )
+                ) {
+
+                    update
+                        .carroceria_fiscal =
+                        "NORMAL";
+
+                } else {
+
+                    errorValidacion =
+                        "Indícame si es versión normal/cerrada o descapotable/cabrio.";
+                }
+
+                break;
+            }
+
+
+            /* =============================================
+               TRANSMISIÓN
+            ============================================= */
+
+            case "TRANSMISION_FISCAL": {
+
+                const valor =
+                    normalizarTexto(
+                        mensaje
+                    )
+                    .toUpperCase();
+
+
+                if (
+                    valor.includes(
+                        "SECUENCIAL"
+                    ) ||
+                    valor.includes(
+                        "AUTOMATIC"
+                    ) ||
+                    valor.includes(
+                        "AUTOMÁTIC"
+                    )
+                ) {
+
+                    update
+                        .transmision_fiscal =
+                        "SECUENCIAL";
+
+                } else if (
+                    valor.includes(
+                        "MANUAL"
+                    )
+                ) {
+
+                    update
+                        .transmision_fiscal =
+                        "MANUAL";
+
+                } else {
+
+                    errorValidacion =
+                        "Indícame si el cambio es manual o secuencial/automático.";
+                }
+
+                break;
+            }
+
+
+            /* =============================================
+               VERSIÓN EXACTA
+            ============================================= */
+
+            case "VERSION_EXACTA": {
+
+                const resultado =
+                    await procesarIdentificacion(
+                        db,
+                        expediente,
+                        mensaje
+                    );
+
+
+                respuestaDirecta =
+                    resultado.respuesta;
+
+
+                pasoDirecto =
+                    resultado.paso;
+
+
+                vehiculoIdentificado =
+                    resultado.vehiculo ||
+                    null;
+
+
+                if (
+                    pasoDirecto !==
+                    "CALCULO_FISCAL"
+                ) {
+
+                    await db
+                        .from(
+                            "expedientes"
+                        )
+                        .update({
+
+                            paso_actual:
+                                pasoDirecto,
+
+                            updated_at:
+                                new Date()
+                                    .toISOString()
+
+                        })
+                        .eq(
+                            "id",
+                            expedienteId
+                        );
+                }
+
+
+                break;
+            }
+
+
+            /* =============================================
+               IDENTIFICAR VEHÍCULO
+            ============================================= */
+
+            case "IDENTIFICAR_VEHICULO": {
+
+                const resultado =
+                    await procesarIdentificacion(
+                        db,
+                        expediente
+                    );
+
+
+                respuestaDirecta =
+                    resultado.respuesta;
+
+
+                pasoDirecto =
+                    resultado.paso;
+
+
+                vehiculoIdentificado =
+                    resultado.vehiculo ||
+                    null;
+
+
+                break;
+            }
+
+
+            /* =============================================
+               CÁLCULO
             ============================================= */
 
             case "CALCULO_FISCAL": {
 
-                return res.status(200).json({
+                return res
+                    .status(200)
+                    .json({
 
-                    ok: true,
+                        ok: true,
 
-                    respuesta:
-                        "Ya tengo los datos principales. Ahora debo verificar el cálculo antes de mostrarte cualquier importe.",
+                        respuesta:
+                            "El vehículo ya está identificado. Ahora voy a verificar el cálculo fiscal.",
 
-                    paso_actual:
-                        "CALCULO_FISCAL",
+                        paso_actual:
+                            "CALCULO_FISCAL",
 
-                    solicitar_calculo:
-                        true
+                        solicitar_calculo:
+                            true
 
-                });
+                    });
             }
 
 
             /* =============================================
-               PAGO PENDIENTE
+               PAGO
             ============================================= */
 
             case "PAGO_PENDIENTE": {
 
-                return res.status(200).json({
+                return res
+                    .status(200)
+                    .json({
 
-                    ok: true,
+                        ok: true,
 
-                    respuesta:
-                        "El cálculo del expediente ya está preparado. Revisa el desglose antes de continuar con el pago.",
+                        respuesta:
+                            "El cálculo está preparado. Revisa el desglose antes del pago.",
 
-                    paso_actual:
-                        "PAGO_PENDIENTE"
+                        paso_actual:
+                            "PAGO_PENDIENTE"
 
-                });
+                    });
             }
 
 
-            /* =============================================
-               OTROS
-            ============================================= */
-
             default: {
 
-                return res.status(200).json({
+                return res
+                    .status(200)
+                    .json({
 
-                    ok: true,
+                        ok: true,
 
-                    respuesta:
-                        "Este expediente ya ha completado esta fase de recogida de datos.",
+                        respuesta:
+                            "Este expediente ya ha completado esta fase.",
 
-                    paso_actual:
-                        expediente.paso_actual
+                        paso_actual:
+                            expediente
+                                .paso_actual
 
-                });
+                    });
             }
         }
 
 
         /* =================================================
-           ERROR DE VALIDACIÓN
+           ERROR VALIDACIÓN
         ================================================= */
 
-        if (errorValidacion) {
-
+        if (
+            errorValidacion
+        ) {
 
             await db
                 .from("mensajes")
@@ -972,27 +2019,81 @@ export default async function handler(req, res) {
                 });
 
 
-            return res.status(200).json({
+            return res
+                .status(200)
+                .json({
 
-                ok: true,
+                    ok: true,
 
-                respuesta:
-                    errorValidacion,
+                    respuesta:
+                        errorValidacion,
 
-                paso_actual:
-                    expediente.paso_actual
+                    paso_actual:
+                        expediente
+                            .paso_actual
 
-            });
+                });
         }
 
 
         /* =================================================
-           AVANZAR PASO
+           RESPUESTA DIRECTA DE IDENTIFICACIÓN
+        ================================================= */
+
+        if (
+            respuestaDirecta
+        ) {
+
+            await db
+                .from("mensajes")
+                .insert({
+
+                    expediente_id:
+                        expedienteId,
+
+                    usuario_id:
+                        usuario.id,
+
+                    autor:
+                        "ia",
+
+                    contenido:
+                        respuestaDirecta
+
+                });
+
+
+            return res
+                .status(200)
+                .json({
+
+                    ok: true,
+
+                    respuesta:
+                        respuestaDirecta,
+
+                    paso_actual:
+                        pasoDirecto,
+
+                    solicitar_calculo:
+                        pasoDirecto ===
+                        "CALCULO_FISCAL",
+
+                    vehiculo:
+                        vehiculoIdentificado
+
+                });
+        }
+
+
+        /* =================================================
+           AVANZAR
         ================================================= */
 
         const nuevoPaso =
             siguientePaso(
-                expediente.paso_actual
+                expediente
+                    .paso_actual
             );
 
 
@@ -1000,37 +2101,20 @@ export default async function handler(req, res) {
             nuevoPaso;
 
 
-        /*
-        IMPORTANTE:
-
-        YA NO cambiamos aquí directamente a
-        PAGO_PENDIENTE.
-
-        Primero pasamos a CALCULO_FISCAL.
-
-        expediente.js tendrá que verificar el cálculo.
-        Solo cuando sea correcto podrá cambiar a:
-        PAGO_PENDIENTE.
-        */
-
-
         if (
             nuevoPaso ===
-            "CALCULO_FISCAL"
+            "IDENTIFICAR_VEHICULO"
         ) {
 
             update.estado =
-                "CALCULO_FISCAL";
+                "IDENTIFICANDO_VEHICULO";
         }
 
 
         update.updated_at =
-            new Date().toISOString();
+            new Date()
+                .toISOString();
 
-
-        /* =================================================
-           GUARDAR EXPEDIENTE
-        ================================================= */
 
         const {
             error: updateError
@@ -1046,26 +2130,29 @@ export default async function handler(req, res) {
                 );
 
 
-        if (updateError) {
+        if (
+            updateError
+        ) {
 
             console.error(
-                "Error actualizando expediente:",
                 updateError
             );
 
 
-            return res.status(500).json({
+            return res
+                .status(500)
+                .json({
 
-                ok: false,
+                    ok: false,
 
-                error:
-                    "No se pudo guardar el avance del expediente."
+                    error:
+                        "No se pudo guardar el avance del expediente."
 
-            });
+                });
         }
 
 
-        const expedienteActualizado = {
+        const actualizado = {
 
             ...expediente,
             ...update
@@ -1074,39 +2161,46 @@ export default async function handler(req, res) {
 
 
         /* =================================================
-           RESPUESTA SIGUIENTE
+           SI ACABAMOS DE LLEGAR A IDENTIFICACIÓN,
+           INTENTAMOS IDENTIFICAR EN ESTE MISMO MENSAJE
         ================================================= */
-
-        let respuestaIA =
-            siguientePregunta(
-                expedienteActualizado
-            );
-
-
-        let solicitarCalculo =
-            false;
-
 
         if (
             nuevoPaso ===
-            "CALCULO_FISCAL"
+            "IDENTIFICAR_VEHICULO"
         ) {
 
-            respuestaIA =
-                `Perfecto, ${primerParticipante?.nombre || "ya tengo tus datos"}. Ya tengo la información principal de la operación y del vehículo. Ahora voy a verificar el cálculo del traspaso antes de mostrarte el importe.`;
+            const resultado =
+                await procesarIdentificacion(
+                    db,
+                    actualizado
+                );
 
-            solicitarCalculo =
-                true;
-        }
+
+            if (
+                resultado.paso !==
+                "CALCULO_FISCAL"
+            ) {
+
+                await db
+                    .from("expedientes")
+                    .update({
+
+                        paso_actual:
+                            resultado.paso,
+
+                        updated_at:
+                            new Date()
+                                .toISOString()
+
+                    })
+                    .eq(
+                        "id",
+                        expedienteId
+                    );
+            }
 
 
-        /* =================================================
-           GUARDAR RESPUESTA IA
-        ================================================= */
-
-        const {
-            error: respuestaError
-        } =
             await db
                 .from("mensajes")
                 .insert({
@@ -1121,56 +2215,94 @@ export default async function handler(req, res) {
                         "ia",
 
                     contenido:
-                        respuestaIA
+                        resultado.respuesta
 
                 });
 
 
-        if (respuestaError) {
+            return res
+                .status(200)
+                .json({
 
-            console.error(
-                "Error guardando respuesta IA:",
-                respuestaError
-            );
+                    ok: true,
+
+                    respuesta:
+                        resultado.respuesta,
+
+                    paso_actual:
+                        resultado.paso,
+
+                    solicitar_calculo:
+                        resultado.paso ===
+                        "CALCULO_FISCAL",
+
+                    vehiculo:
+                        resultado.vehiculo ||
+                        null
+
+                });
         }
 
 
         /* =================================================
-           RESPUESTA FINAL
+           PREGUNTA SIGUIENTE
         ================================================= */
 
-        return res.status(200).json({
+        const respuestaIA =
+            siguientePregunta(
+                actualizado
+            );
 
-            ok: true,
 
-            respuesta:
-                respuestaIA,
+        await db
+            .from("mensajes")
+            .insert({
 
-            paso_actual:
-                nuevoPaso,
+                expediente_id:
+                    expedienteId,
 
-            solicitar_calculo:
-                solicitarCalculo,
+                usuario_id:
+                    usuario.id,
 
-            expediente: {
+                autor:
+                    "ia",
 
-                id:
-                    expediente.id,
+                contenido:
+                    respuestaIA
 
-                matricula:
-                    expediente.matricula,
+            });
 
-                estado:
-                    update.estado ||
-                    expediente.estado
 
-            }
+        return res
+            .status(200)
+            .json({
 
-        });
+                ok: true,
+
+                respuesta:
+                    respuestaIA,
+
+                paso_actual:
+                    nuevoPaso,
+
+                expediente: {
+
+                    id:
+                        expediente.id,
+
+                    matricula:
+                        expediente.matricula,
+
+                    estado:
+                        update.estado ||
+                        expediente.estado
+
+                }
+
+            });
 
 
     } catch (error) {
-
 
         console.error(
             "Error chat:",
@@ -1178,13 +2310,15 @@ export default async function handler(req, res) {
         );
 
 
-        return res.status(500).json({
+        return res
+            .status(500)
+            .json({
 
-            ok: false,
+                ok: false,
 
-            error:
-                "Error interno del servidor."
+                error:
+                    "Error interno del servidor."
 
-        });
+            });
     }
 }
