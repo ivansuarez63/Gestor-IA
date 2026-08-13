@@ -44,7 +44,7 @@ function crearClienteUsuario(token) {
 
 
 /* =====================================================
-   OBTENER USUARIO
+   AUTENTICACIÓN
 ===================================================== */
 
 async function obtenerUsuario(req, res) {
@@ -54,15 +54,12 @@ async function obtenerUsuario(req, res) {
 
 
     if (
-        !authorization.startsWith(
-            "Bearer "
-        )
+        !authorization.startsWith("Bearer ")
     ) {
 
         res.status(401).json({
             ok: false,
-            error:
-                "Necesitas iniciar sesión."
+            error: "Necesitas iniciar sesión."
         });
 
         return null;
@@ -79,9 +76,7 @@ async function obtenerUsuario(req, res) {
         data,
         error
     } =
-        await supabase.auth.getUser(
-            token
-        );
+        await supabase.auth.getUser(token);
 
 
     if (
@@ -91,8 +86,7 @@ async function obtenerUsuario(req, res) {
 
         res.status(401).json({
             ok: false,
-            error:
-                "Sesión no válida."
+            error: "Sesión no válida."
         });
 
         return null;
@@ -107,16 +101,14 @@ async function obtenerUsuario(req, res) {
             data.user,
 
         db:
-            crearClienteUsuario(
-                token
-            )
+            crearClienteUsuario(token)
 
     };
 }
 
 
 /* =====================================================
-   NORMALIZAR TEXTO
+   UTILIDADES
 ===================================================== */
 
 function normalizarTexto(texto) {
@@ -132,9 +124,13 @@ function normalizarTexto(texto) {
 }
 
 
-/* =====================================================
-   EXTRAER AÑO
-===================================================== */
+function redondearDinero(numero) {
+
+    return Math.round(
+        (Number(numero) + Number.EPSILON) * 100
+    ) / 100;
+}
+
 
 function obtenerAnio(fecha) {
 
@@ -142,24 +138,16 @@ function obtenerAnio(fecha) {
         return null;
     }
 
-
     const match =
         String(fecha)
-            .match(
-                /^(\d{4})/
-            );
-
+            .match(/^(\d{4})/);
 
     if (!match) {
         return null;
     }
 
-
     const anio =
-        Number(
-            match[1]
-        );
-
+        Number(match[1]);
 
     return Number.isInteger(anio)
         ? anio
@@ -167,49 +155,239 @@ function obtenerAnio(fecha) {
 }
 
 
-/* =====================================================
-   EXTRAER POTENCIA EN KW
+function diferenciaAnios(
+    fechaInicial,
+    fechaFinal
+) {
 
-   Acepta por ejemplo:
-   "132 kW"
-   "132kw"
-   "180 CV"
-===================================================== */
+    const inicio =
+        new Date(
+            `${fechaInicial}T00:00:00`
+        );
 
-function extraerPotenciaKW(texto) {
-
-    const valor =
-        String(texto || "")
-            .trim()
-            .toLowerCase();
-
-
-    const matchKW =
-        valor.match(
-            /(\d+(?:[.,]\d+)?)\s*kw/
+    const fin =
+        new Date(
+            `${fechaFinal}T00:00:00`
         );
 
 
-    if (matchKW) {
-
-        const numero =
-            Number(
-                matchKW[1]
-                    .replace(",", ".")
-            );
-
-
-        if (
-            Number.isFinite(numero) &&
-            numero > 0
-        ) {
-
-            return numero;
-        }
+    if (
+        Number.isNaN(inicio.getTime()) ||
+        Number.isNaN(fin.getTime())
+    ) {
+        return null;
     }
 
 
-    return null;
+    let anios =
+        fin.getFullYear() -
+        inicio.getFullYear();
+
+
+    const aniversario =
+        new Date(
+            fin.getFullYear(),
+            inicio.getMonth(),
+            inicio.getDate()
+        );
+
+
+    if (
+        fin < aniversario
+    ) {
+        anios--;
+    }
+
+
+    return Math.max(
+        0,
+        anios
+    );
+}
+
+
+/* =====================================================
+   DEPRECIACIÓN VEHÍCULO
+
+   Tabla aplicada según años de utilización.
+===================================================== */
+
+function porcentajeDepreciacion(
+    fechaPrimeraMatriculacion,
+    fechaOperacion
+) {
+
+    const anios =
+        diferenciaAnios(
+            fechaPrimeraMatriculacion,
+            fechaOperacion
+        );
+
+
+    if (
+        anios === null
+    ) {
+
+        return null;
+    }
+
+
+    if (anios < 1) {
+        return 100;
+    }
+
+    if (anios < 2) {
+        return 84;
+    }
+
+    if (anios < 3) {
+        return 67;
+    }
+
+    if (anios < 4) {
+        return 56;
+    }
+
+    if (anios < 5) {
+        return 47;
+    }
+
+    if (anios < 6) {
+        return 39;
+    }
+
+    if (anios < 7) {
+        return 34;
+    }
+
+    if (anios < 8) {
+        return 28;
+    }
+
+    if (anios < 9) {
+        return 24;
+    }
+
+    if (anios < 10) {
+        return 19;
+    }
+
+    if (anios < 11) {
+        return 17;
+    }
+
+    if (anios < 12) {
+        return 13;
+    }
+
+
+    return 10;
+}
+
+
+/* =====================================================
+   TARIFA GESTOR-IA
+
+   PROVISIONALMENTE:
+   FESTIVOS todavía deben conectarse al calendario
+   territorial oficial.
+===================================================== */
+
+function calcularTarifaGestorIA(
+    fecha = new Date()
+) {
+
+    const diaSemana =
+        fecha.getDay();
+
+
+    const horaDecimal =
+        fecha.getHours() +
+        fecha.getMinutes() / 60;
+
+
+    /*
+       Domingo = 0
+       Sábado = 6
+    */
+
+    if (
+        diaSemana === 0 ||
+        diaSemana === 6
+    ) {
+
+        return {
+            importe: 65,
+            tarifa: "FUERA_HORARIO"
+        };
+    }
+
+
+    if (
+        horaDecimal < 8.5 ||
+        horaDecimal >= 18
+    ) {
+
+        return {
+            importe: 65,
+            tarifa: "FUERA_HORARIO"
+        };
+    }
+
+
+    return {
+        importe: 60,
+        tarifa: "ESTANDAR"
+    };
+}
+
+
+/* =====================================================
+   TASA DGT
+
+   Transferencia ordinaria.
+===================================================== */
+
+function calcularTasaDGT(
+    expediente
+) {
+
+    /*
+       Más adelante:
+       - ciclomotores
+       - Canarias/Ceuta/Melilla a Península
+       - otros supuestos especiales
+
+       De momento solo aceptamos transferencia
+       ordinaria de vehículo no ciclomotor.
+    */
+
+    const tipo =
+        normalizarTexto(
+            expediente.tipo_vehiculo
+        )
+        .toUpperCase();
+
+
+    if (
+        tipo.includes("CICLOMOTOR")
+    ) {
+
+        return {
+            verificada: false,
+            importe: null,
+            motivo:
+                "El expediente corresponde a un ciclomotor y requiere su tasa específica."
+        };
+    }
+
+
+    return {
+        verificada: true,
+        importe: 55.70,
+        codigo: "1.5",
+        motivo: null
+    };
 }
 
 
@@ -241,11 +419,6 @@ async function crearExpediente(
         });
     }
 
-
-    /*
-       Comprobar si el usuario ya tiene
-       un expediente activo para esa matrícula.
-    */
 
     const {
         data: existente,
@@ -301,10 +474,6 @@ async function crearExpediente(
     }
 
 
-    /*
-       Crear expediente nuevo.
-    */
-
     const {
         data: expediente,
         error: insertarError
@@ -325,6 +494,9 @@ async function crearExpediente(
                     false,
 
                 invitacion_habilitada:
+                    false,
+
+                calculo_fiscal_verificado:
                     false
 
             })
@@ -335,7 +507,6 @@ async function crearExpediente(
     if (insertarError) {
 
         console.error(
-            "Error creando expediente:",
             insertarError
         );
 
@@ -366,7 +537,7 @@ async function crearExpediente(
 
 
 /* =====================================================
-   LISTAR EXPEDIENTES
+   LISTAR
 ===================================================== */
 
 async function listarExpedientes(
@@ -392,10 +563,7 @@ async function listarExpedientes(
 
     if (error) {
 
-        console.error(
-            "Error listando expedientes:",
-            error
-        );
+        console.error(error);
 
 
         return res.status(500).json({
@@ -421,7 +589,7 @@ async function listarExpedientes(
 
 
 /* =====================================================
-   BUSCAR VEHÍCULO EN CATÁLOGO FISCAL 2026
+   BUSCAR VEHÍCULO
 ===================================================== */
 
 async function buscarVehiculo(
@@ -430,30 +598,25 @@ async function buscarVehiculo(
     auth
 ) {
 
-    /*
-       Podemos recibir los datos directamente
-       o solo expediente_id.
-
-       Si viene expediente_id,
-       recuperamos los datos guardados por chat.js.
-    */
-
     const expedienteId =
         String(
             req.body?.expediente_id || ""
-        ).trim();
+        )
+        .trim();
 
 
     let marca =
         String(
             req.body?.marca || ""
-        ).trim();
+        )
+        .trim();
 
 
     let modelo =
         String(
             req.body?.modelo || ""
-        ).trim();
+        )
+        .trim();
 
 
     let cilindrada =
@@ -473,12 +636,6 @@ async function buscarVehiculo(
             req.body?.anio || 0
         );
 
-
-    /*
-       Si recibimos expediente_id,
-       usamos directamente los datos
-       que la IA ya recopiló.
-    */
 
     let expediente =
         null;
@@ -520,62 +677,34 @@ async function buscarVehiculo(
             data;
 
 
-        if (!marca) {
-
-            marca =
-                expediente.marca || "";
-        }
-
-
-        if (!modelo) {
-
-            modelo =
-                expediente.modelo || "";
-        }
+        marca =
+            marca ||
+            expediente.marca ||
+            "";
 
 
-        if (
-            !cilindrada ||
-            cilindrada <= 0
-        ) {
-
-            cilindrada =
-                Number(
-                    expediente.cilindrada || 0
-                );
-        }
+        modelo =
+            modelo ||
+            expediente.modelo ||
+            "";
 
 
-        if (
-            !potenciaKW ||
-            potenciaKW <= 0
-        ) {
-
-            potenciaKW =
-                extraerPotenciaKW(
-                    expediente
-                        .potencia_declarada
-                ) || 0;
-        }
+        cilindrada =
+            cilindrada ||
+            Number(
+                expediente.cilindrada || 0
+            );
 
 
-        if (
-            !anio ||
-            anio <= 1900
-        ) {
-
-            anio =
-                obtenerAnio(
-                    expediente
-                        .fecha_primera_matriculacion
-                ) || 0;
-        }
+        anio =
+            anio ||
+            obtenerAnio(
+                expediente
+                    .fecha_primera_matriculacion
+            ) ||
+            0;
     }
 
-
-    /* =================================================
-       VALIDACIONES
-    ================================================= */
 
     marca =
         normalizarTexto(
@@ -590,35 +719,10 @@ async function buscarVehiculo(
         );
 
 
-    if (!marca) {
-
-        return res.status(400).json({
-
-            ok: false,
-
-            error:
-                "Falta la marca del vehículo."
-
-        });
-    }
-
-
-    if (!modelo) {
-
-        return res.status(400).json({
-
-            ok: false,
-
-            error:
-                "Falta el modelo del vehículo."
-
-        });
-    }
-
-
     if (
-        !Number.isFinite(cilindrada) ||
-        cilindrada <= 0
+        !marca ||
+        !modelo ||
+        !cilindrada
     ) {
 
         return res.status(400).json({
@@ -626,47 +730,21 @@ async function buscarVehiculo(
             ok: false,
 
             error:
-                "Falta la cilindrada del vehículo."
+                "Faltan datos para identificar el vehículo."
 
         });
     }
 
 
-    /* =================================================
-       BUSCAR POR MARCA + CILINDRADA
-
-       No empezamos haciendo ilike con todo el modelo
-       porque el cliente puede escribir:
-       "595 Competizione"
-
-       y el BOE puede tener:
-       "500 1.4 T-Jet 595 Competizione"
-    ================================================= */
-
     const {
-        data: baseMarca,
-        error: errorMarca
+        data,
+        error
     } =
         await auth.db
             .from(
                 "valoraciones_vehiculos"
             )
-            .select(`
-                id,
-                ejercicio,
-                marca,
-                modelo_tipo,
-                periodo_inicio,
-                periodo_fin,
-                cilindrada,
-                numero_cilindros,
-                tipo_motor,
-                potencia_kw,
-                caballos_fiscales,
-                potencia_cv,
-                valor_oficial,
-                fuente
-            `)
+            .select("*")
             .eq(
                 "ejercicio",
                 2026
@@ -682,12 +760,9 @@ async function buscarVehiculo(
             .limit(1000);
 
 
-    if (errorMarca) {
+    if (error) {
 
-        console.error(
-            "Error consultando valoraciones:",
-            errorMarca
-        );
+        console.error(error);
 
 
         return res.status(500).json({
@@ -695,67 +770,46 @@ async function buscarVehiculo(
             ok: false,
 
             error:
-                "No se pudo consultar la tabla oficial de valoraciones."
+                "No se pudo consultar el catálogo oficial."
 
         });
     }
 
 
     let candidatos =
-        baseMarca || [];
+        data || [];
 
 
-    /* =================================================
-       NORMALIZAR MODELO PARA COMPARACIÓN
-    ================================================= */
+    const palabras =
+        modelo
+            .toUpperCase()
+            .split(" ")
+            .filter(
+                palabra =>
+                    palabra.length >= 2
+            );
 
-    const palabrasModelo =
-        normalizarTexto(
-            modelo
-        )
-        .toUpperCase()
-        .split(" ")
-        .filter(
-            palabra =>
-                palabra.length >= 2
+
+    candidatos =
+        candidatos.filter(
+            item => {
+
+                const oficial =
+                    normalizarTexto(
+                        item.modelo_tipo
+                    )
+                    .toUpperCase();
+
+
+                return palabras.every(
+                    palabra =>
+                        oficial.includes(
+                            palabra
+                        )
+                );
+            }
         );
 
-
-    /*
-       Filtramos candidatos cuyo nombre oficial
-       contenga las palabras importantes indicadas
-       por el usuario.
-    */
-
-    if (
-        palabrasModelo.length > 0
-    ) {
-
-        candidatos =
-            candidatos.filter(
-                vehiculo => {
-
-                    const nombreOficial =
-                        normalizarTexto(
-                            vehiculo.modelo_tipo
-                        )
-                        .toUpperCase();
-
-
-                    return palabrasModelo.every(
-                        palabra =>
-                            nombreOficial.includes(
-                                palabra
-                            )
-                    );
-                }
-            );
-    }
-
-
-    /* =================================================
-       FILTRAR POR AÑO DE PRIMERA MATRICULACIÓN
-    ================================================= */
 
     if (
         Number.isInteger(anio) &&
@@ -764,36 +818,26 @@ async function buscarVehiculo(
 
         candidatos =
             candidatos.filter(
-                vehiculo => {
+                item => {
 
                     const inicio =
-                        vehiculo
-                            .periodo_inicio ===
-                            null
-                            ?
-                            null
-                            :
-                            Number(
-                                vehiculo
-                                    .periodo_inicio
+                        item.periodo_inicio === null
+                            ? null
+                            : Number(
+                                item.periodo_inicio
                             );
 
 
                     const fin =
-                        vehiculo
-                            .periodo_fin ===
-                            null
-                            ?
-                            null
-                            :
-                            Number(
-                                vehiculo
-                                    .periodo_fin
+                        item.periodo_fin === null
+                            ? null
+                            : Number(
+                                item.periodo_fin
                             );
 
 
                     if (
-                        Number.isFinite(inicio) &&
+                        inicio !== null &&
                         anio < inicio
                     ) {
 
@@ -802,7 +846,7 @@ async function buscarVehiculo(
 
 
                     if (
-                        Number.isFinite(fin) &&
+                        fin !== null &&
                         anio > fin
                     ) {
 
@@ -816,73 +860,31 @@ async function buscarVehiculo(
     }
 
 
-    /* =================================================
-       FILTRAR POR POTENCIA KW SI LA TENEMOS
-    ================================================= */
-
     if (
-        Number.isFinite(potenciaKW) &&
         potenciaKW > 0
     ) {
 
-        const candidatosPotencia =
+        const filtrados =
             candidatos.filter(
-                vehiculo => {
-
-                    const potencia =
+                item =>
+                    Math.abs(
                         Number(
-                            vehiculo
-                                .potencia_kw
-                        );
-
-
-                    if (
-                        !Number.isFinite(
-                            potencia
-                        )
-                    ) {
-
-                        return false;
-                    }
-
-
-                    /*
-                       Permitimos una diferencia muy pequeña
-                       por posibles decimales.
-                    */
-
-                    return (
-                        Math.abs(
-                            potencia -
-                            potenciaKW
-                        ) <= 0.5
-                    );
-                }
+                            item.potencia_kw
+                        ) -
+                        potenciaKW
+                    ) <= 0.5
             );
 
 
-        /*
-           Solo aplicamos este filtro si
-           encontramos resultados.
-
-           Si no, mantenemos candidatos y
-           pediremos aclaración en vez de
-           afirmar que no existe el vehículo.
-        */
-
         if (
-            candidatosPotencia.length > 0
+            filtrados.length
         ) {
 
             candidatos =
-                candidatosPotencia;
+                filtrados;
         }
     }
 
-
-    /* =================================================
-       SIN COINCIDENCIAS
-    ================================================= */
 
     if (
         candidatos.length === 0
@@ -899,24 +901,11 @@ async function buscarVehiculo(
                 false,
 
             necesita_mas_datos:
-                true,
-
-            numero_coincidencias:
-                0,
-
-            mensaje:
-                "No se ha podido identificar con certeza una versión compatible en la tabla oficial de valoraciones de 2026.",
-
-            solicitar:
-                "version_exacta"
+                true
 
         });
     }
 
-
-    /* =================================================
-       UNA ÚNICA COINCIDENCIA
-    ================================================= */
 
     if (
         candidatos.length === 1
@@ -926,49 +915,33 @@ async function buscarVehiculo(
             candidatos[0];
 
 
-        /*
-           Si tenemos expediente,
-           guardamos la valoración localizada.
-
-           Todavía NO significa que el ITP
-           esté calculado.
-
-           Solo hemos identificado el vehículo.
-        */
-
         if (expedienteId) {
 
-            const {
-                error: guardarError
-            } =
-                await auth.db
-                    .from(
-                        "expedientes"
-                    )
-                    .update({
+            await auth.db
+                .from("expedientes")
+                .update({
 
-                        valor_fiscal:
-                            vehiculo
-                                .valor_oficial,
+                    valoracion_id:
+                        vehiculo.id,
 
-                        updated_at:
-                            new Date()
-                                .toISOString()
+                    modelo_fiscal_identificado:
+                        vehiculo.modelo_tipo,
 
-                    })
-                    .eq(
-                        "id",
-                        expedienteId
-                    );
+                    valor_oficial_boe:
+                        vehiculo.valor_oficial,
 
+                    valor_fiscal:
+                        vehiculo.valor_oficial,
 
-            if (guardarError) {
+                    updated_at:
+                        new Date()
+                            .toISOString()
 
-                console.error(
-                    "Error guardando valoración:",
-                    guardarError
+                })
+                .eq(
+                    "id",
+                    expedienteId
                 );
-            }
         }
 
 
@@ -991,88 +964,6 @@ async function buscarVehiculo(
     }
 
 
-    /* =================================================
-       VARIAS COINCIDENCIAS
-
-       NUNCA elegimos una al azar.
-    ================================================= */
-
-    /*
-       Averiguar qué datos podrían distinguirlas.
-    */
-
-    const potencias =
-        [
-            ...new Set(
-                candidatos
-                    .map(
-                        item =>
-                            item.potencia_kw
-                    )
-                    .filter(
-                        valor =>
-                            valor !== null
-                    )
-            )
-        ];
-
-
-    const cvs =
-        [
-            ...new Set(
-                candidatos
-                    .map(
-                        item =>
-                            item.potencia_cv
-                    )
-                    .filter(
-                        valor =>
-                            valor !== null
-                    )
-            )
-        ];
-
-
-    const motores =
-        [
-            ...new Set(
-                candidatos
-                    .map(
-                        item =>
-                            item.tipo_motor
-                    )
-                    .filter(Boolean)
-            )
-        ];
-
-
-    let datoNecesario =
-        "version_exacta";
-
-
-    if (
-        potencias.length > 1
-    ) {
-
-        datoNecesario =
-            "potencia_kw";
-
-    } else if (
-        cvs.length > 1
-    ) {
-
-        datoNecesario =
-            "potencia_cv";
-
-    } else if (
-        motores.length > 1
-    ) {
-
-        datoNecesario =
-            "tipo_motor";
-    }
-
-
     return res.status(200).json({
 
         ok: true,
@@ -1089,25 +980,6 @@ async function buscarVehiculo(
         numero_coincidencias:
             candidatos.length,
 
-        solicitar:
-            datoNecesario,
-
-        mensaje:
-            "Hay varias versiones compatibles. Es necesario identificar la versión exacta antes de calcular los impuestos.",
-
-        opciones_disponibles: {
-
-            potencia_kw:
-                potencias,
-
-            potencia_cv:
-                cvs,
-
-            tipo_motor:
-                motores
-
-        },
-
         candidatos:
             candidatos.slice(
                 0,
@@ -1119,10 +991,22 @@ async function buscarVehiculo(
 
 
 /* =====================================================
-   SIMULAR PAGO
+   CALCULAR COSTE
+
+   Esta acción NO inventará el ITP.
+
+   Primero calcula:
+   - Valor oficial
+   - depreciación
+   - valor fiscal depreciado
+   - tasa DGT
+   - tarifa Gestor-IA
+
+   El pago permanece bloqueado hasta
+   verificar la regla territorial.
 ===================================================== */
 
-async function simularPago(
+async function calcularCoste(
     req,
     res,
     auth
@@ -1131,7 +1015,8 @@ async function simularPago(
     const expedienteId =
         String(
             req.body?.expediente_id || ""
-        ).trim();
+        )
+        .trim();
 
 
     if (!expedienteId) {
@@ -1147,15 +1032,562 @@ async function simularPago(
     }
 
 
+    const {
+        data: expediente,
+        error: expedienteError
+    } =
+        await auth.db
+            .from("expedientes")
+            .select("*")
+            .eq(
+                "id",
+                expedienteId
+            )
+            .single();
+
+
+    if (
+        expedienteError ||
+        !expediente
+    ) {
+
+        return res.status(404).json({
+
+            ok: false,
+
+            error:
+                "Expediente no encontrado."
+
+        });
+    }
+
+
+    /* =================================================
+       VEHÍCULO IDENTIFICADO
+    ================================================= */
+
+    if (
+        !expediente.valoracion_id
+    ) {
+
+        return res.status(409).json({
+
+            ok: false,
+
+            calculo_verificado:
+                false,
+
+            pago_bloqueado:
+                true,
+
+            error:
+                "El vehículo todavía no está identificado exactamente."
+
+        });
+    }
+
+
+    const {
+        data: valoracion,
+        error: valoracionError
+    } =
+        await auth.db
+            .from(
+                "valoraciones_vehiculos"
+            )
+            .select("*")
+            .eq(
+                "id",
+                expediente.valoracion_id
+            )
+            .single();
+
+
+    if (
+        valoracionError ||
+        !valoracion
+    ) {
+
+        return res.status(409).json({
+
+            ok: false,
+
+            calculo_verificado:
+                false,
+
+            pago_bloqueado:
+                true,
+
+            error:
+                "No se ha podido recuperar la valoración oficial."
+
+        });
+    }
+
+
+    /* =================================================
+       FECHAS
+    ================================================= */
+
+    if (
+        !expediente
+            .fecha_primera_matriculacion ||
+        !expediente
+            .fecha_compraventa
+    ) {
+
+        return res.status(409).json({
+
+            ok: false,
+
+            calculo_verificado:
+                false,
+
+            pago_bloqueado:
+                true,
+
+            error:
+                "Faltan fechas necesarias para calcular la antigüedad."
+
+        });
+    }
+
+
+    /* =================================================
+       DEPRECIACIÓN
+    ================================================= */
+
+    const porcentaje =
+        porcentajeDepreciacion(
+
+            expediente
+                .fecha_primera_matriculacion,
+
+            expediente
+                .fecha_compraventa
+
+        );
+
+
+    if (
+        porcentaje === null
+    ) {
+
+        return res.status(409).json({
+
+            ok: false,
+
+            calculo_verificado:
+                false,
+
+            pago_bloqueado:
+                true,
+
+            error:
+                "No se pudo determinar la depreciación."
+
+        });
+    }
+
+
+    const valorOficial =
+        Number(
+            valoracion.valor_oficial
+        );
+
+
+    const valorDepreciado =
+        redondearDinero(
+
+            valorOficial *
+            porcentaje /
+            100
+
+        );
+
+
+    /* =================================================
+       DGT
+    ================================================= */
+
+    const dgt =
+        calcularTasaDGT(
+            expediente
+        );
+
+
+    if (
+        !dgt.verificada
+    ) {
+
+        return res.status(409).json({
+
+            ok: false,
+
+            calculo_verificado:
+                false,
+
+            pago_bloqueado:
+                true,
+
+            error:
+                dgt.motivo
+
+        });
+    }
+
+
+    /* =================================================
+       GESTOR-IA
+    ================================================= */
+
+    const tarifa =
+        calcularTarifaGestorIA(
+            new Date()
+        );
+
+
+    /* =================================================
+       ITP
+
+       TODAVÍA BLOQUEADO HASTA QUE
+       LAS REGLAS TERRITORIALES ESTÉN
+       CARGADAS Y VERIFICADAS.
+    ================================================= */
+
+    const comunidad =
+        normalizarTexto(
+            expediente
+                .comunidad_autonoma
+        );
+
+
+    const motivoBloqueo =
+        comunidad
+            ?
+            `Pendiente de verificar la regla fiscal 2026 correspondiente a ${comunidad}.`
+            :
+            "Falta la comunidad autónoma del domicilio fiscal del comprador.";
+
+
     /*
-       ATENCIÓN:
-
-       Este endpoint es solo para desarrollo.
-
-       Cuando exista pago real se eliminará
-       y el pago se validará mediante el
-       proveedor correspondiente.
+       Guardamos el cálculo nacional.
     */
+
+    const actualizacion = {
+
+        valoracion_id:
+            valoracion.id,
+
+        modelo_fiscal_identificado:
+            valoracion.modelo_tipo,
+
+        valor_oficial_boe:
+            valorOficial,
+
+        porcentaje_depreciacion:
+            porcentaje,
+
+        valor_fiscal_depreciado:
+            valorDepreciado,
+
+        valor_fiscal:
+            valorDepreciado,
+
+        tasa_dgt_calculada:
+            dgt.importe,
+
+        tarifa_gestor_ia:
+            tarifa.importe,
+
+        impuesto_calculado:
+            null,
+
+        total_calculado:
+            null,
+
+        calculo_fiscal_verificado:
+            false,
+
+        motivo_calculo_bloqueado:
+            motivoBloqueo,
+
+        estado:
+            "CALCULO_FISCAL",
+
+        paso_actual:
+            "CALCULO_FISCAL",
+
+        updated_at:
+            new Date()
+                .toISOString()
+
+    };
+
+
+    const {
+        error: guardarError
+    } =
+        await auth.db
+            .from("expedientes")
+            .update(
+                actualizacion
+            )
+            .eq(
+                "id",
+                expedienteId
+            );
+
+
+    if (guardarError) {
+
+        console.error(
+            guardarError
+        );
+
+
+        return res.status(500).json({
+
+            ok: false,
+
+            error:
+                "No se pudo guardar el cálculo."
+
+        });
+    }
+
+
+    /*
+       Guardar auditoría del cálculo.
+    */
+
+    await auth.db
+        .from(
+            "calculos_fiscales"
+        )
+        .upsert(
+            {
+
+                expediente_id:
+                    expedienteId,
+
+                ejercicio:
+                    2026,
+
+                valor_declarado:
+                    expediente
+                        .precio_compraventa,
+
+                valor_fiscal:
+                    valorDepreciado,
+
+                base_imponible:
+                    null,
+
+                tipo_impositivo:
+                    null,
+
+                impuesto:
+                    null,
+
+                tasa_dgt:
+                    dgt.importe,
+
+                tarifa_gestor_ia:
+                    tarifa.importe,
+
+                total:
+                    null,
+
+                comunidad_autonoma:
+                    comunidad,
+
+                regla_aplicada:
+                    null,
+
+                fuente_valoracion:
+                    "Orden HAC/1501/2025",
+
+                fuente_normativa:
+                    null,
+
+                calculo_verificado:
+                    false,
+
+                motivo_no_verificado:
+                    motivoBloqueo,
+
+                updated_at:
+                    new Date()
+                        .toISOString()
+
+            },
+            {
+                onConflict:
+                    "expediente_id"
+            }
+        );
+
+
+    return res.status(200).json({
+
+        ok: true,
+
+        calculo_verificado:
+            false,
+
+        pago_bloqueado:
+            true,
+
+        mensaje:
+            "La valoración del vehículo y los costes nacionales están calculados. Falta verificar el impuesto territorial antes de habilitar el pago.",
+
+        vehiculo: {
+
+            marca:
+                valoracion.marca,
+
+            modelo:
+                valoracion.modelo_tipo,
+
+            valor_oficial:
+                valorOficial,
+
+            porcentaje_depreciacion:
+                porcentaje,
+
+            valor_fiscal:
+                valorDepreciado
+
+        },
+
+        costes: {
+
+            servicio_gestor_ia:
+                tarifa.importe,
+
+            tarifa:
+                tarifa.tarifa,
+
+            tasa_dgt:
+                dgt.importe,
+
+            impuesto:
+                null,
+
+            total:
+                null
+
+        },
+
+        fiscal: {
+
+            comunidad,
+
+            verificado:
+                false,
+
+            motivo:
+                motivoBloqueo
+
+        }
+
+    });
+}
+
+
+/* =====================================================
+   SIMULAR PAGO
+
+   SOLO DESARROLLO
+===================================================== */
+
+async function simularPago(
+    req,
+    res,
+    auth
+) {
+
+    const expedienteId =
+        String(
+            req.body?.expediente_id || ""
+        )
+        .trim();
+
+
+    if (!expedienteId) {
+
+        return res.status(400).json({
+
+            ok: false,
+
+            error:
+                "Falta el expediente."
+
+        });
+    }
+
+
+    const {
+        data: expediente,
+        error: buscarError
+    } =
+        await auth.db
+            .from("expedientes")
+            .select("*")
+            .eq(
+                "id",
+                expedienteId
+            )
+            .single();
+
+
+    if (
+        buscarError ||
+        !expediente
+    ) {
+
+        return res.status(404).json({
+
+            ok: false,
+
+            error:
+                "Expediente no encontrado."
+
+        });
+    }
+
+
+    /*
+       IMPORTANTE:
+
+       Incluso la simulación se bloquea
+       si todavía no existe cálculo fiscal
+       verificado.
+
+       Esto evita saltarnos la seguridad
+       durante las pruebas.
+    */
+
+    if (
+        expediente
+            .calculo_fiscal_verificado !==
+        true
+    ) {
+
+        return res.status(409).json({
+
+            ok: false,
+
+            pago_bloqueado:
+                true,
+
+            error:
+                "No se puede validar el pago mientras el cálculo fiscal no esté verificado."
+
+        });
+    }
+
 
     const {
         data,
@@ -1188,12 +1620,6 @@ async function simularPago(
 
 
     if (error) {
-
-        console.error(
-            "Error simulando pago:",
-            error
-        );
-
 
         return res.status(500).json({
 
@@ -1230,7 +1656,8 @@ async function generarInvitacion(
     const expedienteId =
         String(
             req.body?.expediente_id || ""
-        ).trim();
+        )
+        .trim();
 
 
     if (!expedienteId) {
@@ -1276,10 +1703,6 @@ async function generarInvitacion(
     }
 
 
-    /*
-       Invitación bloqueada antes del pago.
-    */
-
     if (
         expediente
             .pago_validado !== true ||
@@ -1298,14 +1721,8 @@ async function generarInvitacion(
     }
 
 
-    /*
-       Si ya existe una invitación activa,
-       devolvemos la misma.
-    */
-
     const {
-        data: existente,
-        error: existenteError
+        data: existente
     } =
         await auth.db
             .from("invitaciones")
@@ -1333,15 +1750,6 @@ async function generarInvitacion(
             .maybeSingle();
 
 
-    if (existenteError) {
-
-        console.error(
-            "Error buscando invitación:",
-            existenteError
-        );
-    }
-
-
     if (existente) {
 
         return res.status(200).json({
@@ -1357,10 +1765,6 @@ async function generarInvitacion(
         });
     }
 
-
-    /*
-       Crear token aleatorio seguro.
-    */
 
     const tokenInvitacion =
         crypto
@@ -1393,8 +1797,7 @@ async function generarInvitacion(
                     false,
 
                 caduca_en:
-                    caduca
-                        .toISOString()
+                    caduca.toISOString()
 
             })
             .select()
@@ -1402,12 +1805,6 @@ async function generarInvitacion(
 
 
     if (invitacionError) {
-
-        console.error(
-            "Error creando invitación:",
-            invitacionError
-        );
-
 
         return res.status(500).json({
 
@@ -1420,38 +1817,22 @@ async function generarInvitacion(
     }
 
 
-    /*
-       Actualizar estado del expediente.
-    */
+    await auth.db
+        .from("expedientes")
+        .update({
 
-    const {
-        error: actualizarError
-    } =
-        await auth.db
-            .from("expedientes")
-            .update({
+            estado:
+                "INVITACION_GENERADA",
 
-                estado:
-                    "INVITACION_GENERADA",
+            updated_at:
+                new Date()
+                    .toISOString()
 
-                updated_at:
-                    new Date()
-                        .toISOString()
-
-            })
-            .eq(
-                "id",
-                expedienteId
-            );
-
-
-    if (actualizarError) {
-
-        console.error(
-            "Error actualizando expediente:",
-            actualizarError
+        })
+        .eq(
+            "id",
+            expedienteId
         );
-    }
 
 
     return res.status(200).json({
@@ -1469,7 +1850,7 @@ async function generarInvitacion(
 
 
 /* =====================================================
-   HANDLER PRINCIPAL
+   HANDLER
 ===================================================== */
 
 export default async function handler(
@@ -1487,7 +1868,6 @@ export default async function handler(
 
 
         if (!auth) {
-
             return;
         }
 
@@ -1503,15 +1883,10 @@ export default async function handler(
         switch (action) {
 
 
-            /* =========================================
-               CREAR
-            ========================================= */
-
             case "crear": {
 
                 if (
-                    req.method !==
-                    "POST"
+                    req.method !== "POST"
                 ) {
 
                     return res
@@ -1535,15 +1910,10 @@ export default async function handler(
             }
 
 
-            /* =========================================
-               LISTAR
-            ========================================= */
-
             case "listar": {
 
                 if (
-                    req.method !==
-                    "GET"
+                    req.method !== "GET"
                 ) {
 
                     return res
@@ -1567,15 +1937,10 @@ export default async function handler(
             }
 
 
-            /* =========================================
-               BUSCAR VEHÍCULO
-            ========================================= */
-
             case "buscar-vehiculo": {
 
                 if (
-                    req.method !==
-                    "POST"
+                    req.method !== "POST"
                 ) {
 
                     return res
@@ -1599,15 +1964,37 @@ export default async function handler(
             }
 
 
-            /* =========================================
-               SIMULAR PAGO
-            ========================================= */
+            case "calcular-coste": {
+
+                if (
+                    req.method !== "POST"
+                ) {
+
+                    return res
+                        .status(405)
+                        .json({
+
+                            ok: false,
+
+                            error:
+                                "Método no permitido"
+
+                        });
+                }
+
+
+                return calcularCoste(
+                    req,
+                    res,
+                    auth
+                );
+            }
+
 
             case "simular-pago": {
 
                 if (
-                    req.method !==
-                    "POST"
+                    req.method !== "POST"
                 ) {
 
                     return res
@@ -1631,15 +2018,10 @@ export default async function handler(
             }
 
 
-            /* =========================================
-               GENERAR INVITACIÓN
-            ========================================= */
-
             case "generar-invitacion": {
 
                 if (
-                    req.method !==
-                    "POST"
+                    req.method !== "POST"
                 ) {
 
                     return res
@@ -1662,10 +2044,6 @@ export default async function handler(
                 );
             }
 
-
-            /* =========================================
-               ACCIÓN NO VÁLIDA
-            ========================================= */
 
             default: {
 
