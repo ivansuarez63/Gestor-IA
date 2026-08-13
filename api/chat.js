@@ -1,367 +1,406 @@
-module.exports = async (req, res) => import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY,
+    {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false
+        }
     }
-  }
 );
 
 export default async function handler(req, res) {
 
-  /* ==========================================
-     SOLO POST
-  ========================================== */
-
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      ok: false,
-      error: "Método no permitido"
-    });
-  }
-
-
-  try {
-
-    /* ==========================================
-       1. COMPROBAR TOKEN
-    ========================================== */
-
-    const authorization =
-      req.headers.authorization || "";
-
-    if (!authorization.startsWith("Bearer ")) {
-
-      return res.status(401).json({
-        ok: false,
-        error: "Necesitas iniciar sesión."
-      });
-
+    if (req.method !== "POST") {
+        return res.status(405).json({
+            ok: false,
+            error: "Método no permitido"
+        });
     }
 
-    const token =
-      authorization.substring(7).trim();
+    try {
 
-    if (!token) {
+        /* ==============================
+           AUTENTICACIÓN
+        ============================== */
 
-      return res.status(401).json({
-        ok: false,
-        error: "Sesión no válida."
-      });
+        const authorization =
+            req.headers.authorization || "";
 
-    }
+        if (!authorization.startsWith("Bearer ")) {
 
-
-    /* ==========================================
-       2. VALIDAR USUARIO CON SUPABASE
-    ========================================== */
-
-    const {
-      data: userData,
-      error: userError
-    } = await supabase.auth.getUser(token);
-
-
-    if (
-      userError ||
-      !userData ||
-      !userData.user
-    ) {
-
-      console.error(
-        "Token inválido:",
-        userError?.message
-      );
-
-      return res.status(401).json({
-        ok: false,
-        error:
-          "Tu sesión ha caducado o no es válida."
-      });
-
-    }
-
-
-    const usuario =
-      userData.user;
-
-
-    /* ==========================================
-       3. COMPROBAR EMAIL VERIFICADO
-    ========================================== */
-
-    if (!usuario.email_confirmed_at) {
-
-      return res.status(403).json({
-        ok: false,
-        error:
-          "Debes verificar tu correo antes de utilizar Gestor-IA."
-      });
-
-    }
-
-
-    /* ==========================================
-       4. VALIDAR MENSAJE
-    ========================================== */
-
-    const mensaje =
-      String(req.body?.mensaje || "")
-        .trim();
-
-
-    if (!mensaje) {
-
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Escribe un mensaje."
-      });
-
-    }
-
-
-    /*
-      Evitamos mensajes enormes que puedan
-      consumir API innecesariamente.
-    */
-
-    if (mensaje.length > 4000) {
-
-      return res.status(400).json({
-        ok: false,
-        error:
-          "El mensaje es demasiado largo."
-      });
-
-    }
-
-
-    /* ==========================================
-       5. COMPROBAR GROQ
-    ========================================== */
-
-    const apiKey =
-      process.env.GROQ_API_KEY;
-
-
-    if (!apiKey) {
-
-      console.error(
-        "Falta GROQ_API_KEY"
-      );
-
-      return res.status(500).json({
-        ok: false,
-        error:
-          "La IA no está configurada correctamente."
-      });
-
-    }
-
-
-    /* ==========================================
-       6. LLAMAR A LA IA
-    ========================================== */
-
-    const respuesta =
-      await fetch(
-        "https://api.groq.com/openai/v1/chat/completions",
-        {
-
-          method: "POST",
-
-          headers: {
-
-            "Authorization":
-              `Bearer ${apiKey}`,
-
-            "Content-Type":
-              "application/json"
-
-          },
-
-          body: JSON.stringify({
-
-            model:
-              "llama-3.1-8b-instant",
-
-            temperature: 0.2,
-
-            max_tokens: 800,
-
-            messages: [
-
-              {
-
-                role: "system",
-
-                content: `
-Eres Gestor-IA, un asistente especializado exclusivamente en trámites relacionados con vehículos en España.
-
-OBJETIVO
-
-Ayudar al usuario durante procesos relacionados con:
-
-- Cambio de titularidad de vehículos.
-- Compraventa de vehículos usados.
-- Documentación necesaria.
-- Contratos de compraventa.
-- DGT.
-- Impuestos relacionados con transmisiones de vehículos.
-- Modelo 620 cuando corresponda.
-- Representación y autorizaciones.
-- Estado de expedientes de Gestor-IA.
-- Explicación del proceso de un traspaso.
-
-REGLAS DE SEGURIDAD
-
-1. No ejecutes trámites reales.
-
-2. No afirmes que has presentado un documento ante la DGT, Hacienda o cualquier Administración.
-
-3. No realices pagos.
-
-4. No inventes que una autorización existe.
-
-5. No solicites contraseñas de Cl@ve.
-
-6. No solicites certificados digitales privados.
-
-7. No solicites claves bancarias.
-
-8. No solicites contraseñas personales.
-
-9. Nunca generes órdenes para ejecutar robots automáticamente.
-
-10. Nunca devuelvas comandos destinados a ejecutar código, scripts o automatizaciones internas.
-
-11. Si una acción requiere autorización oficial del usuario, explica que deberá completarse mediante el procedimiento oficial correspondiente.
-
-12. Si no tienes datos suficientes para calcular un impuesto, pide los datos necesarios en lugar de inventar una cantidad.
-
-13. Si una regla fiscal depende de la comunidad autónoma, pregunta o utiliza la ubicación que haya proporcionado el usuario.
-
-14. No inventes tipos impositivos, tasas oficiales ni requisitos legales.
-
-15. Si el usuario pregunta algo que no tenga relación con vehículos o el funcionamiento de Gestor-IA, indícale amablemente que este asistente está especializado en trámites de vehículos.
-
-ESTILO
-
-- Responde siempre en español.
-- Sé claro.
-- Utiliza lenguaje sencillo.
-- Haz preguntas concretas.
-- Evita respuestas excesivamente largas.
-- Guía al usuario paso a paso cuando sea necesario.
-
-IMPORTANTE
-
-Tú eres únicamente la capa conversacional.
-
-Las acciones reales de Gestor-IA deberán ser autorizadas y ejecutadas por el backend mediante funciones controladas.
-
-Nunca debes decidir por tu cuenta ejecutar una acción real.
-`
-              },
-
-              {
-
-                role: "user",
-
-                content: mensaje
-
-              }
-
-            ]
-
-          })
+            return res.status(401).json({
+                ok: false,
+                error: "Necesitas iniciar sesión."
+            });
 
         }
-      );
+
+        const token =
+            authorization.substring(7).trim();
+
+        const {
+            data: userData,
+            error: userError
+        } = await supabase.auth.getUser(token);
+
+        if (userError || !userData?.user) {
+
+            return res.status(401).json({
+                ok: false,
+                error: "Tu sesión no es válida."
+            });
+
+        }
+
+        const usuario = userData.user;
+
+        const mensaje =
+            String(req.body?.mensaje || "").trim();
+
+        const expedienteId =
+            String(req.body?.expediente_id || "").trim();
+
+        if (!mensaje || !expedienteId) {
+
+            return res.status(400).json({
+                ok: false,
+                error: "Falta el mensaje o el expediente."
+            });
+
+        }
+
+        if (mensaje.length > 4000) {
+
+            return res.status(400).json({
+                ok: false,
+                error: "El mensaje es demasiado largo."
+            });
+
+        }
 
 
-    /* ==========================================
-       7. LEER RESPUESTA
-    ========================================== */
+        /* ==============================
+           CLIENTE SUPABASE DEL USUARIO
+        ============================== */
 
-    const datos =
-      await respuesta.json();
+        const clienteUsuario = createClient(
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_ANON_KEY,
+            {
+                global: {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                },
+                auth: {
+                    persistSession: false,
+                    autoRefreshToken: false
+                }
+            }
+        );
 
 
-    if (!respuesta.ok) {
+        /* ==============================
+           EXPEDIENTE
+        ============================== */
 
-      console.error(
-        "Error Groq:",
-        datos
-      );
+        const {
+            data: expediente,
+            error: expedienteError
+        } = await clienteUsuario
+            .from("expedientes")
+            .select("*")
+            .eq("id", expedienteId)
+            .single();
 
-      return res.status(500).json({
-        ok: false,
-        error:
-          "No se pudo conectar con la IA."
-      });
+        if (
+            expedienteError ||
+            !expediente
+        ) {
+
+            return res.status(403).json({
+                ok: false,
+                error: "No tienes acceso a este expediente."
+            });
+
+        }
+
+
+        /* ==============================
+           PARTICIPANTE
+        ============================== */
+
+        const {
+            data: participantes
+        } = await clienteUsuario
+            .from("participantes")
+            .select(
+                "nombre,dni_nie,telefono,email,rol,estado"
+            )
+            .eq("expediente_id", expedienteId);
+
+
+        /* ==============================
+           HISTORIAL
+        ============================== */
+
+        const {
+            data: historial
+        } = await clienteUsuario
+            .from("mensajes")
+            .select("autor,contenido,created_at")
+            .eq("expediente_id", expedienteId)
+            .order("created_at", {
+                ascending: true
+            })
+            .limit(30);
+
+
+        /* ==============================
+           GUARDAR MENSAJE USUARIO
+        ============================== */
+
+        await clienteUsuario
+            .from("mensajes")
+            .insert({
+                expediente_id: expedienteId,
+                usuario_id: usuario.id,
+                autor: "usuario",
+                contenido: mensaje
+            });
+
+
+        /* ==============================
+           CONTEXTO
+        ============================== */
+
+        const contextoParticipantes =
+            JSON.stringify(
+                participantes || [],
+                null,
+                2
+            );
+
+        const mensajesIA = [
+
+            {
+                role: "system",
+                content: `
+Eres Gestor-IA.
+
+Trabajas exclusivamente dentro de un expediente de cambio de titularidad de vehículo en España.
+
+MATRÍCULA:
+${expediente.matricula}
+
+ESTADO DEL EXPEDIENTE:
+${expediente.estado}
+
+PARTICIPANTES:
+${contextoParticipantes}
+
+TU OBJETIVO ES LLEVAR EL EXPEDIENTE PASO A PASO.
+
+Debes ayudar a recopilar:
+
+- Datos del comprador.
+- Datos del vendedor.
+- Datos del vehículo.
+- Precio de compraventa.
+- Fecha de compraventa.
+- Documentación necesaria.
+- Datos necesarios para generar el contrato.
+- Comunidad autónoma competente.
+- Información necesaria para determinar impuestos.
+- Información necesaria para preparar el cambio de titularidad.
+
+REGLAS MUY IMPORTANTES
+
+1. Solo trabajas con este expediente.
+
+2. No respondas preguntas generales que no estén relacionadas con este traspaso.
+
+3. Nunca pidas contraseñas de Cl@ve.
+
+4. Nunca pidas claves bancarias.
+
+5. Nunca pidas certificados digitales privados.
+
+6. No afirmes que has presentado el modelo 620 si el backend no confirma que se ha presentado.
+
+7. No afirmes que un impuesto está pagado si el backend no lo confirma.
+
+8. No afirmes que el vehículo ya está transferido si el backend no lo confirma.
+
+9. Puedes preparar la información necesaria para un contrato de compraventa.
+
+10. Puedes detectar qué datos faltan para poder generar ese contrato.
+
+11. Cuando dispongamos del motor fiscal del backend, utilizarás sus resultados para mostrar el ITP.
+
+12. Hasta que exista ese cálculo oficial del backend, NO inventes porcentajes ni importes fiscales.
+
+13. El modelo puede variar dependiendo de la comunidad autónoma y del supuesto. No lo inventes.
+
+14. La IA conversa y organiza. Las acciones reales las ejecuta el backend.
+
+15. Haz una pregunta cada vez cuando necesites información del cliente.
+
+16. Sé breve y claro.
+
+17. Responde siempre en español.
+
+Cuando acabas de recibir los datos iniciales del primer participante, empieza solicitando la información de la compraventa que todavía falte.
+`
+            }
+
+        ];
+
+
+        for (const item of historial || []) {
+
+            mensajesIA.push({
+                role:
+                    item.autor === "ia"
+                        ? "assistant"
+                        : "user",
+
+                content:
+                    item.contenido
+            });
+
+        }
+
+
+        mensajesIA.push({
+            role: "user",
+            content: mensaje
+        });
+
+
+        /* ==============================
+           GROQ
+        ============================== */
+
+        const apiKey =
+            process.env.GROQ_API_KEY;
+
+        if (!apiKey) {
+
+            return res.status(500).json({
+                ok: false,
+                error: "La IA no está configurada."
+            });
+
+        }
+
+
+        const respuesta =
+            await fetch(
+                "https://api.groq.com/openai/v1/chat/completions",
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Authorization":
+                            `Bearer ${apiKey}`,
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        model:
+                            "llama-3.1-8b-instant",
+
+                        temperature: 0.2,
+
+                        max_tokens: 700,
+
+                        messages:
+                            mensajesIA
+
+                    })
+
+                }
+            );
+
+
+        const datos =
+            await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            console.error(datos);
+
+            return res.status(500).json({
+                ok: false,
+                error: "No se pudo conectar con la IA."
+            });
+
+        }
+
+
+        const textoIA =
+            datos?.choices?.[0]?.message?.content;
+
+
+        if (!textoIA) {
+
+            return res.status(500).json({
+                ok: false,
+                error: "La IA no devolvió respuesta."
+            });
+
+        }
+
+
+        /* ==============================
+           GUARDAR RESPUESTA IA
+        ============================== */
+
+        await clienteUsuario
+            .from("mensajes")
+            .insert({
+                expediente_id: expedienteId,
+                usuario_id: usuario.id,
+                autor: "ia",
+                contenido: textoIA
+            });
+
+
+        return res.status(200).json({
+
+            ok: true,
+
+            respuesta: textoIA,
+
+            expediente: {
+                id: expediente.id,
+                matricula: expediente.matricula,
+                estado: expediente.estado
+            }
+
+        });
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            ok: false,
+            error: "Error interno del servidor."
+        });
 
     }
-
-
-    if (
-      !datos.choices ||
-      !datos.choices.length ||
-      !datos.choices[0]?.message?.content
-    ) {
-
-      return res.status(500).json({
-        ok: false,
-        error:
-          "La IA no devolvió ninguna respuesta."
-      });
-
-    }
-
-
-    /* ==========================================
-       8. DEVOLVER RESPUESTA
-    ========================================== */
-
-    return res.status(200).json({
-
-      ok: true,
-
-      respuesta:
-        datos.choices[0]
-          .message
-          .content,
-
-      usuario: {
-        id: usuario.id,
-        email: usuario.email
-      }
-
-    });
-
-
-  } catch (error) {
-
-    console.error(
-      "Error chat:",
-      error
-    );
-
-
-    return res.status(500).json({
-
-      ok: false,
-
-      error:
-        "Error interno del servidor."
-
-    });
-
-  }
 
 }
