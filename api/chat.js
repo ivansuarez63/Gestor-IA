@@ -17,10 +17,6 @@ const supabase = createClient(
 );
 
 
-/* =====================================================
-   CLIENTE AUTENTICADO
-===================================================== */
-
 function clienteAutenticado(token) {
 
     return createClient(
@@ -87,10 +83,12 @@ function convertirFecha(texto) {
     const anio =
         match[3];
 
+
     const fecha =
         new Date(
             `${anio}-${mes}-${dia}T00:00:00`
         );
+
 
     if (
         Number.isNaN(
@@ -100,6 +98,7 @@ function convertirFecha(texto) {
         return null;
     }
 
+
     if (
         fecha.getFullYear() !== Number(anio) ||
         fecha.getMonth() + 1 !== Number(mes) ||
@@ -107,6 +106,7 @@ function convertirFecha(texto) {
     ) {
         return null;
     }
+
 
     return `${anio}-${mes}-${dia}`;
 }
@@ -141,10 +141,12 @@ function extraerPotencia(texto) {
             .toLowerCase()
             .replace(",", ".");
 
+
     const kw =
         valor.match(
             /(\d+(?:\.\d+)?)\s*kw/
         );
+
 
     if (kw) {
 
@@ -160,6 +162,7 @@ function extraerPotencia(texto) {
             /(\d+(?:\.\d+)?)\s*(cv|caballos)/
         );
 
+
     if (cv) {
 
         return {
@@ -169,16 +172,11 @@ function extraerPotencia(texto) {
     }
 
 
-    /*
-       Si solo escribe un número,
-       lo guardamos pero NO asumimos
-       automáticamente la unidad.
-    */
-
     const numero =
         valor.match(
             /(\d+(?:\.\d+)?)/
         );
+
 
     if (numero) {
 
@@ -194,7 +192,7 @@ function extraerPotencia(texto) {
 
 
 /* =====================================================
-   IDENTIFICAR CARROCERÍA
+   CARROCERÍA
 ===================================================== */
 
 function esDescapotable(nombre) {
@@ -202,6 +200,7 @@ function esDescapotable(nombre) {
     const n =
         normalizarTexto(nombre)
             .toUpperCase();
+
 
     return (
         /\bCABRIO\b/.test(n) ||
@@ -215,7 +214,7 @@ function esDescapotable(nombre) {
 
 
 /* =====================================================
-   IDENTIFICAR TRANSMISIÓN
+   TRANSMISIÓN
 ===================================================== */
 
 function esSecuencial(nombre) {
@@ -223,6 +222,7 @@ function esSecuencial(nombre) {
     const n =
         normalizarTexto(nombre)
             .toUpperCase();
+
 
     return (
         n.includes("SECUENCIAL") ||
@@ -298,7 +298,7 @@ function siguientePregunta(expediente) {
 
         case "CARROCERIA_FISCAL":
 
-            return "Necesito distinguir la versión exacta. ¿El vehículo es la versión normal/cerrada o es descapotable/cabrio?";
+            return "Necesito distinguir la versión exacta. ¿El vehículo es normal/cerrado o descapotable/cabrio?";
 
 
         case "TRANSMISION_FISCAL":
@@ -308,17 +308,27 @@ function siguientePregunta(expediente) {
 
         case "VERSION_EXACTA":
 
-            return "He encontrado varias versiones fiscales posibles. Indícame la versión exacta del vehículo tal como aparece en su documentación.";
+            return "He encontrado varias versiones posibles. Indícame la versión exacta del vehículo tal como aparece en su documentación.";
+
+
+        case "TIPO_VENDEDOR":
+
+            return "Una última comprobación fiscal: ¿compras el vehículo a un particular o a una empresa/profesional que te entrega factura?";
+
+
+        case "FACTURA_PENDIENTE":
+
+            return "Necesito verificar la factura de la empresa/profesional antes de calcular el tratamiento fiscal de la operación.";
 
 
         case "CALCULO_FISCAL":
 
-            return "Perfecto. El vehículo ya está identificado. Ahora voy a verificar el cálculo fiscal antes de mostrarte el importe.";
+            return "Perfecto. Ya tengo los datos necesarios. Voy a calcular el coste del traspaso.";
 
 
         case "PAGO_PENDIENTE":
 
-            return "El cálculo está preparado. El siguiente paso es revisar el desglose y realizar el pago.";
+            return "El cálculo está terminado. Revisa el importe antes de continuar con el pago.";
 
 
         default:
@@ -329,7 +339,7 @@ function siguientePregunta(expediente) {
 
 
 /* =====================================================
-   SECUENCIA NORMAL
+   FLUJO NORMAL
 ===================================================== */
 
 function siguientePaso(actual) {
@@ -371,12 +381,13 @@ function siguientePaso(actual) {
 
     };
 
+
     return pasos[actual] || actual;
 }
 
 
 /* =====================================================
-   BUSCAR CANDIDATOS FISCALES
+   BUSCAR CANDIDATOS
 ===================================================== */
 
 async function buscarCandidatos(
@@ -460,12 +471,6 @@ async function buscarCandidatos(
 
 
     if (error) {
-
-        console.error(
-            "Error buscando valoración:",
-            error
-        );
-
         throw error;
     }
 
@@ -475,7 +480,7 @@ async function buscarCandidatos(
 
 
     /* =================================================
-       FILTRAR POR TEXTO DEL MODELO
+       MODELO
     ================================================= */
 
     const palabras =
@@ -490,34 +495,29 @@ async function buscarCandidatos(
         );
 
 
-    if (
-        palabras.length > 0
-    ) {
+    candidatos =
+        candidatos.filter(
+            vehiculo => {
 
-        candidatos =
-            candidatos.filter(
-                vehiculo => {
+                const oficial =
+                    normalizarTexto(
+                        vehiculo.modelo_tipo
+                    )
+                    .toUpperCase();
 
-                    const oficial =
-                        normalizarTexto(
-                            vehiculo.modelo_tipo
+
+                return palabras.every(
+                    palabra =>
+                        oficial.includes(
+                            palabra
                         )
-                        .toUpperCase();
-
-
-                    return palabras.every(
-                        palabra =>
-                            oficial.includes(
-                                palabra
-                            )
-                    );
-                }
-            );
-    }
+                );
+            }
+        );
 
 
     /* =================================================
-       FILTRAR POR AÑO
+       AÑO
     ================================================= */
 
     const anio =
@@ -559,7 +559,6 @@ async function buscarCandidatos(
                         inicio !== null &&
                         anio < inicio
                     ) {
-
                         return false;
                     }
 
@@ -568,7 +567,6 @@ async function buscarCandidatos(
                         fin !== null &&
                         anio > fin
                     ) {
-
                         return false;
                     }
 
@@ -580,7 +578,7 @@ async function buscarCandidatos(
 
 
     /* =================================================
-       FILTRAR POR POTENCIA
+       POTENCIA
     ================================================= */
 
     const potencia =
@@ -607,13 +605,13 @@ async function buscarCandidatos(
 
                         const oficial =
                             Number(
-                                vehiculo.potencia_kw
+                                vehiculo
+                                    .potencia_kw
                             );
 
+
                         return (
-                            Number.isFinite(
-                                oficial
-                            ) &&
+                            Number.isFinite(oficial) &&
                             Math.abs(
                                 oficial -
                                 potencia.valor
@@ -629,13 +627,13 @@ async function buscarCandidatos(
 
                         const oficial =
                             Number(
-                                vehiculo.potencia_cv
+                                vehiculo
+                                    .potencia_cv
                             );
 
+
                         return (
-                            Number.isFinite(
-                                oficial
-                            ) &&
+                            Number.isFinite(oficial) &&
                             Math.abs(
                                 oficial -
                                 potencia.valor
@@ -736,7 +734,7 @@ async function buscarCandidatos(
 
 
 /* =====================================================
-   DECIDIR QUÉ DATO FALTA
+   DATO QUE FALTA
 ===================================================== */
 
 function decidirDatoFaltante(
@@ -746,7 +744,6 @@ function decidirDatoFaltante(
     if (
         candidatos.length <= 1
     ) {
-
         return null;
     }
 
@@ -802,7 +799,7 @@ function decidirDatoFaltante(
 
 
 /* =====================================================
-   FINALIZAR IDENTIFICACIÓN
+   GUARDAR VEHÍCULO IDENTIFICADO
 ===================================================== */
 
 async function guardarVehiculoIdentificado(
@@ -824,14 +821,24 @@ async function guardarVehiculoIdentificado(
                 modelo_fiscal_identificado:
                     vehiculo.modelo_tipo,
 
+                valor_oficial_boe:
+                    vehiculo.valor_oficial,
+
                 valor_fiscal:
                     vehiculo.valor_oficial,
 
+                /*
+                   Ahora NO vamos directamente
+                   al cálculo.
+
+                   Primero preguntamos quién vende.
+                */
+
                 paso_actual:
-                    "CALCULO_FISCAL",
+                    "TIPO_VENDEDOR",
 
                 estado:
-                    "CALCULO_FISCAL",
+                    "DATOS_FISCALES",
 
                 calculo_fiscal_verificado:
                     false,
@@ -848,14 +855,13 @@ async function guardarVehiculoIdentificado(
 
 
     if (error) {
-
         throw error;
     }
 }
 
 
 /* =====================================================
-   PROCESAR IDENTIFICACIÓN
+   IDENTIFICACIÓN
 ===================================================== */
 
 async function procesarIdentificacion(
@@ -872,32 +878,21 @@ async function procesarIdentificacion(
         );
 
 
-    /* =================================================
-       NO ENCONTRADO
-    ================================================= */
-
     if (
         candidatos.length === 0
     ) {
 
         return {
 
-            encontrado:
-                false,
-
             paso:
                 "VERSION_EXACTA",
 
             respuesta:
-                "No he podido identificar con certeza la versión fiscal del vehículo. Indícame la versión exacta tal como aparece en la documentación del vehículo."
+                "No he podido identificar con certeza la versión fiscal. Indícame la versión exacta tal como aparece en la documentación."
 
         };
     }
 
-
-    /* =================================================
-       UNA SOLA VERSIÓN
-    ================================================= */
 
     if (
         candidatos.length === 1
@@ -916,27 +911,17 @@ async function procesarIdentificacion(
 
         return {
 
-            encontrado:
-                true,
-
-            exacto:
-                true,
-
             paso:
-                "CALCULO_FISCAL",
+                "TIPO_VENDEDOR",
 
             vehiculo,
 
             respuesta:
-                `Perfecto. He identificado la versión como ${vehiculo.marca} ${vehiculo.modelo_tipo}. Ya puedo continuar con la verificación fiscal del expediente.`
+                `Perfecto. He identificado el vehículo como ${vehiculo.marca} ${vehiculo.modelo_tipo}. Una última comprobación: ¿lo compras a un particular o a una empresa/profesional que te entrega factura?`
 
         };
     }
 
-
-    /* =================================================
-       VARIAS VERSIONES
-    ================================================= */
 
     const paso =
         decidirDatoFaltante(
@@ -953,7 +938,7 @@ async function procesarIdentificacion(
     ) {
 
         respuesta =
-            "He encontrado varias versiones compatibles. Para distinguirlas necesito saber si tu vehículo es la versión normal/cerrada o descapotable/cabrio.";
+            "He encontrado varias versiones compatibles. ¿Tu vehículo es normal/cerrado o descapotable/cabrio?";
 
     } else if (
         paso ===
@@ -961,26 +946,25 @@ async function procesarIdentificacion(
     ) {
 
         respuesta =
-            "Ya casi lo tengo. ¿El cambio del vehículo es manual o secuencial/automático?";
+            "Ya casi lo tengo. ¿El cambio es manual o secuencial/automático?";
 
     } else {
 
         const nombres =
             [
                 ...new Set(
-                    candidatos
-                        .map(
-                            vehiculo =>
-                                vehiculo
-                                    .modelo_tipo
-                        )
+                    candidatos.map(
+                        vehiculo =>
+                            vehiculo
+                                .modelo_tipo
+                    )
                 )
             ]
             .slice(0, 8);
 
 
         respuesta =
-            "He encontrado varias versiones fiscales posibles. Indícame cuál corresponde a tu vehículo:\n\n" +
+            "He encontrado varias versiones posibles. Indícame cuál corresponde:\n\n" +
             nombres
                 .map(
                     (nombre, index) =>
@@ -992,16 +976,8 @@ async function procesarIdentificacion(
 
     return {
 
-        encontrado:
-            true,
-
-        exacto:
-            false,
-
         paso,
-
         candidatos,
-
         respuesta
 
     };
@@ -1018,29 +994,20 @@ export default async function handler(
 ) {
 
     if (
-        req.method !==
-        "POST"
+        req.method !== "POST"
     ) {
 
         return res
             .status(405)
             .json({
-
                 ok: false,
-
                 error:
                     "Método no permitido"
-
             });
     }
 
 
     try {
-
-
-        /* =================================================
-           AUTENTICACIÓN
-        ================================================= */
 
         const authorization =
             req.headers.authorization || "";
@@ -1055,12 +1022,9 @@ export default async function handler(
             return res
                 .status(401)
                 .json({
-
                     ok: false,
-
                     error:
                         "Necesitas iniciar sesión."
-
                 });
         }
 
@@ -1088,12 +1052,9 @@ export default async function handler(
             return res
                 .status(401)
                 .json({
-
                     ok: false,
-
                     error:
                         "Sesión no válida."
-
                 });
         }
 
@@ -1102,14 +1063,9 @@ export default async function handler(
             userData.user;
 
 
-        /* =================================================
-           DATOS
-        ================================================= */
-
         const expedienteId =
             String(
-                req.body
-                    ?.expediente_id ||
+                req.body?.expediente_id ||
                 ""
             )
             .trim();
@@ -1128,12 +1084,9 @@ export default async function handler(
             return res
                 .status(400)
                 .json({
-
                     ok: false,
-
                     error:
                         "Falta el expediente."
-
                 });
         }
 
@@ -1143,10 +1096,6 @@ export default async function handler(
                 token
             );
 
-
-        /* =================================================
-           EXPEDIENTE
-        ================================================= */
 
         const {
             data: expediente,
@@ -1170,62 +1119,19 @@ export default async function handler(
             return res
                 .status(403)
                 .json({
-
                     ok: false,
-
                     error:
                         "No tienes acceso a este expediente."
-
                 });
         }
 
 
         /* =================================================
-           PARTICIPANTES
-        ================================================= */
-
-        const {
-            data: participantes
-        } =
-            await db
-                .from(
-                    "participantes"
-                )
-                .select(
-                    "nombre,rol,estado,email"
-                )
-                .eq(
-                    "expediente_id",
-                    expedienteId
-                );
-
-
-        const primerParticipante =
-            participantes?.find(
-                participante =>
-                    participante.estado ===
-                    "DATOS_COMPLETOS"
-            );
-
-
-        /*
-           La IA nunca añade al segundo
-           participante solo porque alguien
-           escriba sus datos en el chat.
-        */
-
-
-        /* =================================================
-           PETICIÓN SIN MENSAJE
+           SIN MENSAJE
         ================================================= */
 
         if (!mensaje) {
 
-
-            /*
-               Si llegamos a identificación,
-               intentamos resolverla automáticamente.
-            */
 
             if (
                 expediente
@@ -1242,7 +1148,7 @@ export default async function handler(
 
                 if (
                     resultado.paso !==
-                    "CALCULO_FISCAL"
+                    "TIPO_VENDEDOR"
                 ) {
 
                     await db
@@ -1277,8 +1183,7 @@ export default async function handler(
                             resultado.paso,
 
                         solicitar_calculo:
-                            resultado.paso ===
-                            "CALCULO_FISCAL",
+                            false,
 
                         vehiculo:
                             resultado.vehiculo ||
@@ -1301,7 +1206,7 @@ export default async function handler(
                         ok: true,
 
                         respuesta:
-                            "El vehículo está identificado. Ahora voy a verificar impuestos, tasas y coste total antes de habilitar el pago.",
+                            "Perfecto. Voy a calcular impuestos, tasa DGT y servicio Gestor-IA.",
 
                         paso_actual:
                             "CALCULO_FISCAL",
@@ -1333,7 +1238,7 @@ export default async function handler(
 
 
         /* =================================================
-           GUARDAR MENSAJE USUARIO
+           GUARDAR MENSAJE
         ================================================= */
 
         await db
@@ -1355,26 +1260,15 @@ export default async function handler(
             });
 
 
-        /* =================================================
-           VALIDACIÓN
-        ================================================= */
-
         let update = {};
 
-        let errorValidacion =
-            null;
+        let errorValidacion = null;
 
+        let respuestaDirecta = null;
 
-        let respuestaDirecta =
-            null;
+        let pasoDirecto = null;
 
-
-        let pasoDirecto =
-            null;
-
-
-        let vehiculoIdentificado =
-            null;
+        let vehiculoIdentificado = null;
 
 
         switch (
@@ -1382,28 +1276,18 @@ export default async function handler(
         ) {
 
 
-            /* =============================================
-               PRECIO
-            ============================================= */
-
             case "PRECIO": {
-
-                const numero =
-                    limpiarNumero(
-                        mensaje
-                    );
-
 
                 const precio =
                     Number(
-                        numero
+                        limpiarNumero(
+                            mensaje
+                        )
                     );
 
 
                 if (
-                    !Number.isFinite(
-                        precio
-                    ) ||
+                    !Number.isFinite(precio) ||
                     precio <= 0
                 ) {
 
@@ -1421,10 +1305,6 @@ export default async function handler(
             }
 
 
-            /* =============================================
-               FECHA
-            ============================================= */
-
             case "FECHA": {
 
                 const fecha =
@@ -1436,7 +1316,7 @@ export default async function handler(
                 if (!fecha) {
 
                     errorValidacion =
-                        "Indícame una fecha válida en formato día/mes/año. Por ejemplo: 13/08/2026.";
+                        "Indícame una fecha válida. Por ejemplo: 13/08/2026.";
 
                 } else {
 
@@ -1448,10 +1328,6 @@ export default async function handler(
                 break;
             }
 
-
-            /* =============================================
-               MARCA
-            ============================================= */
 
             case "MARCA": {
 
@@ -1466,7 +1342,7 @@ export default async function handler(
                 ) {
 
                     errorValidacion =
-                        "Indícame la marca del vehículo.";
+                        "Indícame la marca.";
 
                 } else {
 
@@ -1477,10 +1353,6 @@ export default async function handler(
                 break;
             }
 
-
-            /* =============================================
-               MODELO
-            ============================================= */
 
             case "MODELO": {
 
@@ -1493,7 +1365,7 @@ export default async function handler(
                 if (!valor) {
 
                     errorValidacion =
-                        "Indícame el modelo del vehículo.";
+                        "Indícame el modelo.";
 
                 } else {
 
@@ -1504,10 +1376,6 @@ export default async function handler(
                 break;
             }
 
-
-            /* =============================================
-               PRIMERA MATRICULACIÓN
-            ============================================= */
 
             case "PRIMERA_MATRICULACION": {
 
@@ -1520,7 +1388,7 @@ export default async function handler(
                 if (!fecha) {
 
                     errorValidacion =
-                        "Indícame la fecha de primera matriculación en formato día/mes/año.";
+                        "Indícame la fecha de primera matriculación.";
 
                 } else {
 
@@ -1532,10 +1400,6 @@ export default async function handler(
                 break;
             }
 
-
-            /* =============================================
-               COMBUSTIBLE
-            ============================================= */
 
             case "COMBUSTIBLE": {
 
@@ -1550,7 +1414,7 @@ export default async function handler(
                 ) {
 
                     errorValidacion =
-                        "Indícame el combustible del vehículo.";
+                        "Indícame el combustible.";
 
                 } else {
 
@@ -1561,10 +1425,6 @@ export default async function handler(
                 break;
             }
 
-
-            /* =============================================
-               CILINDRADA
-            ============================================= */
 
             case "CILINDRADA": {
 
@@ -1579,9 +1439,7 @@ export default async function handler(
 
 
                 if (
-                    !Number.isInteger(
-                        numero
-                    ) ||
+                    !Number.isInteger(numero) ||
                     numero <= 0 ||
                     numero > 10000
                 ) {
@@ -1599,10 +1457,6 @@ export default async function handler(
             }
 
 
-            /* =============================================
-               POTENCIA
-            ============================================= */
-
             case "POTENCIA": {
 
                 const potencia =
@@ -1614,7 +1468,7 @@ export default async function handler(
                 if (!potencia) {
 
                     errorValidacion =
-                        "Indícame la potencia y su unidad. Por ejemplo: 132 kW o 180 CV.";
+                        "Indícame la potencia. Por ejemplo: 132 kW.";
 
                 } else if (
                     potencia.tipo ===
@@ -1622,7 +1476,7 @@ export default async function handler(
                 ) {
 
                     errorValidacion =
-                        "Necesito saber la unidad de la potencia. Por ejemplo: 132 kW o 180 CV.";
+                        "Indícame también la unidad: kW o CV.";
 
                 } else {
 
@@ -1634,10 +1488,6 @@ export default async function handler(
                 break;
             }
 
-
-            /* =============================================
-               KILÓMETROS
-            ============================================= */
 
             case "KILOMETROS": {
 
@@ -1652,15 +1502,12 @@ export default async function handler(
 
 
                 if (
-                    !Number.isInteger(
-                        numero
-                    ) ||
-                    numero < 0 ||
-                    numero > 5000000
+                    !Number.isInteger(numero) ||
+                    numero < 0
                 ) {
 
                     errorValidacion =
-                        "Indícame los kilómetros del vehículo. Por ejemplo: 125000.";
+                        "Indícame los kilómetros.";
 
                 } else {
 
@@ -1671,10 +1518,6 @@ export default async function handler(
                 break;
             }
 
-
-            /* =============================================
-               COMUNIDAD
-            ============================================= */
 
             case "COMUNIDAD": {
 
@@ -1689,7 +1532,7 @@ export default async function handler(
                 ) {
 
                     errorValidacion =
-                        "Indícame la comunidad autónoma del domicilio fiscal del comprador.";
+                        "Indícame la comunidad autónoma del comprador.";
 
                 } else {
 
@@ -1701,10 +1544,6 @@ export default async function handler(
                 break;
             }
 
-
-            /* =============================================
-               PROVINCIA
-            ============================================= */
 
             case "PROVINCIA": {
 
@@ -1719,7 +1558,7 @@ export default async function handler(
                 ) {
 
                     errorValidacion =
-                        "Indícame la provincia del domicilio fiscal del comprador.";
+                        "Indícame la provincia.";
 
                 } else {
 
@@ -1731,10 +1570,6 @@ export default async function handler(
             }
 
 
-            /* =============================================
-               CARROCERÍA
-            ============================================= */
-
             case "CARROCERIA_FISCAL": {
 
                 const valor =
@@ -1745,18 +1580,10 @@ export default async function handler(
 
 
                 if (
-                    valor.includes(
-                        "CABRIO"
-                    ) ||
-                    valor.includes(
-                        "DESCAPOT"
-                    ) ||
-                    valor.includes(
-                        "CONVERTIBLE"
-                    ) ||
-                    valor.includes(
-                        "SPIDER"
-                    )
+                    valor.includes("CABRIO") ||
+                    valor.includes("DESCAPOT") ||
+                    valor.includes("SPIDER") ||
+                    valor.includes("CONVERTIBLE")
                 ) {
 
                     update
@@ -1764,15 +1591,8 @@ export default async function handler(
                         "CABRIO";
 
                 } else if (
-                    valor.includes(
-                        "NORMAL"
-                    ) ||
-                    valor.includes(
-                        "CERRAD"
-                    ) ||
-                    valor.includes(
-                        "NO DESCAPOT"
-                    )
+                    valor.includes("NORMAL") ||
+                    valor.includes("CERRAD")
                 ) {
 
                     update
@@ -1782,16 +1602,12 @@ export default async function handler(
                 } else {
 
                     errorValidacion =
-                        "Indícame si es versión normal/cerrada o descapotable/cabrio.";
+                        "Indícame si es normal/cerrado o descapotable/cabrio.";
                 }
 
                 break;
             }
 
-
-            /* =============================================
-               TRANSMISIÓN
-            ============================================= */
 
             case "TRANSMISION_FISCAL": {
 
@@ -1803,15 +1619,8 @@ export default async function handler(
 
 
                 if (
-                    valor.includes(
-                        "SECUENCIAL"
-                    ) ||
-                    valor.includes(
-                        "AUTOMATIC"
-                    ) ||
-                    valor.includes(
-                        "AUTOMÁTIC"
-                    )
+                    valor.includes("AUTOM") ||
+                    valor.includes("SECUENCIAL")
                 ) {
 
                     update
@@ -1819,9 +1628,7 @@ export default async function handler(
                         "SECUENCIAL";
 
                 } else if (
-                    valor.includes(
-                        "MANUAL"
-                    )
+                    valor.includes("MANUAL")
                 ) {
 
                     update
@@ -1831,7 +1638,7 @@ export default async function handler(
                 } else {
 
                     errorValidacion =
-                        "Indícame si el cambio es manual o secuencial/automático.";
+                        "Indícame si es manual o secuencial/automático.";
                 }
 
                 break;
@@ -1839,8 +1646,107 @@ export default async function handler(
 
 
             /* =============================================
-               VERSIÓN EXACTA
+               PARTICULAR / EMPRESA
             ============================================= */
+
+            case "TIPO_VENDEDOR": {
+
+                const valor =
+                    normalizarTexto(
+                        mensaje
+                    )
+                    .toUpperCase();
+
+
+                if (
+                    valor.includes("EMPRESA") ||
+                    valor.includes("PROFESIONAL") ||
+                    valor.includes("CONCESIONARIO")
+                ) {
+
+                    update
+                        .tipo_vendedor_declarado =
+                        "EMPRESA";
+
+                    update
+                        .tipo_vendedor_verificado =
+                        null;
+
+                    update
+                        .factura_verificada =
+                        false;
+
+                    update
+                        .paso_actual =
+                        "FACTURA_PENDIENTE";
+
+                    update.estado =
+                        "FACTURA_PENDIENTE";
+
+
+                    respuestaDirecta =
+                        "Perfecto. Al tratarse de una empresa/profesional necesitaremos verificar la factura antes de determinar el tratamiento fiscal. No podrás reducir el impuesto únicamente marcando esta opción.";
+
+                    pasoDirecto =
+                        "FACTURA_PENDIENTE";
+
+                } else if (
+                    valor.includes("PARTICULAR") ||
+                    valor.includes("PERSONA")
+                ) {
+
+                    update
+                        .tipo_vendedor_declarado =
+                        "PARTICULAR";
+
+                    update
+                        .tipo_vendedor_verificado =
+                        "PARTICULAR";
+
+                    update
+                        .paso_actual =
+                        "CALCULO_FISCAL";
+
+                    update.estado =
+                        "CALCULO_FISCAL";
+
+
+                    respuestaDirecta =
+                        "Perfecto. Ya tengo todo lo necesario. Voy a calcular el impuesto, la tasa DGT y el servicio Gestor-IA.";
+
+                    pasoDirecto =
+                        "CALCULO_FISCAL";
+
+                } else {
+
+                    errorValidacion =
+                        "Respóndeme únicamente: particular o empresa/profesional.";
+                }
+
+                break;
+            }
+
+
+            case "FACTURA_PENDIENTE": {
+
+                return res
+                    .status(200)
+                    .json({
+
+                        ok: true,
+
+                        respuesta:
+                            "La factura está pendiente de verificación. Más adelante habilitaremos aquí la subida del documento.",
+
+                        paso_actual:
+                            "FACTURA_PENDIENTE",
+
+                        requiere_factura:
+                            true
+
+                    });
+            }
+
 
             case "VERSION_EXACTA": {
 
@@ -1855,10 +1761,8 @@ export default async function handler(
                 respuestaDirecta =
                     resultado.respuesta;
 
-
                 pasoDirecto =
                     resultado.paso;
-
 
                 vehiculoIdentificado =
                     resultado.vehiculo ||
@@ -1867,13 +1771,11 @@ export default async function handler(
 
                 if (
                     pasoDirecto !==
-                    "CALCULO_FISCAL"
+                    "TIPO_VENDEDOR"
                 ) {
 
                     await db
-                        .from(
-                            "expedientes"
-                        )
+                        .from("expedientes")
                         .update({
 
                             paso_actual:
@@ -1890,14 +1792,9 @@ export default async function handler(
                         );
                 }
 
-
                 break;
             }
 
-
-            /* =============================================
-               IDENTIFICAR VEHÍCULO
-            ============================================= */
 
             case "IDENTIFICAR_VEHICULO": {
 
@@ -1911,23 +1808,16 @@ export default async function handler(
                 respuestaDirecta =
                     resultado.respuesta;
 
-
                 pasoDirecto =
                     resultado.paso;
-
 
                 vehiculoIdentificado =
                     resultado.vehiculo ||
                     null;
 
-
                 break;
             }
 
-
-            /* =============================================
-               CÁLCULO
-            ============================================= */
 
             case "CALCULO_FISCAL": {
 
@@ -1938,7 +1828,7 @@ export default async function handler(
                         ok: true,
 
                         respuesta:
-                            "El vehículo ya está identificado. Ahora voy a verificar el cálculo fiscal.",
+                            "Voy a calcular ahora el coste total del traspaso.",
 
                         paso_actual:
                             "CALCULO_FISCAL",
@@ -1950,10 +1840,6 @@ export default async function handler(
             }
 
 
-            /* =============================================
-               PAGO
-            ============================================= */
-
             case "PAGO_PENDIENTE": {
 
                 return res
@@ -1963,7 +1849,7 @@ export default async function handler(
                         ok: true,
 
                         respuesta:
-                            "El cálculo está preparado. Revisa el desglose antes del pago.",
+                            "El cálculo está terminado. Revisa el desglose del pago.",
 
                         paso_actual:
                             "PAGO_PENDIENTE"
@@ -1993,7 +1879,7 @@ export default async function handler(
 
 
         /* =================================================
-           ERROR VALIDACIÓN
+           ERROR
         ================================================= */
 
         if (
@@ -2037,8 +1923,81 @@ export default async function handler(
 
 
         /* =================================================
-           RESPUESTA DIRECTA DE IDENTIFICACIÓN
+           RESPUESTA DIRECTA
         ================================================= */
+
+        if (
+            respuestaDirecta &&
+            (
+                expediente.paso_actual ===
+                "TIPO_VENDEDOR"
+            )
+        ) {
+
+            update.updated_at =
+                new Date()
+                    .toISOString();
+
+
+            const {
+                error: updateError
+            } =
+                await db
+                    .from("expedientes")
+                    .update(update)
+                    .eq(
+                        "id",
+                        expedienteId
+                    );
+
+
+            if (updateError) {
+                throw updateError;
+            }
+
+
+            await db
+                .from("mensajes")
+                .insert({
+
+                    expediente_id:
+                        expedienteId,
+
+                    usuario_id:
+                        usuario.id,
+
+                    autor:
+                        "ia",
+
+                    contenido:
+                        respuestaDirecta
+
+                });
+
+
+            return res
+                .status(200)
+                .json({
+
+                    ok: true,
+
+                    respuesta:
+                        respuestaDirecta,
+
+                    paso_actual:
+                        pasoDirecto,
+
+                    solicitar_calculo:
+                        pasoDirecto ===
+                        "CALCULO_FISCAL",
+
+                    requiere_factura:
+                        pasoDirecto ===
+                        "FACTURA_PENDIENTE"
+
+                });
+        }
+
 
         if (
             respuestaDirecta
@@ -2121,48 +2080,26 @@ export default async function handler(
         } =
             await db
                 .from("expedientes")
-                .update(
-                    update
-                )
+                .update(update)
                 .eq(
                     "id",
                     expedienteId
                 );
 
 
-        if (
-            updateError
-        ) {
-
-            console.error(
-                updateError
-            );
-
-
-            return res
-                .status(500)
-                .json({
-
-                    ok: false,
-
-                    error:
-                        "No se pudo guardar el avance del expediente."
-
-                });
+        if (updateError) {
+            throw updateError;
         }
 
 
         const actualizado = {
-
             ...expediente,
             ...update
-
         };
 
 
         /* =================================================
-           SI ACABAMOS DE LLEGAR A IDENTIFICACIÓN,
-           INTENTAMOS IDENTIFICAR EN ESTE MISMO MENSAJE
+           IDENTIFICACIÓN AUTOMÁTICA
         ================================================= */
 
         if (
@@ -2179,7 +2116,7 @@ export default async function handler(
 
             if (
                 resultado.paso !==
-                "CALCULO_FISCAL"
+                "TIPO_VENDEDOR"
             ) {
 
                 await db
@@ -2233,8 +2170,7 @@ export default async function handler(
                         resultado.paso,
 
                     solicitar_calculo:
-                        resultado.paso ===
-                        "CALCULO_FISCAL",
+                        false,
 
                     vehiculo:
                         resultado.vehiculo ||
@@ -2245,7 +2181,7 @@ export default async function handler(
 
 
         /* =================================================
-           PREGUNTA SIGUIENTE
+           SIGUIENTE PREGUNTA
         ================================================= */
 
         const respuestaIA =
