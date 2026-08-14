@@ -135,11 +135,17 @@ button:disabled{
 .pago-box,
 .autorizacion,
 .expediente-card,
-.invitacion-box{
+.invitacion-box,
+.calculo-box,
+.bloqueo-box{
     background:#0b1220;
     border-radius:15px;
     padding:20px;
     margin-top:20px;
+}
+
+.bloqueo-box{
+    border:1px solid #f59e0b;
 }
 
 .servicios-grid{
@@ -209,6 +215,7 @@ select{
     padding:14px 18px;
     border-radius:18px;
     max-width:75%;
+    white-space:pre-wrap;
 }
 
 .bot{
@@ -221,6 +228,7 @@ select{
     padding:14px 18px;
     border-radius:18px;
     max-width:75%;
+    white-space:pre-wrap;
 }
 
 .fila-chat{
@@ -282,15 +290,22 @@ select{
     display:flex;
     justify-content:space-between;
     gap:20px;
-    margin:12px 0;
+    margin:14px 0;
     color:#cbd5e1;
 }
 
 .total{
-    border-top:1px solid #1e293b;
-    padding-top:15px;
+    border-top:1px solid #334155;
+    padding-top:18px;
+    margin-top:18px;
+    font-size:21px;
     font-weight:bold;
     color:white;
+}
+
+.total span:last-child{
+    color:#38bdf8;
+    font-size:25px;
 }
 
 .enlace-invitacion{
@@ -298,6 +313,22 @@ select{
     max-width:none;
     background:#111827;
     color:white;
+}
+
+.valor-fiscal{
+    color:#94a3b8;
+    font-size:14px;
+    line-height:1.7;
+    margin-top:15px;
+}
+
+.calculando{
+    text-align:center;
+    padding:45px;
+}
+
+.calculando h2{
+    color:#38bdf8;
 }
 
 @media(max-width:900px){
@@ -404,16 +435,50 @@ id="modalContenido">
 let sesionActiva=false;
 let usuarioActual=null;
 let expedienteActual=null;
+let ultimoCalculo=null;
 
 
-/* =============================
-   SESIÓN
-============================= */
+/* =====================================================
+   UTILIDADES
+===================================================== */
 
 function tokenActual(){
 
     return localStorage.getItem(
         "gestorIA_token"
+    );
+}
+
+
+function formatoEuro(valor){
+
+    const numero=
+        Number(valor || 0);
+
+    return numero.toLocaleString(
+        "es-ES",
+        {
+            minimumFractionDigits:2,
+            maximumFractionDigits:2
+        }
+    ) + " €";
+}
+
+
+function nombreUsuario(){
+
+    if(!usuarioActual){
+        return "";
+    }
+
+    if(typeof usuarioActual==="string"){
+        return usuarioActual;
+    }
+
+    return (
+        usuarioActual.email ||
+        usuarioActual.nombre ||
+        "Usuario"
     );
 }
 
@@ -434,9 +499,13 @@ function requiereSesion(){
 }
 
 
+/* =====================================================
+   SESIÓN
+===================================================== */
+
 async function restaurarSesion(){
 
-    const token =
+    const token=
         tokenActual();
 
     if(!token){
@@ -448,7 +517,7 @@ async function restaurarSesion(){
 
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/sesion",
                 {
@@ -459,7 +528,7 @@ async function restaurarSesion(){
                 }
             );
 
-        const data =
+        const data=
             await res.json();
 
         if(!res.ok || !data.ok){
@@ -478,7 +547,9 @@ async function restaurarSesion(){
         }
 
         sesionActiva=true;
-        usuarioActual=data.usuario;
+
+        usuarioActual=
+            data.usuario;
 
         actualizarUsuario();
 
@@ -491,9 +562,9 @@ async function restaurarSesion(){
 }
 
 
-/* =============================
+/* =====================================================
    INICIO
-============================= */
+===================================================== */
 
 function inicio(){
 
@@ -535,9 +606,9 @@ function inicio(){
 }
 
 
-/* =============================
+/* =====================================================
    SERVICIOS
-============================= */
+===================================================== */
 
 function servicios(){
 
@@ -642,9 +713,9 @@ function servicios(){
 }
 
 
-/* =============================
+/* =====================================================
    QUIÉNES SOMOS
-============================= */
+===================================================== */
 
 function quienesSomos(){
 
@@ -675,9 +746,9 @@ function quienesSomos(){
 }
 
 
-/* =============================
+/* =====================================================
    AYUDA
-============================= */
+===================================================== */
 
 function ayuda(){
 
@@ -695,9 +766,9 @@ function ayuda(){
 }
 
 
-/* =============================
+/* =====================================================
    LOGIN
-============================= */
+===================================================== */
 
 function login(){
 
@@ -736,13 +807,13 @@ function login(){
 
 async function entrar(){
 
-    const email =
+    const email=
         document
         .getElementById(
             "loginEmail"
         ).value;
 
-    const password =
+    const password=
         document
         .getElementById(
             "loginPass"
@@ -750,7 +821,7 @@ async function entrar(){
 
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/login",
                 {
@@ -768,7 +839,7 @@ async function entrar(){
                 }
             );
 
-        const data =
+        const data=
             await res.json();
 
         if(!data.ok){
@@ -784,7 +855,8 @@ async function entrar(){
         sesionActiva=true;
 
         usuarioActual=
-            data.usuario || email;
+            data.usuario ||
+            email;
 
         localStorage.setItem(
             "gestorIA_token",
@@ -814,9 +886,9 @@ async function entrar(){
 }
 
 
-/* =============================
+/* =====================================================
    REGISTRO
-============================= */
+===================================================== */
 
 function registro(){
 
@@ -854,19 +926,19 @@ function registro(){
 
 async function crearCuenta(){
 
-    const nombre =
+    const nombre=
         document
         .getElementById(
             "regNombre"
         ).value;
 
-    const email =
+    const email=
         document
         .getElementById(
             "regEmail"
         ).value;
 
-    const password =
+    const password=
         document
         .getElementById(
             "regPass"
@@ -874,7 +946,7 @@ async function crearCuenta(){
 
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/registro",
                 {
@@ -893,7 +965,7 @@ async function crearCuenta(){
                 }
             );
 
-        const data =
+        const data=
             await res.json();
 
         if(data.ok){
@@ -932,16 +1004,16 @@ async function crearCuenta(){
 }
 
 
-/* =============================
+/* =====================================================
    USUARIO
-============================= */
+===================================================== */
 
 function actualizarUsuario(){
 
     usuario.innerHTML=`
 
     <span>
-        👤 ${usuarioActual}
+        👤 ${nombreUsuario()}
     </span>
 
     <button
@@ -967,14 +1039,15 @@ function cerrarSesion(){
     sesionActiva=false;
     usuarioActual=null;
     expedienteActual=null;
+    ultimoCalculo=null;
 
     location.reload();
 }
 
 
-/* =============================
+/* =====================================================
    NUEVO TRASPASO
-============================= */
+===================================================== */
 
 function nuevoTraspaso(){
 
@@ -1012,7 +1085,7 @@ function nuevoTraspaso(){
 
 async function crearExpediente(){
 
-    const matricula =
+    const matricula=
         document
         .getElementById(
             "matriculaTraspaso"
@@ -1032,7 +1105,7 @@ async function crearExpediente(){
 
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/expediente?action=crear",
                 {
@@ -1053,7 +1126,7 @@ async function crearExpediente(){
                 }
             );
 
-        const data =
+        const data=
             await res.json();
 
         if(!data.ok){
@@ -1071,7 +1144,7 @@ async function crearExpediente(){
 
         if(data.existente){
 
-            const seguir =
+            const seguir=
                 confirm(
                     "Ya tienes un expediente activo para esta matrícula. ¿Quieres continuarlo?"
                 );
@@ -1101,9 +1174,9 @@ async function crearExpediente(){
 }
 
 
-/* =============================
+/* =====================================================
    PARTICIPANTE
-============================= */
+===================================================== */
 
 function formularioParticipante(){
 
@@ -1211,31 +1284,31 @@ function formularioParticipante(){
 
 async function guardarParticipante(){
 
-    const nombre =
+    const nombre=
         document
         .getElementById(
             "participanteNombre"
         ).value.trim();
 
-    const dni_nie =
+    const dni_nie=
         document
         .getElementById(
             "participanteDni"
         ).value.trim();
 
-    const telefono =
+    const telefono=
         document
         .getElementById(
             "participanteTelefono"
         ).value.trim();
 
-    const email =
+    const email=
         document
         .getElementById(
             "participanteEmail"
         ).value.trim();
 
-    const rol =
+    const rol=
         document
         .getElementById(
             "participanteRol"
@@ -1258,7 +1331,7 @@ async function guardarParticipante(){
 
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/guardar-participante",
                 {
@@ -1288,7 +1361,7 @@ async function guardarParticipante(){
                 }
             );
 
-        const data =
+        const data=
             await res.json();
 
         if(!data.ok){
@@ -1315,9 +1388,9 @@ async function guardarParticipante(){
 }
 
 
-/* =============================
+/* =====================================================
    CHAT
-============================= */
+===================================================== */
 
 async function abrirChat(){
 
@@ -1374,7 +1447,7 @@ async function iniciarConversacion(){
 
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/chat",
                 {
@@ -1400,7 +1473,7 @@ async function iniciarConversacion(){
                 }
             );
 
-        const data =
+        const data=
             await res.json();
 
         if(!res.ok){
@@ -1419,17 +1492,41 @@ async function iniciarConversacion(){
             data.respuesta
         );
 
+
+        if(
+            data.requiere_factura === true
+        ){
+
+            setTimeout(
+                pantallaFacturaPendiente,
+                900
+            );
+
+            return;
+        }
+
+
+        if(
+            data.solicitar_calculo === true
+        ){
+
+            setTimeout(
+                calcularCosteFiscal,
+                800
+            );
+
+            return;
+        }
+
+
         if(
             data.paso_actual ===
             "PAGO_PENDIENTE"
         ){
 
-            expedienteActual.estado=
-                "PAGO_PENDIENTE";
-
             setTimeout(
-                pantallaPago,
-                800
+                cargarCalculoGuardado,
+                700
             );
         }
 
@@ -1448,26 +1545,27 @@ function agregarMensaje(
     texto
 ){
 
-    const chat =
+    const chat=
         document.getElementById(
             "chat"
         );
 
     if(!chat) return;
 
-    const div =
+    const div=
         document.createElement(
             "div"
         );
 
     div.className=tipo;
 
-    const span =
+    const span=
         document.createElement(
             "span"
         );
 
-    span.textContent=texto;
+    span.textContent=
+        texto || "";
 
     div.appendChild(span);
 
@@ -1480,12 +1578,14 @@ function agregarMensaje(
 
 async function enviarMensaje(){
 
-    const input =
+    const input=
         document.getElementById(
             "mensaje"
         );
 
-    const mensaje =
+    if(!input) return;
+
+    const mensaje=
         input.value.trim();
 
     if(!mensaje) return;
@@ -1504,7 +1604,7 @@ async function enviarMensaje(){
 
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/chat",
                 {
@@ -1530,15 +1630,17 @@ async function enviarMensaje(){
                 }
             );
 
-        const data =
+        const data=
             await res.json();
 
-        const chat =
+        const chat=
             document.getElementById(
                 "chat"
             );
 
-        if(chat?.lastChild){
+        if(
+            chat?.lastChild
+        ){
 
             chat.removeChild(
                 chat.lastChild
@@ -1561,21 +1663,71 @@ async function enviarMensaje(){
             data.respuesta
         );
 
+
+        if(
+            data.vehiculo
+        ){
+
+            expedienteActual
+                .modelo_fiscal_identificado=
+                data.vehiculo.modelo_tipo ||
+                data.vehiculo.modelo ||
+                null;
+        }
+
+
+        if(
+            data.requiere_factura === true
+        ){
+
+            setTimeout(
+                pantallaFacturaPendiente,
+                1000
+            );
+
+            return;
+        }
+
+
+        if(
+            data.solicitar_calculo === true
+        ){
+
+            setTimeout(
+                calcularCosteFiscal,
+                900
+            );
+
+            return;
+        }
+
+
         if(
             data.paso_actual ===
             "PAGO_PENDIENTE"
         ){
 
-            expedienteActual.estado=
-                "PAGO_PENDIENTE";
-
             setTimeout(
-                pantallaPago,
-                900
+                cargarCalculoGuardado,
+                800
             );
         }
 
     }catch(error){
+
+        const chat=
+            document.getElementById(
+                "chat"
+            );
+
+        if(
+            chat?.lastChild
+        ){
+
+            chat.removeChild(
+                chat.lastChild
+            );
+        }
 
         agregarMensaje(
             "bot",
@@ -1585,18 +1737,314 @@ async function enviarMensaje(){
 }
 
 
-/* =============================
-   PAGO
-============================= */
+/* =====================================================
+   CÁLCULO FISCAL
+===================================================== */
 
-function pantallaPago(){
+async function calcularCosteFiscal(){
+
+    contenido.innerHTML=`
+
+    <div class="card calculando">
+
+        <h2>
+            🤖 Calculando el traspaso...
+        </h2>
+
+        <p>
+            Gestor-IA está comprobando
+            la valoración fiscal, el impuesto,
+            la tasa DGT y el servicio.
+        </p>
+
+    </div>
+
+    `;
+
+
+    try{
+
+        const res=
+            await fetch(
+                "/api/expediente?action=calcular-coste",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            "Bearer " +
+                            tokenActual()
+                    },
+
+                    body:JSON.stringify({
+
+                        expediente_id:
+                            expedienteActual.id
+
+                    })
+                }
+            );
+
+
+        const data=
+            await res.json();
+
+
+        if(
+            !res.ok ||
+            !data.ok
+        ){
+
+            pantallaCalculoBloqueado(
+                data
+            );
+
+            return;
+        }
+
+
+        if(
+            data.pago_bloqueado === true ||
+            data.calculo_verificado !== true
+        ){
+
+            pantallaCalculoBloqueado(
+                data
+            );
+
+            return;
+        }
+
+
+        ultimoCalculo=
+            data;
+
+
+        expedienteActual.estado=
+            "PAGO_PENDIENTE";
+
+        expedienteActual
+            .calculo_fiscal_verificado=
+            true;
+
+        pantallaPagoExacto(
+            data
+        );
+
+
+    }catch(error){
+
+        contenido.innerHTML=`
+
+        <div class="card">
+
+            <h1>
+                ⚠️ No se pudo calcular
+            </h1>
+
+            <div class="bloqueo-box">
+
+                <p>
+                    Se produjo un error de conexión
+                    al calcular el expediente.
+                </p>
+
+            </div>
+
+            <button
+                onclick="calcularCosteFiscal()">
+
+                Reintentar
+
+            </button>
+
+        </div>
+
+        `;
+    }
+}
+
+
+/* =====================================================
+   CÁLCULO BLOQUEADO
+===================================================== */
+
+function pantallaCalculoBloqueado(data){
+
+    const motivo=
+        data?.error ||
+        data?.mensaje ||
+        "El cálculo no ha podido verificarse todavía.";
+
+
+    let extra="";
+
+
+    if(
+        data?.requiere_documentacion
+    ){
+
+        extra=`
+
+        <p>
+            📄 Este caso requiere documentación
+            antes de poder determinar el importe.
+        </p>
+
+        `;
+    }
+
+
+    if(
+        data?.territorio
+    ){
+
+        extra+=`
+
+        <p>
+            Territorio fiscal:
+            <b>${data.territorio}</b>
+        </p>
+
+        `;
+    }
+
 
     contenido.innerHTML=`
 
     <div class="card">
 
         <h1>
-            💳 Pago del servicio
+            🔒 Cálculo pendiente de verificación
+        </h1>
+
+        <div class="bloqueo-box">
+
+            <p>
+                ${motivo}
+            </p>
+
+            ${extra}
+
+        </div>
+
+        <p>
+            Gestor-IA no habilitará el pago
+            hasta disponer de un cálculo fiscal
+            verificado.
+        </p>
+
+        <button
+            class="btn-secundario"
+            onclick="misExpedientes()">
+
+            Volver a mis expedientes
+
+        </button>
+
+    </div>
+
+    `;
+}
+
+
+/* =====================================================
+   FACTURA PENDIENTE
+===================================================== */
+
+function pantallaFacturaPendiente(){
+
+    contenido.innerHTML=`
+
+    <div class="card">
+
+        <h1>
+            📄 Factura pendiente
+        </h1>
+
+        <p>
+            Has indicado que el vendedor
+            es una empresa o profesional.
+        </p>
+
+        <div class="bloqueo-box">
+
+            <p>
+                Antes de determinar el tratamiento
+                fiscal tenemos que verificar
+                la factura de la operación.
+            </p>
+
+        </div>
+
+        <p>
+            La subida y verificación de la factura
+            se habilitará en esta fase del expediente.
+        </p>
+
+        <button
+            class="btn-secundario"
+            onclick="misExpedientes()">
+
+            Volver a mis expedientes
+
+        </button>
+
+    </div>
+
+    `;
+}
+
+
+/* =====================================================
+   PANTALLA PAGO EXACTO
+===================================================== */
+
+function pantallaPagoExacto(data){
+
+    const costes=
+        data.costes || {};
+
+    const fiscal=
+        data.fiscal || {};
+
+    const vehiculo=
+        data.vehiculo || {};
+
+
+    const impuesto=
+        Number(
+            costes.impuestos ?? 0
+        );
+
+
+    const dgt=
+        Number(
+            costes.tasa_dgt ?? 0
+        );
+
+
+    const servicio=
+        Number(
+            costes.gestor_ia ?? 0
+        );
+
+
+    const total=
+        Number(
+            costes.total ?? 0
+        );
+
+
+    contenido.innerHTML=`
+
+    <div class="card">
+
+        <h1>
+            💳 Resumen del traspaso
         </h1>
 
         <p>
@@ -1606,31 +2054,45 @@ function pantallaPago(){
             </b>
         </p>
 
+
+        <div class="calculo-box">
+
+            <h2>
+                🚗 Vehículo identificado
+            </h2>
+
+            <p>
+                <b>
+                    ${vehiculo.marca || ""}
+                    ${vehiculo.modelo || ""}
+                </b>
+            </p>
+
+            <div class="valor-fiscal">
+
+                Valor oficial:
+                ${formatoEuro(
+                    vehiculo.valor_oficial
+                )}
+
+                <br>
+
+                Depreciación aplicada:
+                ${vehiculo.depreciacion ?? "-"} %
+
+                <br>
+
+                Valor fiscal:
+                ${formatoEuro(
+                    vehiculo.valor_fiscal
+                )}
+
+            </div>
+
+        </div>
+
+
         <div class="pago-box">
-
-            <div class="linea-pago">
-
-                <span>
-                    Servicio Gestor-IA
-                </span>
-
-                <span>
-                    Según tarifa aplicable
-                </span>
-
-            </div>
-
-            <div class="linea-pago">
-
-                <span>
-                    Tasas oficiales
-                </span>
-
-                <span>
-                    Pendiente de cálculo
-                </span>
-
-            </div>
 
             <div class="linea-pago">
 
@@ -1639,44 +2101,95 @@ function pantallaPago(){
                 </span>
 
                 <span>
-                    Pendiente de cálculo
+                    ${formatoEuro(impuesto)}
                 </span>
 
             </div>
 
-            <div class="linea-pago total">
+
+            <div class="linea-pago">
 
                 <span>
-                    Total
+                    Tasa DGT
                 </span>
 
                 <span>
-                    Pendiente
+                    ${formatoEuro(dgt)}
+                </span>
+
+            </div>
+
+
+            <div class="linea-pago">
+
+                <span>
+                    Servicio Gestor-IA
+                </span>
+
+                <span>
+                    ${formatoEuro(servicio)}
+                </span>
+
+            </div>
+
+
+            <div class="linea-pago total">
+
+                <span>
+                    TOTAL A PAGAR
+                </span>
+
+                <span>
+                    ${formatoEuro(total)}
                 </span>
 
             </div>
 
         </div>
 
-        <p>
-            Esta versión está en desarrollo.
-            El pago real todavía no está conectado.
-        </p>
+
+        <div class="valor-fiscal">
+
+            Territorio fiscal:
+            <b>
+                ${fiscal.territorio || "-"}
+            </b>
+
+            <br>
+
+            Base imponible:
+            <b>
+                ${formatoEuro(
+                    fiscal.base_imponible
+                )}
+            </b>
+
+        </div>
+
+
+        <br>
+
 
         <button
             onclick="simularPago()">
 
-            🧪 Simular pago completado
+            🧪 Simular pago de
+            ${formatoEuro(total)}
 
         </button>
+
 
         <p style="
             color:#94a3b8;
             margin-top:15px;
             font-size:13px;
         ">
-            Este botón se eliminará antes
-            de publicar el servicio.
+
+            Pago simulado únicamente
+            durante el desarrollo.
+            Se eliminará al conectar
+            el proveedor de pagos real.
+
         </p>
 
     </div>
@@ -1685,19 +2198,51 @@ function pantallaPago(){
 }
 
 
+/* =====================================================
+   RECUPERAR CÁLCULO DE UN EXPEDIENTE
+===================================================== */
+
+async function cargarCalculoGuardado(){
+
+    /*
+       Recalculamos desde backend para no confiar
+       en importes almacenados en el navegador.
+    */
+
+    await calcularCosteFiscal();
+}
+
+
+/* =====================================================
+   SIMULAR PAGO
+===================================================== */
+
 async function simularPago(){
 
+    const total=
+        ultimoCalculo
+            ?.costes
+            ?.total;
+
+
+    const texto=
+        total
+            ?
+            `¿Simular el pago de ${formatoEuro(total)}?`
+            :
+            "¿Simular el pago de este expediente?";
+
+
     if(
-        !confirm(
-            "¿Simular el pago de este expediente?"
-        )
+        !confirm(texto)
     ){
         return;
     }
 
+
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/expediente?action=simular-pago",
                 {
@@ -1713,16 +2258,23 @@ async function simularPago(){
                     },
 
                     body:JSON.stringify({
+
                         expediente_id:
                             expedienteActual.id
+
                     })
                 }
             );
 
-        const data =
+
+        const data=
             await res.json();
 
-        if(!res.ok || !data.ok){
+
+        if(
+            !res.ok ||
+            !data.ok
+        ){
 
             alert(
                 data.error ||
@@ -1732,10 +2284,13 @@ async function simularPago(){
             return;
         }
 
+
         expedienteActual=
             data.expediente;
 
+
         pantallaPostPago();
+
 
     }catch(error){
 
@@ -1746,9 +2301,9 @@ async function simularPago(){
 }
 
 
-/* =============================
+/* =====================================================
    DESPUÉS DEL PAGO
-============================= */
+===================================================== */
 
 function pantallaPostPago(){
 
@@ -1776,6 +2331,8 @@ function pantallaPostPago(){
 
         </div>
 
+        <br>
+
         <button
             onclick="generarInvitacion()">
 
@@ -1797,15 +2354,15 @@ function pantallaPostPago(){
 }
 
 
-/* =============================
+/* =====================================================
    INVITACIÓN
-============================= */
+===================================================== */
 
 async function generarInvitacion(){
 
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/expediente?action=generar-invitacion",
                 {
@@ -1829,10 +2386,15 @@ async function generarInvitacion(){
                 }
             );
 
-        const data =
+
+        const data=
             await res.json();
 
-        if(!res.ok || !data.ok){
+
+        if(
+            !res.ok ||
+            !data.ok
+        ){
 
             alert(
                 data.error ||
@@ -1841,6 +2403,7 @@ async function generarInvitacion(){
 
             return;
         }
+
 
         contenido.innerHTML=`
 
@@ -1885,6 +2448,7 @@ async function generarInvitacion(){
 
         `;
 
+
     }catch(error){
 
         alert(
@@ -1896,15 +2460,17 @@ async function generarInvitacion(){
 
 function copiarInvitacion(){
 
-    const input =
+    const input=
         document.getElementById(
             "enlaceInvitacion"
         );
+
 
     navigator.clipboard
         .writeText(
             input.value
         );
+
 
     alert(
         "Enlace copiado."
@@ -1912,14 +2478,15 @@ function copiarInvitacion(){
 }
 
 
-/* =============================
+/* =====================================================
    AUTORIZACIONES
-============================= */
+===================================================== */
 
 async function pantallaAutorizaciones(){
 
     if(
-        !expedienteActual?.pago_validado
+        !expedienteActual
+            ?.pago_validado
     ){
 
         alert(
@@ -1929,9 +2496,10 @@ async function pantallaAutorizaciones(){
         return;
     }
 
+
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/autorizaciones",
                 {
@@ -1947,16 +2515,23 @@ async function pantallaAutorizaciones(){
                     },
 
                     body:JSON.stringify({
+
                         expediente_id:
                             expedienteActual.id
+
                     })
                 }
             );
 
-        const data =
+
+        const data=
             await res.json();
 
-        if(!res.ok || !data.ok){
+
+        if(
+            !res.ok ||
+            !data.ok
+        ){
 
             alert(
                 data.error ||
@@ -1965,6 +2540,7 @@ async function pantallaAutorizaciones(){
 
             return;
         }
+
 
         contenido.innerHTML=`
 
@@ -1999,6 +2575,7 @@ async function pantallaAutorizaciones(){
 
             </div>
 
+
             <div class="autorizacion">
 
                 <h2>
@@ -2022,6 +2599,7 @@ async function pantallaAutorizaciones(){
 
         `;
 
+
     }catch(error){
 
         alert(
@@ -2041,13 +2619,14 @@ function abrirEnlace(url){
 }
 
 
-/* =============================
+/* =====================================================
    MIS EXPEDIENTES
-============================= */
+===================================================== */
 
 async function misExpedientes(){
 
     if(!requiereSesion()) return;
+
 
     contenido.innerHTML=`
 
@@ -2065,9 +2644,10 @@ async function misExpedientes(){
 
     `;
 
+
     try{
 
-        const res =
+        const res=
             await fetch(
                 "/api/expediente?action=listar",
                 {
@@ -2081,10 +2661,15 @@ async function misExpedientes(){
                 }
             );
 
-        const data =
+
+        const data=
             await res.json();
 
-        if(!res.ok || !data.ok){
+
+        if(
+            !res.ok ||
+            !data.ok
+        ){
 
             contenido.innerHTML=`
 
@@ -2105,6 +2690,7 @@ async function misExpedientes(){
 
             return;
         }
+
 
         if(
             !data.expedientes.length
@@ -2137,12 +2723,14 @@ async function misExpedientes(){
             return;
         }
 
+
         let tarjetas="";
+
 
         data.expedientes.forEach(
             function(exp,index){
 
-                tarjetas += `
+                tarjetas+=`
 
                 <div class="expediente-card">
 
@@ -2184,8 +2772,10 @@ async function misExpedientes(){
             }
         );
 
-        window.expedientesCargados =
+
+        window.expedientesCargados=
             data.expedientes;
+
 
         contenido.innerHTML=`
 
@@ -2204,6 +2794,7 @@ async function misExpedientes(){
         </div>
 
         `;
+
 
     }catch(error){
 
@@ -2228,7 +2819,7 @@ async function misExpedientes(){
 
 function continuarExpedientePorIndice(index){
 
-    const exp =
+    const exp=
         window.expedientesCargados?.[index];
 
     if(!exp) return;
@@ -2247,6 +2838,18 @@ function textoEstado(estado){
         DATOS_INICIALES:
             "Recogiendo datos",
 
+        IDENTIFICANDO_VEHICULO:
+            "Identificando vehículo",
+
+        DATOS_FISCALES:
+            "Comprobación fiscal",
+
+        CALCULO_FISCAL:
+            "Calculando impuestos",
+
+        FACTURA_PENDIENTE:
+            "Factura pendiente",
+
         PAGO_PENDIENTE:
             "Pendiente de pago",
 
@@ -2261,20 +2864,25 @@ function textoEstado(estado){
 
     };
 
+
     return nombres[estado] ||
         estado;
 }
 
 
-/* =============================
+/* =====================================================
    CONTINUAR EXPEDIENTE
-============================= */
+===================================================== */
 
 function continuarExpediente(exp){
 
     expedienteActual=exp;
 
+    ultimoCalculo=null;
+
+
     switch(exp.estado){
+
 
         case "CREADO":
 
@@ -2285,14 +2893,32 @@ function continuarExpediente(exp){
 
         case "DATOS_INICIALES":
 
+        case "IDENTIFICANDO_VEHICULO":
+
+        case "DATOS_FISCALES":
+
             abrirChat();
+
+            break;
+
+
+        case "CALCULO_FISCAL":
+
+            calcularCosteFiscal();
+
+            break;
+
+
+        case "FACTURA_PENDIENTE":
+
+            pantallaFacturaPendiente();
 
             break;
 
 
         case "PAGO_PENDIENTE":
 
-            pantallaPago();
+            cargarCalculoGuardado();
 
             break;
 
@@ -2329,8 +2955,10 @@ function continuarExpediente(exp){
                 </p>
 
                 <div class="estado">
+
                     Este expediente consta
                     como finalizado.
+
                 </div>
 
             </div>
@@ -2347,9 +2975,9 @@ function continuarExpediente(exp){
 }
 
 
-/* =============================
+/* =====================================================
    MODAL
-============================= */
+===================================================== */
 
 modal.onclick=function(e){
 
@@ -2360,9 +2988,9 @@ modal.onclick=function(e){
 };
 
 
-/* =============================
+/* =====================================================
    ARRANCAR
-============================= */
+===================================================== */
 
 restaurarSesion();
 
