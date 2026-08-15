@@ -3,7 +3,14 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+    http-equiv="Content-Type"
+    content="text/html; charset=UTF-8"
+>
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>Gestor-IA | Traspasos de vehículos</title>
 
@@ -13,11 +20,17 @@
     box-sizing:border-box;
 }
 
+html,
 body{
     margin:0;
+    min-height:100%;
     font-family:Segoe UI,Arial,sans-serif;
     background:#0b1220;
     color:white;
+}
+
+body{
+    min-height:100vh;
 }
 
 header{
@@ -137,7 +150,8 @@ button:disabled{
 .expediente-card,
 .invitacion-box,
 .calculo-box,
-.bloqueo-box{
+.bloqueo-box,
+.ficha-box{
     background:#0b1220;
     border-radius:15px;
     padding:20px;
@@ -183,6 +197,12 @@ select{
     font-size:16px;
 }
 
+input[type="file"]{
+    background:#111827;
+    color:white;
+    border:1px solid #334155;
+}
+
 .campo{
     margin-bottom:15px;
 }
@@ -216,6 +236,7 @@ select{
     border-radius:18px;
     max-width:75%;
     white-space:pre-wrap;
+    overflow-wrap:anywhere;
 }
 
 .bot{
@@ -229,6 +250,7 @@ select{
     border-radius:18px;
     max-width:75%;
     white-space:pre-wrap;
+    overflow-wrap:anywhere;
 }
 
 .fila-chat{
@@ -331,6 +353,26 @@ select{
     color:#38bdf8;
 }
 
+.ficha-ayuda{
+    color:#94a3b8;
+    line-height:1.7;
+}
+
+.estado-ficha{
+    margin-top:20px;
+    color:#cbd5e1;
+    line-height:1.6;
+}
+
+.datos-extraidos{
+    margin-top:20px;
+    background:#111827;
+    padding:15px;
+    border-radius:12px;
+    color:#cbd5e1;
+    line-height:1.7;
+}
+
 @media(max-width:900px){
 
     .servicios-grid{
@@ -353,6 +395,7 @@ select{
 
 </head>
 
+
 <body>
 
 
@@ -365,8 +408,9 @@ Gestor-IA
 <div id="usuario">
 
 <button
-class="btn-secundario"
-onclick="login()">
+    class="btn-secundario"
+    onclick="login()"
+>
 Iniciar sesión
 </button>
 
@@ -411,20 +455,23 @@ Registrarse
 
 
 <div
-class="content"
-id="contenido">
+    class="content"
+    id="contenido"
+>
 </div>
 
 </div>
 
 
 <div
-class="modal"
-id="modal">
+    class="modal"
+    id="modal"
+>
 
 <div
-class="modal-box"
-id="modalContenido">
+    class="modal-box"
+    id="modalContenido"
+>
 </div>
 
 </div>
@@ -436,6 +483,62 @@ let sesionActiva=false;
 let usuarioActual=null;
 let expedienteActual=null;
 let ultimoCalculo=null;
+
+
+/* =====================================================
+   TEXTO
+===================================================== */
+
+function limpiarTextoIA(texto){
+
+    let s=
+        String(
+            texto ?? ""
+        );
+
+    const reemplazos={
+        "Ã¡":"á",
+        "Ã©":"é",
+        "Ã­":"í",
+        "Ã³":"ó",
+        "Ãº":"ú",
+        "Ã":"Á",
+        "Ã‰":"É",
+        "Ã":"Í",
+        "Ã“":"Ó",
+        "Ãš":"Ú",
+        "Ã±":"ñ",
+        "Ã‘":"Ñ",
+        "Â¿":"¿",
+        "Â¡":"¡",
+        "Âº":"º",
+        "Âª":"ª",
+        "â‚¬":"€",
+        "â€“":"–",
+        "â€”":"—",
+        "Â":""
+    };
+
+    for(
+        const [mal,bien]
+        of Object.entries(
+            reemplazos
+        )
+    ){
+
+        s=
+            s
+            .split(mal)
+            .join(bien);
+    }
+
+    return s
+        .replace(/\uFFFD/g,"")
+        .replace(
+            /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,
+            ""
+        );
+}
 
 
 /* =====================================================
@@ -453,7 +556,9 @@ function tokenActual(){
 function formatoEuro(valor){
 
     const numero=
-        Number(valor || 0);
+        Number(
+            valor || 0
+        );
 
     return numero.toLocaleString(
         "es-ES",
@@ -471,11 +576,16 @@ function nombreUsuario(){
         return "";
     }
 
-    if(typeof usuarioActual==="string"){
-        return usuarioActual;
+    if(
+        typeof usuarioActual ===
+        "string"
+    ){
+        return limpiarTextoIA(
+            usuarioActual
+        );
     }
 
-    return (
+    return limpiarTextoIA(
         usuarioActual.email ||
         usuarioActual.nombre ||
         "Usuario"
@@ -523,7 +633,8 @@ async function restaurarSesion(){
                 {
                     headers:{
                         "Authorization":
-                            "Bearer " + token
+                            "Bearer " +
+                            token
                     }
                 }
             );
@@ -531,7 +642,10 @@ async function restaurarSesion(){
         const data=
             await res.json();
 
-        if(!res.ok || !data.ok){
+        if(
+            !res.ok ||
+            !data.ok
+        ){
 
             localStorage.removeItem(
                 "gestorIA_token"
@@ -581,9 +695,10 @@ function inicio(){
         </h2>
 
         <p>
-            Gestiona tu traspaso de vehículo
-            de forma guiada, sencilla y desde
-            un único expediente digital.
+            Gestiona tu traspaso de vehículo de forma
+            guiada. Gestor-IA utiliza la ficha técnica
+            para identificar automáticamente el vehículo
+            y solo pregunta los datos que falten.
         </p>
 
         <div class="hero-botones">
@@ -594,7 +709,8 @@ function inicio(){
 
             <button
                 class="btn-secundario"
-                onclick="servicios()">
+                onclick="servicios()"
+            >
                 Ver servicios
             </button>
 
@@ -644,7 +760,7 @@ function servicios(){
                 <ul>
                     <li>Guía durante todo el proceso.</li>
                     <li>Expediente digital.</li>
-                    <li>Recogida guiada de datos.</li>
+                    <li>Lectura automática de ficha técnica.</li>
                     <li>Contrato elaborado con los datos aportados.</li>
                     <li>Seguimiento del expediente.</li>
                     <li>Preparación de información necesaria para impuestos y DGT.</li>
@@ -670,7 +786,7 @@ function servicios(){
                 <ul>
                     <li>Guía durante todo el proceso.</li>
                     <li>Expediente digital.</li>
-                    <li>Recogida guiada de datos.</li>
+                    <li>Lectura automática de ficha técnica.</li>
                     <li>Contrato elaborado con los datos aportados.</li>
                     <li>Seguimiento del expediente.</li>
                     <li>Preparación de información necesaria para impuestos y DGT.</li>
@@ -696,7 +812,7 @@ function servicios(){
                 <ul>
                     <li>Guía durante todo el proceso.</li>
                     <li>Expediente digital.</li>
-                    <li>Recogida guiada de datos.</li>
+                    <li>Lectura automática de ficha técnica.</li>
                     <li>Contrato elaborado con los datos aportados.</li>
                     <li>Seguimiento del expediente.</li>
                     <li>Preparación de información necesaria para impuestos y DGT.</li>
@@ -760,6 +876,11 @@ function ayuda(){
             ❓ Ayuda
         </h1>
 
+        <p>
+            Para iniciar un traspaso necesitarás
+            una foto clara de la ficha técnica del vehículo.
+        </p>
+
     </div>
 
     `;
@@ -780,12 +901,14 @@ function login(){
 
     <input
         id="loginEmail"
-        placeholder="Correo">
+        placeholder="Correo"
+    >
 
     <input
         id="loginPass"
         type="password"
-        placeholder="Contraseña">
+        placeholder="Contraseña"
+    >
 
     <br><br>
 
@@ -795,13 +918,15 @@ function login(){
 
     <button
         class="btn-secundario"
-        onclick="registro()">
+        onclick="registro()"
+    >
         Crear cuenta
     </button>
 
     `;
 
-    modal.style.display="flex";
+    modal.style.display=
+        "flex";
 }
 
 
@@ -811,13 +936,15 @@ async function entrar(){
         document
         .getElementById(
             "loginEmail"
-        ).value;
+        )
+        .value;
 
     const password=
         document
         .getElementById(
             "loginPass"
-        ).value;
+        )
+        .value;
 
     try{
 
@@ -829,13 +956,14 @@ async function entrar(){
 
                     headers:{
                         "Content-Type":
-                            "application/json"
+                            "application/json; charset=UTF-8"
                     },
 
-                    body:JSON.stringify({
-                        email,
-                        password
-                    })
+                    body:
+                        JSON.stringify({
+                            email,
+                            password
+                        })
                 }
             );
 
@@ -845,8 +973,10 @@ async function entrar(){
         if(!data.ok){
 
             alert(
-                data.error ||
-                "Login incorrecto."
+                limpiarTextoIA(
+                    data.error ||
+                    "Login incorrecto."
+                )
             );
 
             return;
@@ -863,7 +993,9 @@ async function entrar(){
             data.access_token
         );
 
-        if(data.refresh_token){
+        if(
+            data.refresh_token
+        ){
 
             localStorage.setItem(
                 "gestorIA_refresh_token",
@@ -871,7 +1003,8 @@ async function entrar(){
             );
         }
 
-        modal.style.display="none";
+        modal.style.display=
+            "none";
 
         actualizarUsuario();
 
@@ -900,17 +1033,20 @@ function registro(){
 
     <input
         id="regNombre"
-        placeholder="Nombre">
+        placeholder="Nombre"
+    >
 
     <input
         id="regEmail"
         type="email"
-        placeholder="Correo">
+        placeholder="Correo"
+    >
 
     <input
         id="regPass"
         type="password"
-        placeholder="Contraseña">
+        placeholder="Contraseña"
+    >
 
     <br><br>
 
@@ -920,7 +1056,8 @@ function registro(){
 
     `;
 
-    modal.style.display="flex";
+    modal.style.display=
+        "flex";
 }
 
 
@@ -930,19 +1067,22 @@ async function crearCuenta(){
         document
         .getElementById(
             "regNombre"
-        ).value;
+        )
+        .value;
 
     const email=
         document
         .getElementById(
             "regEmail"
-        ).value;
+        )
+        .value;
 
     const password=
         document
         .getElementById(
             "regPass"
-        ).value;
+        )
+        .value;
 
     try{
 
@@ -954,14 +1094,15 @@ async function crearCuenta(){
 
                     headers:{
                         "Content-Type":
-                            "application/json"
+                            "application/json; charset=UTF-8"
                     },
 
-                    body:JSON.stringify({
-                        nombre,
-                        email,
-                        password
-                    })
+                    body:
+                        JSON.stringify({
+                            nombre,
+                            email,
+                            password
+                        })
                 }
             );
 
@@ -990,8 +1131,10 @@ async function crearCuenta(){
         }else{
 
             alert(
-                data.error ||
-                "No se pudo crear la cuenta."
+                limpiarTextoIA(
+                    data.error ||
+                    "No se pudo crear la cuenta."
+                )
             );
         }
 
@@ -1018,7 +1161,8 @@ function actualizarUsuario(){
 
     <button
         class="btn-secundario"
-        onclick="cerrarSesion()">
+        onclick="cerrarSesion()"
+    >
         Salir
     </button>
 
@@ -1051,7 +1195,11 @@ function cerrarSesion(){
 
 function nuevoTraspaso(){
 
-    if(!requiereSesion()) return;
+    if(
+        !requiereSesion()
+    ){
+        return;
+    }
 
     contenido.innerHTML=`
 
@@ -1069,7 +1217,8 @@ function nuevoTraspaso(){
 
         <input
             id="matriculaTraspaso"
-            placeholder="1234ABC">
+            placeholder="1234ABC"
+        >
 
         <br><br>
 
@@ -1113,16 +1262,17 @@ async function crearExpediente(){
 
                     headers:{
                         "Content-Type":
-                            "application/json",
+                            "application/json; charset=UTF-8",
 
                         "Authorization":
                             "Bearer " +
                             tokenActual()
                     },
 
-                    body:JSON.stringify({
-                        matricula
-                    })
+                    body:
+                        JSON.stringify({
+                            matricula
+                        })
                 }
             );
 
@@ -1132,8 +1282,10 @@ async function crearExpediente(){
         if(!data.ok){
 
             alert(
-                data.error ||
-                "No se pudo crear el expediente."
+                limpiarTextoIA(
+                    data.error ||
+                    "No se pudo crear el expediente."
+                )
             );
 
             return;
@@ -1191,7 +1343,9 @@ function formularioParticipante(){
         <p>
             Vehículo:
             <b>
-                ${expedienteActual.matricula}
+                ${limpiarTextoIA(
+                    expedienteActual.matricula
+                )}
             </b>
         </p>
 
@@ -1203,7 +1357,8 @@ function formularioParticipante(){
 
             <input
                 id="participanteNombre"
-                placeholder="Nombre completo">
+                placeholder="Nombre completo"
+            >
 
         </div>
 
@@ -1215,7 +1370,8 @@ function formularioParticipante(){
 
             <input
                 id="participanteDni"
-                placeholder="DNI o NIE">
+                placeholder="DNI o NIE"
+            >
 
         </div>
 
@@ -1227,7 +1383,8 @@ function formularioParticipante(){
 
             <input
                 id="participanteTelefono"
-                placeholder="Teléfono">
+                placeholder="Teléfono"
+            >
 
         </div>
 
@@ -1240,7 +1397,8 @@ function formularioParticipante(){
             <input
                 id="participanteEmail"
                 type="email"
-                placeholder="Correo electrónico">
+                placeholder="Correo electrónico"
+            >
 
         </div>
 
@@ -1251,7 +1409,8 @@ function formularioParticipante(){
             </label>
 
             <select
-                id="participanteRol">
+                id="participanteRol"
+            >
 
                 <option value="">
                     Selecciona
@@ -1271,8 +1430,7 @@ function formularioParticipante(){
 
         <br>
 
-        <button
-            onclick="guardarParticipante()">
+        <button onclick="guardarParticipante()">
             Continuar
         </button>
 
@@ -1288,31 +1446,40 @@ async function guardarParticipante(){
         document
         .getElementById(
             "participanteNombre"
-        ).value.trim();
+        )
+        .value
+        .trim();
 
     const dni_nie=
         document
         .getElementById(
             "participanteDni"
-        ).value.trim();
+        )
+        .value
+        .trim();
 
     const telefono=
         document
         .getElementById(
             "participanteTelefono"
-        ).value.trim();
+        )
+        .value
+        .trim();
 
     const email=
         document
         .getElementById(
             "participanteEmail"
-        ).value.trim();
+        )
+        .value
+        .trim();
 
     const rol=
         document
         .getElementById(
             "participanteRol"
-        ).value;
+        )
+        .value;
 
     if(
         !nombre ||
@@ -1339,25 +1506,26 @@ async function guardarParticipante(){
 
                     headers:{
                         "Content-Type":
-                            "application/json",
+                            "application/json; charset=UTF-8",
 
                         "Authorization":
                             "Bearer " +
                             tokenActual()
                     },
 
-                    body:JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        expediente_id:
-                            expedienteActual.id,
+                            expediente_id:
+                                expedienteActual.id,
 
-                        nombre,
-                        dni_nie,
-                        telefono,
-                        email,
-                        rol
+                            nombre,
+                            dni_nie,
+                            telefono,
+                            email,
+                            rol
 
-                    })
+                        })
                 }
             );
 
@@ -1367,23 +1535,463 @@ async function guardarParticipante(){
         if(!data.ok){
 
             alert(
-                data.error ||
-                "No se pudieron guardar los datos."
+                limpiarTextoIA(
+                    data.error ||
+                    "No se pudieron guardar los datos."
+                )
             );
 
             return;
         }
 
         expedienteActual.estado=
-            "DATOS_INICIALES";
+            "FICHA_TECNICA";
 
-        abrirChat();
+        expedienteActual.paso_actual=
+            "FICHA_TECNICA";
+
+        pantallaFichaTecnica();
 
     }catch(error){
 
         alert(
             "No se pudieron guardar los datos."
         );
+    }
+}
+
+
+/* =====================================================
+   FICHA TÉCNICA
+===================================================== */
+
+async function pantallaFichaTecnica(){
+
+    contenido.innerHTML=`
+
+    <div class="card">
+
+        <h1>
+            📄 Ficha técnica del vehículo
+        </h1>
+
+        <p>
+            Sube una foto clara de la ficha técnica.
+        </p>
+
+        <p class="ficha-ayuda">
+            Gestor-IA intentará obtener automáticamente
+            matrícula, marca, denominación comercial,
+            tipo/variante/versión, primera matriculación,
+            cilindrada, potencia y combustible.
+            Solo te preguntará lo que no pueda leer
+            o verificar.
+        </p>
+
+        <div class="ficha-box">
+
+            <input
+                id="archivoFicha"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+            >
+
+            <br><br>
+
+            <button
+                id="botonAnalizarFicha"
+                onclick="analizarFichaTecnica()"
+            >
+                📄 Analizar ficha técnica
+            </button>
+
+        </div>
+
+        <div
+            id="estadoFicha"
+            class="estado-ficha"
+        >
+        </div>
+
+        <div
+            id="datosFicha"
+            class="datos-extraidos"
+            style="display:none"
+        >
+        </div>
+
+    </div>
+
+    `;
+
+    try{
+
+        await fetch(
+            "/api/analizar-ficha",
+            {
+                method:"POST",
+
+                headers:{
+                    "Content-Type":
+                        "application/json; charset=UTF-8",
+
+                    "Authorization":
+                        "Bearer " +
+                        tokenActual()
+                },
+
+                body:
+                    JSON.stringify({
+
+                        expediente_id:
+                            expedienteActual.id,
+
+                        accion:
+                            "preparar"
+
+                    })
+            }
+        );
+
+    }catch(error){
+
+        console.error(
+            error
+        );
+    }
+}
+
+
+function archivoABase64(
+    archivo
+){
+
+    return new Promise(
+        (
+            resolve,
+            reject
+        )=>{
+
+            const reader=
+                new FileReader();
+
+            reader.onload=()=>{
+
+                const resultado=
+                    String(
+                        reader.result ||
+                        ""
+                    );
+
+                const coma=
+                    resultado.indexOf(
+                        ","
+                    );
+
+                if(
+                    coma === -1
+                ){
+
+                    reject(
+                        new Error(
+                            "No se pudo leer la imagen."
+                        )
+                    );
+
+                    return;
+                }
+
+                resolve(
+                    resultado.slice(
+                        coma + 1
+                    )
+                );
+            };
+
+            reader.onerror=()=>{
+
+                reject(
+                    new Error(
+                        "No se pudo leer la imagen."
+                    )
+                );
+            };
+
+            reader.readAsDataURL(
+                archivo
+            );
+        }
+    );
+}
+
+
+function mostrarDatosExtraidos(
+    datos
+){
+
+    const caja=
+        document
+        .getElementById(
+            "datosFicha"
+        );
+
+    if(
+        !caja ||
+        !datos
+    ){
+        return;
+    }
+
+    const filas=[];
+
+    if(datos.marca){
+        filas.push(
+            `<b>Marca:</b> ${limpiarTextoIA(datos.marca)}`
+        );
+    }
+
+    if(datos.modelo){
+        filas.push(
+            `<b>Modelo:</b> ${limpiarTextoIA(datos.modelo)}`
+        );
+    }
+
+    if(datos.version){
+        filas.push(
+            `<b>Versión:</b> ${limpiarTextoIA(datos.version)}`
+        );
+    }
+
+    if(
+        datos.fecha_primera_matriculacion
+    ){
+        filas.push(
+            `<b>Primera matriculación:</b> ${datos.fecha_primera_matriculacion}`
+        );
+    }
+
+    if(datos.cilindrada){
+        filas.push(
+            `<b>Cilindrada:</b> ${datos.cilindrada} cc`
+        );
+    }
+
+    if(datos.potencia_kw){
+        filas.push(
+            `<b>Potencia:</b> ${datos.potencia_kw} kW`
+        );
+    }
+
+    if(datos.combustible){
+        filas.push(
+            `<b>Combustible:</b> ${limpiarTextoIA(datos.combustible)}`
+        );
+    }
+
+    if(
+        filas.length === 0
+    ){
+
+        caja.style.display=
+            "none";
+
+        return;
+    }
+
+    caja.innerHTML=
+        filas.join(
+            "<br>"
+        );
+
+    caja.style.display=
+        "block";
+}
+
+
+async function analizarFichaTecnica(){
+
+    const input=
+        document
+        .getElementById(
+            "archivoFicha"
+        );
+
+    const estado=
+        document
+        .getElementById(
+            "estadoFicha"
+        );
+
+    const boton=
+        document
+        .getElementById(
+            "botonAnalizarFicha"
+        );
+
+    const archivo=
+        input?.files?.[0];
+
+    if(!archivo){
+
+        alert(
+            "Selecciona una foto de la ficha técnica."
+        );
+
+        return;
+    }
+
+    const tiposPermitidos=[
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    ];
+
+    if(
+        !tiposPermitidos.includes(
+            archivo.type
+        )
+    ){
+
+        alert(
+            "La ficha debe ser una imagen JPG, PNG o WEBP."
+        );
+
+        return;
+    }
+
+    if(
+        archivo.size >
+        8 * 1024 * 1024
+    ){
+
+        alert(
+            "La imagen es demasiado grande. Usa una foto de menos de 8 MB."
+        );
+
+        return;
+    }
+
+    boton.disabled=
+        true;
+
+    estado.textContent=
+        "🤖 Leyendo la ficha técnica...";
+
+    try{
+
+        const base64=
+            await archivoABase64(
+                archivo
+            );
+
+        const res=
+            await fetch(
+                "/api/analizar-ficha",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json; charset=UTF-8",
+
+                        "Accept":
+                            "application/json",
+
+                        "Authorization":
+                            "Bearer " +
+                            tokenActual()
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            expediente_id:
+                                expedienteActual.id,
+
+                            imagen_base64:
+                                base64,
+
+                            mime_type:
+                                archivo.type
+
+                        })
+                }
+            );
+
+        const data=
+            await res.json();
+
+        if(
+            !res.ok ||
+            !data.ok
+        ){
+
+            estado.textContent=
+                limpiarTextoIA(
+                    data.error ||
+                    "No se pudo analizar la ficha técnica."
+                );
+
+            boton.disabled=
+                false;
+
+            return;
+        }
+
+        estado.textContent=
+            limpiarTextoIA(
+                data.mensaje
+            );
+
+        mostrarDatosExtraidos(
+            data.datos_extraidos
+        );
+
+        expedienteActual.paso_actual=
+            data.paso_actual;
+
+        expedienteActual.estado=
+            (
+                data.paso_actual ===
+                "CALCULO_FISCAL"
+            )
+                ?
+                "CALCULO_FISCAL"
+                :
+                "DATOS_INICIALES";
+
+        if(
+            data.vehiculo
+        ){
+
+            expedienteActual.valoracion_id=
+                data.vehiculo.id;
+
+            expedienteActual
+                .modelo_fiscal_identificado=
+                data.vehiculo.modelo_tipo;
+        }
+
+        setTimeout(
+            ()=>{
+
+                abrirChat();
+
+            },
+            1500
+        );
+
+    }catch(error){
+
+        console.error(
+            error
+        );
+
+        estado.textContent=
+            "No se pudo analizar la ficha técnica.";
+
+        boton.disabled=
+            false;
     }
 }
 
@@ -1399,7 +2007,9 @@ async function abrirChat(){
     <div class="card">
 
         <h1>
-            🚗 ${expedienteActual.matricula}
+            🚗 ${limpiarTextoIA(
+                expedienteActual.matricula
+            )}
         </h1>
 
         <div class="estado">
@@ -1413,10 +2023,13 @@ async function abrirChat(){
 
             <input
                 id="mensaje"
-                placeholder="Escribe tu respuesta...">
+                placeholder="Escribe tu respuesta..."
+                autocomplete="off"
+            >
 
             <button
-                onclick="enviarMensaje()">
+                onclick="enviarMensaje()"
+            >
                 Enviar
             </button>
 
@@ -1427,12 +2040,17 @@ async function abrirChat(){
     `;
 
     document
-    .getElementById("mensaje")
+    .getElementById(
+        "mensaje"
+    )
     .addEventListener(
         "keydown",
         function(e){
 
-            if(e.key==="Enter"){
+            if(
+                e.key ===
+                "Enter"
+            ){
 
                 enviarMensaje();
             }
@@ -1440,6 +2058,52 @@ async function abrirChat(){
     );
 
     await iniciarConversacion();
+}
+
+
+function agregarMensaje(
+    tipo,
+    texto
+){
+
+    const chat=
+        document
+        .getElementById(
+            "chat"
+        );
+
+    if(!chat){
+        return;
+    }
+
+    const div=
+        document.createElement(
+            "div"
+        );
+
+    div.className=
+        tipo;
+
+    const span=
+        document.createElement(
+            "span"
+        );
+
+    span.textContent=
+        limpiarTextoIA(
+            texto
+        );
+
+    div.appendChild(
+        span
+    );
+
+    chat.appendChild(
+        div
+    );
+
+    chat.scrollTop=
+        chat.scrollHeight;
 }
 
 
@@ -1455,6 +2119,9 @@ async function iniciarConversacion(){
 
                     headers:{
                         "Content-Type":
+                            "application/json; charset=UTF-8",
+
+                        "Accept":
                             "application/json",
 
                         "Authorization":
@@ -1462,14 +2129,15 @@ async function iniciarConversacion(){
                             tokenActual()
                     },
 
-                    body:JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        expediente_id:
-                            expedienteActual.id,
+                            expediente_id:
+                                expedienteActual.id,
 
-                        mensaje:""
+                            mensaje:""
 
-                    })
+                        })
                 }
             );
 
@@ -1492,9 +2160,9 @@ async function iniciarConversacion(){
             data.respuesta
         );
 
-
         if(
-            data.requiere_factura === true
+            data.requiere_factura ===
+            true
         ){
 
             setTimeout(
@@ -1505,9 +2173,9 @@ async function iniciarConversacion(){
             return;
         }
 
-
         if(
-            data.solicitar_calculo === true
+            data.solicitar_calculo ===
+            true
         ){
 
             setTimeout(
@@ -1517,7 +2185,6 @@ async function iniciarConversacion(){
 
             return;
         }
-
 
         if(
             data.paso_actual ===
@@ -1540,55 +2207,25 @@ async function iniciarConversacion(){
 }
 
 
-function agregarMensaje(
-    tipo,
-    texto
-){
-
-    const chat=
-        document.getElementById(
-            "chat"
-        );
-
-    if(!chat) return;
-
-    const div=
-        document.createElement(
-            "div"
-        );
-
-    div.className=tipo;
-
-    const span=
-        document.createElement(
-            "span"
-        );
-
-    span.textContent=
-        texto || "";
-
-    div.appendChild(span);
-
-    chat.appendChild(div);
-
-    chat.scrollTop=
-        chat.scrollHeight;
-}
-
-
 async function enviarMensaje(){
 
     const input=
-        document.getElementById(
+        document
+        .getElementById(
             "mensaje"
         );
 
-    if(!input) return;
+    if(!input){
+        return;
+    }
 
     const mensaje=
-        input.value.trim();
+        input.value
+        .trim();
 
-    if(!mensaje) return;
+    if(!mensaje){
+        return;
+    }
 
     agregarMensaje(
         "user",
@@ -1612,6 +2249,9 @@ async function enviarMensaje(){
 
                     headers:{
                         "Content-Type":
+                            "application/json; charset=UTF-8",
+
+                        "Accept":
                             "application/json",
 
                         "Authorization":
@@ -1619,14 +2259,15 @@ async function enviarMensaje(){
                             tokenActual()
                     },
 
-                    body:JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        expediente_id:
-                            expedienteActual.id,
+                            expediente_id:
+                                expedienteActual.id,
 
-                        mensaje
+                            mensaje
 
-                    })
+                        })
                 }
             );
 
@@ -1634,7 +2275,8 @@ async function enviarMensaje(){
             await res.json();
 
         const chat=
-            document.getElementById(
+            document
+            .getElementById(
                 "chat"
             );
 
@@ -1663,10 +2305,15 @@ async function enviarMensaje(){
             data.respuesta
         );
 
+        expedienteActual.paso_actual=
+            data.paso_actual;
 
         if(
             data.vehiculo
         ){
+
+            expedienteActual.valoracion_id=
+                data.vehiculo.id;
 
             expedienteActual
                 .modelo_fiscal_identificado=
@@ -1675,9 +2322,9 @@ async function enviarMensaje(){
                 null;
         }
 
-
         if(
-            data.requiere_factura === true
+            data.requiere_factura ===
+            true
         ){
 
             setTimeout(
@@ -1688,9 +2335,9 @@ async function enviarMensaje(){
             return;
         }
 
-
         if(
-            data.solicitar_calculo === true
+            data.solicitar_calculo ===
+            true
         ){
 
             setTimeout(
@@ -1700,7 +2347,6 @@ async function enviarMensaje(){
 
             return;
         }
-
 
         if(
             data.paso_actual ===
@@ -1716,7 +2362,8 @@ async function enviarMensaje(){
     }catch(error){
 
         const chat=
-            document.getElementById(
+            document
+            .getElementById(
                 "chat"
             );
 
@@ -1753,14 +2400,15 @@ async function calcularCosteFiscal(){
 
         <p>
             Gestor-IA está comprobando
-            la valoración fiscal, el impuesto,
-            la tasa DGT y el servicio.
+            la valoración fiscal,
+            el impuesto,
+            la tasa DGT
+            y el servicio.
         </p>
 
     </div>
 
     `;
-
 
     try{
 
@@ -1772,6 +2420,9 @@ async function calcularCosteFiscal(){
 
                     headers:{
                         "Content-Type":
+                            "application/json; charset=UTF-8",
+
+                        "Accept":
                             "application/json",
 
                         "Authorization":
@@ -1779,19 +2430,18 @@ async function calcularCosteFiscal(){
                             tokenActual()
                     },
 
-                    body:JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        expediente_id:
-                            expedienteActual.id
+                            expediente_id:
+                                expedienteActual.id
 
-                    })
+                        })
                 }
             );
 
-
         const data=
             await res.json();
-
 
         if(
             !res.ok ||
@@ -1805,10 +2455,11 @@ async function calcularCosteFiscal(){
             return;
         }
 
-
         if(
-            data.pago_bloqueado === true ||
-            data.calculo_verificado !== true
+            data.pago_bloqueado ===
+            true ||
+            data.calculo_verificado !==
+            true
         ){
 
             pantallaCalculoBloqueado(
@@ -1818,10 +2469,8 @@ async function calcularCosteFiscal(){
             return;
         }
 
-
         ultimoCalculo=
             data;
-
 
         expedienteActual.estado=
             "PAGO_PENDIENTE";
@@ -1833,7 +2482,6 @@ async function calcularCosteFiscal(){
         pantallaPagoExacto(
             data
         );
-
 
     }catch(error){
 
@@ -1855,10 +2503,9 @@ async function calcularCosteFiscal(){
             </div>
 
             <button
-                onclick="calcularCosteFiscal()">
-
+                onclick="calcularCosteFiscal()"
+            >
                 Reintentar
-
             </button>
 
         </div>
@@ -1872,16 +2519,18 @@ async function calcularCosteFiscal(){
    CÁLCULO BLOQUEADO
 ===================================================== */
 
-function pantallaCalculoBloqueado(data){
+function pantallaCalculoBloqueado(
+    data
+){
 
     const motivo=
-        data?.error ||
-        data?.mensaje ||
-        "El cálculo no ha podido verificarse todavía.";
-
+        limpiarTextoIA(
+            data?.error ||
+            data?.mensaje ||
+            "El cálculo no ha podido verificarse todavía."
+        );
 
     let extra="";
-
 
     if(
         data?.requiere_documentacion
@@ -1897,7 +2546,6 @@ function pantallaCalculoBloqueado(data){
         `;
     }
 
-
     if(
         data?.territorio
     ){
@@ -1906,12 +2554,15 @@ function pantallaCalculoBloqueado(data){
 
         <p>
             Territorio fiscal:
-            <b>${data.territorio}</b>
+            <b>
+                ${limpiarTextoIA(
+                    data.territorio
+                )}
+            </b>
         </p>
 
         `;
     }
-
 
     contenido.innerHTML=`
 
@@ -1939,10 +2590,9 @@ function pantallaCalculoBloqueado(data){
 
         <button
             class="btn-secundario"
-            onclick="misExpedientes()">
-
+            onclick="misExpedientes()"
+        >
             Volver a mis expedientes
-
         </button>
 
     </div>
@@ -1987,10 +2637,9 @@ function pantallaFacturaPendiente(){
 
         <button
             class="btn-secundario"
-            onclick="misExpedientes()">
-
+            onclick="misExpedientes()"
+        >
             Volver a mis expedientes
-
         </button>
 
     </div>
@@ -2000,44 +2649,48 @@ function pantallaFacturaPendiente(){
 
 
 /* =====================================================
-   PANTALLA PAGO EXACTO
+   PAGO
 ===================================================== */
 
-function pantallaPagoExacto(data){
+function pantallaPagoExacto(
+    data
+){
 
     const costes=
-        data.costes || {};
+        data.costes ||
+        {};
 
     const fiscal=
-        data.fiscal || {};
+        data.fiscal ||
+        {};
 
     const vehiculo=
-        data.vehiculo || {};
-
+        data.vehiculo ||
+        {};
 
     const impuesto=
         Number(
-            costes.impuestos ?? 0
+            costes.impuestos ??
+            0
         );
-
 
     const dgt=
         Number(
-            costes.tasa_dgt ?? 0
+            costes.tasa_dgt ??
+            0
         );
-
 
     const servicio=
         Number(
-            costes.gestor_ia ?? 0
+            costes.gestor_ia ??
+            0
         );
-
 
     const total=
         Number(
-            costes.total ?? 0
+            costes.total ??
+            0
         );
-
 
     contenido.innerHTML=`
 
@@ -2050,10 +2703,11 @@ function pantallaPagoExacto(data){
         <p>
             Expediente:
             <b>
-                ${expedienteActual.matricula}
+                ${limpiarTextoIA(
+                    expedienteActual.matricula
+                )}
             </b>
         </p>
-
 
         <div class="calculo-box">
 
@@ -2063,8 +2717,15 @@ function pantallaPagoExacto(data){
 
             <p>
                 <b>
-                    ${vehiculo.marca || ""}
-                    ${vehiculo.modelo || ""}
+                    ${limpiarTextoIA(
+                        vehiculo.marca ||
+                        ""
+                    )}
+
+                    ${limpiarTextoIA(
+                        vehiculo.modelo ||
+                        ""
+                    )}
                 </b>
             </p>
 
@@ -2091,7 +2752,6 @@ function pantallaPagoExacto(data){
 
         </div>
 
-
         <div class="pago-box">
 
             <div class="linea-pago">
@@ -2101,11 +2761,12 @@ function pantallaPagoExacto(data){
                 </span>
 
                 <span>
-                    ${formatoEuro(impuesto)}
+                    ${formatoEuro(
+                        impuesto
+                    )}
                 </span>
 
             </div>
-
 
             <div class="linea-pago">
 
@@ -2114,11 +2775,12 @@ function pantallaPagoExacto(data){
                 </span>
 
                 <span>
-                    ${formatoEuro(dgt)}
+                    ${formatoEuro(
+                        dgt
+                    )}
                 </span>
 
             </div>
-
 
             <div class="linea-pago">
 
@@ -2127,37 +2789,46 @@ function pantallaPagoExacto(data){
                 </span>
 
                 <span>
-                    ${formatoEuro(servicio)}
+                    ${formatoEuro(
+                        servicio
+                    )}
                 </span>
 
             </div>
 
-
-            <div class="linea-pago total">
+            <div
+                class="linea-pago total"
+            >
 
                 <span>
                     TOTAL A PAGAR
                 </span>
 
                 <span>
-                    ${formatoEuro(total)}
+                    ${formatoEuro(
+                        total
+                    )}
                 </span>
 
             </div>
 
         </div>
 
-
         <div class="valor-fiscal">
 
             Territorio fiscal:
+
             <b>
-                ${fiscal.territorio || "-"}
+                ${limpiarTextoIA(
+                    fiscal.territorio ||
+                    "-"
+                )}
             </b>
 
             <br>
 
             Base imponible:
+
             <b>
                 ${formatoEuro(
                     fiscal.base_imponible
@@ -2166,29 +2837,29 @@ function pantallaPagoExacto(data){
 
         </div>
 
-
         <br>
 
-
         <button
-            onclick="simularPago()">
+            onclick="simularPago()"
+        >
 
             🧪 Simular pago de
-            ${formatoEuro(total)}
+            ${formatoEuro(
+                total
+            )}
 
         </button>
 
-
-        <p style="
-            color:#94a3b8;
-            margin-top:15px;
-            font-size:13px;
-        ">
+        <p
+            style="
+                color:#94a3b8;
+                margin-top:15px;
+                font-size:13px;
+            "
+        >
 
             Pago simulado únicamente
             durante el desarrollo.
-            Se eliminará al conectar
-            el proveedor de pagos real.
 
         </p>
 
@@ -2198,16 +2869,7 @@ function pantallaPagoExacto(data){
 }
 
 
-/* =====================================================
-   RECUPERAR CÁLCULO DE UN EXPEDIENTE
-===================================================== */
-
 async function cargarCalculoGuardado(){
-
-    /*
-       Recalculamos desde backend para no confiar
-       en importes almacenados en el navegador.
-    */
 
     await calcularCosteFiscal();
 }
@@ -2224,7 +2886,6 @@ async function simularPago(){
             ?.costes
             ?.total;
 
-
     const texto=
         total
             ?
@@ -2232,13 +2893,13 @@ async function simularPago(){
             :
             "¿Simular el pago de este expediente?";
 
-
     if(
-        !confirm(texto)
+        !confirm(
+            texto
+        )
     ){
         return;
     }
-
 
     try{
 
@@ -2250,26 +2911,25 @@ async function simularPago(){
 
                     headers:{
                         "Content-Type":
-                            "application/json",
+                            "application/json; charset=UTF-8",
 
                         "Authorization":
                             "Bearer " +
                             tokenActual()
                     },
 
-                    body:JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        expediente_id:
-                            expedienteActual.id
+                            expediente_id:
+                                expedienteActual.id
 
-                    })
+                        })
                 }
             );
 
-
         const data=
             await res.json();
-
 
         if(
             !res.ok ||
@@ -2277,20 +2937,19 @@ async function simularPago(){
         ){
 
             alert(
-                data.error ||
-                "No se pudo simular el pago."
+                limpiarTextoIA(
+                    data.error ||
+                    "No se pudo simular el pago."
+                )
             );
 
             return;
         }
 
-
         expedienteActual=
             data.expediente;
 
-
         pantallaPostPago();
-
 
     }catch(error){
 
@@ -2302,7 +2961,7 @@ async function simularPago(){
 
 
 /* =====================================================
-   DESPUÉS DEL PAGO
+   POST PAGO
 ===================================================== */
 
 function pantallaPostPago(){
@@ -2318,7 +2977,9 @@ function pantallaPostPago(){
         <p>
             El expediente
             <b>
-                ${expedienteActual.matricula}
+                ${limpiarTextoIA(
+                    expedienteActual.matricula
+                )}
             </b>
             puede continuar.
         </p>
@@ -2334,18 +2995,16 @@ function pantallaPostPago(){
         <br>
 
         <button
-            onclick="generarInvitacion()">
-
+            onclick="generarInvitacion()"
+        >
             🔗 Generar invitación
-
         </button>
 
         <button
             class="btn-secundario"
-            onclick="pantallaAutorizaciones()">
-
+            onclick="pantallaAutorizaciones()"
+        >
             🔐 Ver autorizaciones
-
         </button>
 
     </div>
@@ -2370,26 +3029,25 @@ async function generarInvitacion(){
 
                     headers:{
                         "Content-Type":
-                            "application/json",
+                            "application/json; charset=UTF-8",
 
                         "Authorization":
                             "Bearer " +
                             tokenActual()
                     },
 
-                    body:JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        expediente_id:
-                            expedienteActual.id
+                            expediente_id:
+                                expedienteActual.id
 
-                    })
+                        })
                 }
             );
 
-
         const data=
             await res.json();
-
 
         if(
             !res.ok ||
@@ -2397,13 +3055,14 @@ async function generarInvitacion(){
         ){
 
             alert(
-                data.error ||
-                "No se pudo generar la invitación."
+                limpiarTextoIA(
+                    data.error ||
+                    "No se pudo generar la invitación."
+                )
             );
 
             return;
         }
-
 
         contenido.innerHTML=`
 
@@ -2430,10 +3089,9 @@ async function generarInvitacion(){
                 <br><br>
 
                 <button
-                    onclick="copiarInvitacion()">
-
+                    onclick="copiarInvitacion()"
+                >
                     Copiar enlace
-
                 </button>
 
             </div>
@@ -2448,7 +3106,6 @@ async function generarInvitacion(){
 
         `;
 
-
     }catch(error){
 
         alert(
@@ -2461,16 +3118,15 @@ async function generarInvitacion(){
 function copiarInvitacion(){
 
     const input=
-        document.getElementById(
+        document
+        .getElementById(
             "enlaceInvitacion"
         );
-
 
     navigator.clipboard
         .writeText(
             input.value
         );
-
 
     alert(
         "Enlace copiado."
@@ -2496,7 +3152,6 @@ async function pantallaAutorizaciones(){
         return;
     }
 
-
     try{
 
         const res=
@@ -2507,26 +3162,25 @@ async function pantallaAutorizaciones(){
 
                     headers:{
                         "Content-Type":
-                            "application/json",
+                            "application/json; charset=UTF-8",
 
                         "Authorization":
                             "Bearer " +
                             tokenActual()
                     },
 
-                    body:JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        expediente_id:
-                            expedienteActual.id
+                            expediente_id:
+                                expedienteActual.id
 
-                    })
+                        })
                 }
             );
 
-
         const data=
             await res.json();
-
 
         if(
             !res.ok ||
@@ -2534,13 +3188,14 @@ async function pantallaAutorizaciones(){
         ){
 
             alert(
-                data.error ||
-                "No se pudieron cargar las autorizaciones."
+                limpiarTextoIA(
+                    data.error ||
+                    "No se pudieron cargar las autorizaciones."
+                )
             );
 
             return;
         }
-
 
         contenido.innerHTML=`
 
@@ -2557,24 +3212,26 @@ async function pantallaAutorizaciones(){
                 </h2>
 
                 <p>
-                    ${data.tributaria.descripcion}
+                    ${limpiarTextoIA(
+                        data.tributaria.descripcion
+                    )}
                 </p>
 
                 <p>
                     <b>
-                        ${data.tributaria.organismo}
+                        ${limpiarTextoIA(
+                            data.tributaria.organismo
+                        )}
                     </b>
                 </p>
 
                 <button
-                    onclick="abrirEnlace('${data.tributaria.enlace}')">
-
+                    onclick="abrirEnlace('${data.tributaria.enlace}')"
+                >
                     Autorizar gestión tributaria
-
                 </button>
 
             </div>
-
 
             <div class="autorizacion">
 
@@ -2583,14 +3240,15 @@ async function pantallaAutorizaciones(){
                 </h2>
 
                 <p>
-                    ${data.dgt.descripcion}
+                    ${limpiarTextoIA(
+                        data.dgt.descripcion
+                    )}
                 </p>
 
                 <button
-                    onclick="abrirEnlace('${data.dgt.enlace}')">
-
+                    onclick="abrirEnlace('${data.dgt.enlace}')"
+                >
                     Autorizar en la DGT
-
                 </button>
 
             </div>
@@ -2598,7 +3256,6 @@ async function pantallaAutorizaciones(){
         </div>
 
         `;
-
 
     }catch(error){
 
@@ -2609,7 +3266,9 @@ async function pantallaAutorizaciones(){
 }
 
 
-function abrirEnlace(url){
+function abrirEnlace(
+    url
+){
 
     window.open(
         url,
@@ -2625,8 +3284,11 @@ function abrirEnlace(url){
 
 async function misExpedientes(){
 
-    if(!requiereSesion()) return;
-
+    if(
+        !requiereSesion()
+    ){
+        return;
+    }
 
     contenido.innerHTML=`
 
@@ -2644,7 +3306,6 @@ async function misExpedientes(){
 
     `;
 
-
     try{
 
         const res=
@@ -2661,10 +3322,8 @@ async function misExpedientes(){
                 }
             );
 
-
         const data=
             await res.json();
-
 
         if(
             !res.ok ||
@@ -2680,8 +3339,10 @@ async function misExpedientes(){
                 </h1>
 
                 <p>
-                    ${data.error ||
-                    "No se pudieron cargar."}
+                    ${limpiarTextoIA(
+                        data.error ||
+                        "No se pudieron cargar."
+                    )}
                 </p>
 
             </div>
@@ -2690,7 +3351,6 @@ async function misExpedientes(){
 
             return;
         }
-
 
         if(
             !data.expedientes.length
@@ -2710,10 +3370,9 @@ async function misExpedientes(){
                 </p>
 
                 <button
-                    onclick="nuevoTraspaso()">
-
+                    onclick="nuevoTraspaso()"
+                >
                     Iniciar traspaso
-
                 </button>
 
             </div>
@@ -2723,12 +3382,13 @@ async function misExpedientes(){
             return;
         }
 
-
         let tarjetas="";
 
-
         data.expedientes.forEach(
-            function(exp,index){
+            function(
+                exp,
+                index
+            ){
 
                 tarjetas+=`
 
@@ -2739,27 +3399,39 @@ async function misExpedientes(){
                         <div>
 
                             <div class="expediente-matricula">
-                                🚗 ${exp.matricula}
+
+                                🚗
+                                ${limpiarTextoIA(
+                                    exp.matricula
+                                )}
+
                             </div>
 
                             <br>
 
                             <span class="estado-pill">
-                                ${textoEstado(exp.estado)}
+
+                                ${limpiarTextoIA(
+                                    textoEstado(
+                                        exp.estado
+                                    )
+                                )}
+
                             </span>
 
                         </div>
 
                         <button
-                            onclick="continuarExpedientePorIndice(${index})">
+                            onclick="continuarExpedientePorIndice(${index})"
+                        >
 
                             ${
                                 exp.estado ===
                                 "FINALIZADO"
-                                ?
-                                "Ver expediente"
-                                :
-                                "Continuar"
+                                    ?
+                                    "Ver expediente"
+                                    :
+                                    "Continuar"
                             }
 
                         </button>
@@ -2772,10 +3444,8 @@ async function misExpedientes(){
             }
         );
 
-
         window.expedientesCargados=
             data.expedientes;
-
 
         contenido.innerHTML=`
 
@@ -2794,7 +3464,6 @@ async function misExpedientes(){
         </div>
 
         `;
-
 
     }catch(error){
 
@@ -2817,23 +3486,36 @@ async function misExpedientes(){
 }
 
 
-function continuarExpedientePorIndice(index){
+function continuarExpedientePorIndice(
+    index
+){
 
     const exp=
-        window.expedientesCargados?.[index];
+        window
+        .expedientesCargados
+        ?.[index];
 
-    if(!exp) return;
+    if(!exp){
+        return;
+    }
 
-    continuarExpediente(exp);
+    continuarExpediente(
+        exp
+    );
 }
 
 
-function textoEstado(estado){
+function textoEstado(
+    estado
+){
 
     const nombres={
 
         CREADO:
             "Datos pendientes",
+
+        FICHA_TECNICA:
+            "Ficha técnica pendiente",
 
         DATOS_INICIALES:
             "Recogiendo datos",
@@ -2864,7 +3546,6 @@ function textoEstado(estado){
 
     };
 
-
     return nombres[estado] ||
         estado;
 }
@@ -2874,15 +3555,19 @@ function textoEstado(estado){
    CONTINUAR EXPEDIENTE
 ===================================================== */
 
-function continuarExpediente(exp){
+function continuarExpediente(
+    exp
+){
 
-    expedienteActual=exp;
+    expedienteActual=
+        exp;
 
-    ultimoCalculo=null;
+    ultimoCalculo=
+        null;
 
-
-    switch(exp.estado){
-
+    switch(
+        exp.estado
+    ){
 
         case "CREADO":
 
@@ -2890,6 +3575,11 @@ function continuarExpediente(exp){
 
             break;
 
+        case "FICHA_TECNICA":
+
+            pantallaFichaTecnica();
+
+            break;
 
         case "DATOS_INICIALES":
 
@@ -2901,13 +3591,11 @@ function continuarExpediente(exp){
 
             break;
 
-
         case "CALCULO_FISCAL":
 
             calcularCosteFiscal();
 
             break;
-
 
         case "FACTURA_PENDIENTE":
 
@@ -2915,13 +3603,11 @@ function continuarExpediente(exp){
 
             break;
 
-
         case "PAGO_PENDIENTE":
 
             cargarCalculoGuardado();
 
             break;
-
 
         case "PAGO_VALIDADO":
 
@@ -2929,13 +3615,11 @@ function continuarExpediente(exp){
 
             break;
 
-
         case "INVITACION_GENERADA":
 
             pantallaPostPago();
 
             break;
-
 
         case "FINALIZADO":
 
@@ -2949,8 +3633,11 @@ function continuarExpediente(exp){
 
                 <p>
                     Matrícula:
+
                     <b>
-                        ${exp.matricula}
+                        ${limpiarTextoIA(
+                            exp.matricula
+                        )}
                     </b>
                 </p>
 
@@ -2967,7 +3654,6 @@ function continuarExpediente(exp){
 
             break;
 
-
         default:
 
             abrirChat();
@@ -2979,11 +3665,16 @@ function continuarExpediente(exp){
    MODAL
 ===================================================== */
 
-modal.onclick=function(e){
+modal.onclick=
+function(e){
 
-    if(e.target===modal){
+    if(
+        e.target ===
+        modal
+    ){
 
-        modal.style.display="none";
+        modal.style.display=
+            "none";
     }
 };
 
